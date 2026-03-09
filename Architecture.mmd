@@ -1,0 +1,12 @@
+classDiagram
+    class EventBus {
+        -Queues: Dict[EventTypes, Queue[Event]]
+        -Listeners: Dict[EventTypes, Func[Event, void]]
+        +Publish(event: Event) void
+        +Subscribe(eventType: EventTypes, callback: Func[Event, void]) void
+    }
+
+    class PlayerSystem {
+        +field: type
+        +method(type) type
+    }

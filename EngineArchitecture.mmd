@@ -30,7 +30,12 @@ classDiagram
 
 
     class Renderer {
+        # update(TimeDelta delta) void
+        - renderStrategy: RenderingStrategy
+    }
 
+    class InputHandler {
+        + update(TimeDelta delta) void
     }
 
     class System {
@@ -47,3 +52,7 @@ Engine *-- World
 Engine *-- SystemRegistry
 Engine *-- EventBus
 World *-- Renderer
+World *-- InputHandler
+
+System <|-- Renderer
+System <|-- InputHandler

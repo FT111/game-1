@@ -1,0 +1,49 @@
+---
+config:
+  layout: elk
+---
+
+classDiagram
+    class EventBus {
+        -Queues: Dict[EventTypes, Queue[Event]]
+        -Listeners: Dict[EventTypes, Func[Event, void]]
+        +Publish(event: Event) void
+        +Subscribe(eventType: EventTypes, callback: Func[Event, void]) void
+    }
+
+    class Engine {
+        + EntityRegistry: EntityRegistry
+        + SystemRegistry: SystemRegistry
+        + EventBus: EventBus
+        + Renderer: Renderer
+    }
+
+    class World {
+        + Entities: Dict[EntityID, Entity]
+        + EntityComponentIndex: Dict[Component, List[EntityID]]
+    }
+
+    class SystemRegistry {
+        + Systems: Dict[string, System]
+        + Register(System system, string Identifier)
+    }
+
+
+    class Renderer {
+
+    }
+
+    class System {
+        <<interface>>
+        + update(TimeDelta delta) void
+    }
+
+    class Component {
+        <<interface>>
+    }
+
+
+Engine *-- World
+Engine *-- SystemRegistry
+Engine *-- EventBus
+World *-- Renderer

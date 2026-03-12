@@ -12,15 +12,22 @@ classDiagram
     }
 
     class Engine {
-        + EntityRegistry: EntityRegistry
         + SystemRegistry: SystemRegistry
         + EventBus: EventBus
-        + Renderer: Renderer
+        + World: World
+
+        + Start(TimeDelta delta) void
     }
 
     class World {
         + Entities: Dict[EntityID, Entity]
         + EntityComponentIndex: Dict[Component, List[EntityID]]
+
+        + Layers: Dict[LayerID, Layer]
+        + LayerComponentIndex: Dict[Component, List[LayerID]]
+
+        + Renderer: Renderer
+        + InputHandler: InputHandler
     }
 
     class SystemRegistry {
@@ -35,7 +42,7 @@ classDiagram
     }
 
     class InputHandler {
-        + update(TimeDelta delta) void
+        # update(TimeDelta delta) void
     }
 
     class System {

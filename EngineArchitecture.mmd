@@ -16,6 +16,8 @@ classDiagram
         + SystemRegistry: SystemRegistry
         + EventBus: EventBus
         + World: World
+        + GraphicsAPI: GraphicsAPI
+        + Renderer: Renderer
 
         + Start() void
     }
@@ -36,7 +38,9 @@ classDiagram
 
 
     class Renderer {
-        # render(World world) void
+        # renderPipelines: ArrayList[RenderPass]
+        # render(World world, GraphicsAPI IO) void
+        - cameraView: CameraView
 
         - renderBuffer: RenderBuffer
 
@@ -48,6 +52,38 @@ classDiagram
         + bgColor: string
     }
 
+
+    class UIRenderPass {
+        + render(World world, CameraView camera, RenderBuffer buffer) void
+    }
+
+    class TilemapRenderPass {
+        + render(World world, CameraView camera, RenderBuffer buffer) void
+    }
+
+    class EntityRenderPass {
+        + render(World world, CameraView camera, RenderBuffer buffer) void
+    }
+
+    class RenderPass {
+        <<abstract>>
+        + render(World world, CameraView camera, RenderBuffer buffer) void
+    }
+
+
+    class InputHandler {
+        InputHandler(World world, EventBus eventBus, GraphicsAPI io)
+        # update(TimeDelta delta) void
+    }
+    class RenderBuffer {
+        - cells = Cell[][]
+        - width: int
+        -  height: int
+        + set(x: int, y: int, Cell cell) void
+        + get(x: int, y: int) Cell
+        + clear() void
+        }
+
     class CameraView {
         - originX: int
         - originY: int
@@ -58,32 +94,6 @@ classDiagram
         + isInView(Vector2Int position) bool
         + worldToView(Vector2Int worldPos) Vector2Int
     }
-
-    class RenderBuffer {
-        - cells = Cell[][]
-        - width: int
-        -  height: int
-        + set(x: int, y: int, Cell cell) void
-        + get(x: int, y: int) Cell
-        + clear() void
-        }
-
-    class TilemapRenderPass {
-        # render(World world, RenderBuffer buffer) void
-    }
-
-    class EntityRenderPass {
-        # render(World world, RenderBuffer buffer) void
-    }
-
-    class UIRenderPass {
-        # render(World world, RenderBuffer buffer) void
-    }
-
-    class InputHandler {
-        # update(TimeDelta delta) void
-    }
-
     class System {
         <<abstract>>
         + System(World world, EventBus eventBus)
@@ -100,17 +110,41 @@ classDiagram
         + viewHeight: int
     }
 
+    class RenderableComponent {
+        + Content: char
+        + fgColor: string
+        + bgColor: string
+    }
+
+    class GraphicsAPI {
+        <<interface>>
+        + render(RenderBuffer buffer) void
+        + listen(callback: Func[InputEvent, void]) void
+        + clear() void
+
+        + getWidth() int
+        + getHeight() int
+        + onResize(callback: Func[void]) void
+    }
+
 
 Engine *-- World
 Engine *-- SystemRegistry
 Engine *-- EventBus
 Engine *-- Renderer
+Engine *-- GraphicsAPI
 
 Renderer *-- RenderBuffer
-Renderer *-- TilemapRenderPass
-Renderer *-- EntityRenderPass
-Renderer *-- UIRenderPass
+Renderer *-- CameraView : updates each tick
+Renderer o-- RenderPass
+
+RenderPass <|-- TilemapRenderPass
+RenderPass <|-- EntityRenderPass
+RenderPass <|-- UIRenderPass
+
+SystemRegistry o-- System
 
 Component <|-- CameraComponent
+Component <|-- RenderableComponent
 
 System <|-- InputHandler

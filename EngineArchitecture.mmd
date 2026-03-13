@@ -9,6 +9,7 @@ classDiagram
         -Listeners: Dict[EventTypes, Func[Event, void]]
         +Publish(event: Event) void
         +Subscribe(eventType: EventTypes, callback: Func[Event, void]) void
+        +Flush() void
     }
 
     class Engine {
@@ -16,29 +17,67 @@ classDiagram
         + EventBus: EventBus
         + World: World
 
-        + Start(TimeDelta delta) void
+        + Start() void
     }
 
     class World {
-        + Entities: Dict[EntityID, Entity]
+        + Entities: Dict[EntityID, List[Component]]
         + EntityComponentIndex: Dict[Component, List[EntityID]]
 
         + Layers: Dict[LayerID, Layer]
         + LayerComponentIndex: Dict[Component, List[LayerID]]
-
-        + Renderer: Renderer
-        + InputHandler: InputHandler
     }
 
     class SystemRegistry {
-        + Systems: Dict[string, System]
+        + Systems: ArrayList[System]
+        + SystemIndex: Dict[string, System]
         + Register(System system, string Identifier)
     }
 
 
     class Renderer {
-        # update(TimeDelta delta) void
-        - renderStrategy: RenderingStrategy
+        # render(World world) void
+
+        - renderBuffer: RenderBuffer
+
+    }
+
+    class Cell {
+        + Content: char
+        + fgColor: string
+        + bgColor: string
+    }
+
+    class CameraView {
+        - originX: int
+        - originY: int
+        - viewWidth: int
+        - viewHeight: int
+
+        + CameraView(CameraComponent camera) void
+        + isInView(Vector2Int position) bool
+        + worldToView(Vector2Int worldPos) Vector2Int
+    }
+
+    class RenderBuffer {
+        - cells = Cell[][]
+        - width: int
+        -  height: int
+        + set(x: int, y: int, Cell cell) void
+        + get(x: int, y: int) Cell
+        + clear() void
+        }
+
+    class TilemapRenderPass {
+        # render(World world, RenderBuffer buffer) void
+    }
+
+    class EntityRenderPass {
+        # render(World world, RenderBuffer buffer) void
+    }
+
+    class UIRenderPass {
+        # render(World world, RenderBuffer buffer) void
     }
 
     class InputHandler {
@@ -46,7 +85,8 @@ classDiagram
     }
 
     class System {
-        <<interface>>
+        <<abstract>>
+        + System(World world, EventBus eventBus)
         + update(TimeDelta delta) void
     }
 
@@ -54,12 +94,23 @@ classDiagram
         <<interface>>
     }
 
+    class CameraComponent {
+        + origin: Vector2Int
+        + viewWidth: int
+        + viewHeight: int
+    }
+
 
 Engine *-- World
 Engine *-- SystemRegistry
 Engine *-- EventBus
-World *-- Renderer
-World *-- InputHandler
+Engine *-- Renderer
 
-System <|-- Renderer
+Renderer *-- RenderBuffer
+Renderer *-- TilemapRenderPass
+Renderer *-- EntityRenderPass
+Renderer *-- UIRenderPass
+
+Component <|-- CameraComponent
+
 System <|-- InputHandler

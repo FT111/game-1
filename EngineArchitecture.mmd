@@ -100,6 +100,12 @@ classDiagram
         + update(TimeDelta delta) void
     }
 
+    class Point {
+        <<record>>
+        + x: int
+        + y: int
+    }
+
     class Component {
         <<interface>>
     }

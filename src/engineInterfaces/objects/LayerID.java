@@ -1,4 +1,4 @@
-﻿package engine_interfaces.objects;
+﻿package engineInterfaces.objects;
 
 public record LayerID(long Id) {
     @Override

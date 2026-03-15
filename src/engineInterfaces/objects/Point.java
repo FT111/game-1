@@ -1,4 +1,4 @@
-﻿package engine_interfaces.objects;
+﻿package engineInterfaces.objects;
 
 /// Represents a point in 2D space.
 public record Point(int x, int y) {

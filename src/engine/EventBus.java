@@ -1,8 +1,12 @@
 ﻿package engine;
 
-import java.util.Dictionary;
-import java.util.Queue;
+import engineInterfaces.objects.Event;
+
+import java.util.ArrayDeque;
 
 public class EventBus {
-    private Queue<Event
+    private final ArrayDeque<Event> pendingQueue = new ArrayDeque<>();
+    private final ArrayDeque<Event> processingQueue = new ArrayDeque<>();
+
+
 }

@@ -1,6 +1,6 @@
-﻿package engineInterfaces.objects.components;
+﻿package engine_interfaces.objects.components;
 
-import engineInterfaces.objects.Component;
+import engine_interfaces.objects.Component;
 
 public class RenderableComponent extends Component {
     public char Char;

@@ -1,4 +1,4 @@
-package engineInterfaces.objects.rendering;
+package engine_interfaces.objects.rendering;
 
 public class Cell {
     public Character content;

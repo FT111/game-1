@@ -1,4 +1,4 @@
-package engineInterfaces.objects.rendering;
+package engine_interfaces.objects.rendering;
 
 public interface GraphicsAPI
 {

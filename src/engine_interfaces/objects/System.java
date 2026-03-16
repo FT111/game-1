@@ -1,4 +1,4 @@
-﻿package engineInterfaces.objects;
+﻿package engine_interfaces.objects;
 
 import engine.World;
 

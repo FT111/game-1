@@ -1,8 +1,8 @@
 ﻿package engine;
 
-import engineInterfaces.objects.Component;
-import engineInterfaces.objects.EntityID;
-import engineInterfaces.objects.LayerID;
+import engine_interfaces.objects.Component;
+import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.LayerID;
 
 import java.util.HashMap;
 import java.util.List;

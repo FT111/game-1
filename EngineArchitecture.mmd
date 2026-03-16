@@ -52,22 +52,19 @@ classDiagram
         + bgColor: string
     }
 
-
-    class UIRenderPass {
-        + render(World world, CameraView camera, RenderBuffer buffer) void
-    }
-
-    class TilemapRenderPass {
-        + render(World world, CameraView camera, RenderBuffer buffer) void
-    }
-
-    class EntityRenderPass {
-        + render(World world, CameraView camera, RenderBuffer buffer) void
-    }
-
     class RenderPass {
         <<abstract>>
         + render(World world, CameraView camera, RenderBuffer buffer) void
+    }
+
+
+    class UIRenderPass {
+    }
+
+    class TilemapRenderPass {
+    }
+
+    class EntityRenderPass {
     }
 
 
@@ -148,9 +145,13 @@ RenderPass <|-- TilemapRenderPass
 RenderPass <|-- EntityRenderPass
 RenderPass <|-- UIRenderPass
 
+RenderBuffer o-- Cell
+
 SystemRegistry o-- System
 
 Component <|-- CameraComponent
 Component <|-- RenderableComponent
 
 System <|-- InputHandler
+
+World o-- Component

@@ -1,12 +1,17 @@
 package engine_interfaces.objects.rendering;
 
+import java.io.IOException;
+import java.util.function.Consumer;
+
 public interface GraphicsAPI
 {
-    void render(RenderBuffer buffer);
+    void render(RenderBuffer buffer) throws IOException;
     void clear();
 
     int getWidth();
     int getHeight();
 
     void onResize(Runnable callback);
+
+    void listenForInput(Consumer<Character> callback) throws IOException;
 }

@@ -1,8 +1,13 @@
 ﻿package engine;
 
+import com.googlecode.lanterna.TerminalSize;
+import com.googlecode.lanterna.TextCharacter;
+import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
-import com.googlecode.lanterna.terminal.swing.SwingTerminal;
+import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
+import com.googlecode.lanterna.terminal.Terminal;
+import com.googlecode.lanterna.terminal.TerminalResizeListener;
 import com.googlecode.lanterna.terminal.swing.SwingTerminalFrame;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 import engine_interfaces.objects.rendering.RenderBuffer;
@@ -24,31 +29,49 @@ public class LanternaAPI implements GraphicsAPI {
     }
 
     @Override
-    public void render(RenderBuffer buffer) {
+    public void render(RenderBuffer buffer) throws IOException {
         for (int i = 0; i < buffer.cells.length; i++) {
                 for (int j = 0; j < buffer.cells[i].length; j++) {
-
+                    TextColor foregroundColour = new TextColor.RGB(buffer.cells[i][j].fgColour.R, buffer.cells[i][j].fgColour.G, buffer.cells[i][j].fgColour.B);
+                    TextColor backgroundColour = new TextColor.RGB(buffer.cells[i][j].bgColour.R, buffer.cells[i][j].bgColour.G, buffer.cells[i][j].bgColour.B);
+                    TextCharacter lanternaCell = TextCharacter.fromCharacter(buffer.cells[i][j].content, foregroundColour, backgroundColour)[0];
+                    screen.setCharacter(i, j, lanternaCell);
                 }
         }
+        screen.refresh();
     }
 
     @Override
     public void clear() {
-
+        screen.clear();
     }
 
     @Override
     public int getWidth() {
-        return 0;
+        return screen.getTerminalSize().getColumns();
     }
 
     @Override
     public int getHeight() {
-        return 0;
+        return screen.getTerminalSize().getRows();
     }
 
     @Override
     public void onResize(Runnable callback) {
+            terminal.addResizeListener((terminal, terminalSize) -> callback.run());
+    }
 
+    @Override
+    public void listenForInput(java.util.function.Consumer<Character> callback) throws IOException {
+        new Thread(() -> {
+            while (true) {
+                try {
+                    char input = screen.readInput().getCharacter();
+                    callback.accept(input);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
     }
 }

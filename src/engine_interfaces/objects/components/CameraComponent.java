@@ -7,4 +7,5 @@ public class CameraComponent extends Component {
     public Point Origin;
     public int viewWidth;
     public int viewHeight;
+    public boolean isActive;
 }

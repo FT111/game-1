@@ -130,9 +130,15 @@ classDiagram
         + onResize(callback: Func[void]) void
     }
 
+    class Resources {
+        + ResoucePath: Path
+        +
+    }
+
 
 Engine *-- World
 Engine *-- SystemRegistry
+Engine *-- Resources
 Engine *-- EventBus
 Engine *-- Renderer
 Engine *-- GraphicsAPI

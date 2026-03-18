@@ -17,4 +17,34 @@ public class World {
 
     public HashMap<Class<Component>, List<EntityID>> ComponentEntitiesIndex = new HashMap<>();
     public HashMap<Class<Component>, List<LayerID>> ComponentLayersIndex = new HashMap<>();
+
+    public HashSet<EntityID> queryEntities(Class<? extends Component>[] requiredComponents) {
+        if (requiredComponents.length == 0) {
+            return new HashSet<>(Entities.keySet());
+        }
+        HashSet<EntityID> collectedEntities = new HashSet<>();
+
+        for (Class<? extends Component> componentClass : requiredComponents) {
+            if (!ComponentEntitiesIndex.containsKey(componentClass)) {
+                return new HashSet<>();
+            }
+
+            List<EntityID> entitiesWithComponent = ComponentEntitiesIndex.get(componentClass);
+            if (entitiesWithComponent.isEmpty()) {
+                return new HashSet<>();
+            }
+
+            if (collectedEntities.isEmpty()) {
+                collectedEntities.addAll(entitiesWithComponent);
+            } else {
+                collectedEntities.retainAll(entitiesWithComponent);
+            }
+        }
+
+        return collectedEntities;
+    }
+
+    public HashSet<EntityID> queryEntities(Class<? extends Component> requiredComponent) {
+        return new HashSet<>(ComponentEntitiesIndex.getOrDefault(requiredComponent, List.of()));
+    }
 }

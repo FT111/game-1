@@ -54,7 +54,10 @@ public class TileMapRenderPass extends RenderPass {
 
                     // Skip empty cells -- Allows transparency
                     if (cell.content == ' ') continue;
-                    buffer.cells[cellPosition.y()][cellPosition.x()] = cell;
+
+                    // Make cells relative to the camera position
+                    Point relativePoint = renderObjects.camera().worldToScreen(new Point(x, y));
+                    buffer.cells[relativePoint.y()][relativePoint.x()] = cell;
                 }
             }
         });

@@ -21,18 +21,18 @@ public class LanternaAPI implements GraphicsAPI {
 
     public LanternaAPI() throws IOException {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
-        terminal = factory.createTerminalEmulator();
+        terminal = factory.createTerminal();
         terminal.enterPrivateMode();
 
 
         screen = new TerminalScreen(terminal);
         screen.setCursorPosition(null);
         screen.startScreen();
-//        terminal.createBufferStrategy(1);
     }
 
     @Override
     public void render(RenderBuffer buffer) throws IOException {
+        screen.clear();
         for (int i = 0; i < buffer.cells.length; i++) {
                 for (int j = 0; j < buffer.cells[i].length; j++) {
 

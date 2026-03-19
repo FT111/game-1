@@ -1,10 +1,10 @@
 ﻿package engine_interfaces.objects;
 
-import java.util.Dictionary;
 import java.util.HashMap;
 
 public interface ResourceLoader {
-    Object Load(HashMap<String, Object> params);
+    String getKey();
+    HashMap<String, Object> Load();
     void Save();
-    boolean Saveable();
+    boolean isWritable();
 }

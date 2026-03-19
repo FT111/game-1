@@ -6,6 +6,7 @@ public class Engine {
     public World World;
     public Renderer Renderer;
     public Systems Systems = new Systems();
+    public Resources Resources = new Resources();
     public int TicksPerSecond = 60;
 
     public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException {
@@ -21,7 +22,7 @@ public class Engine {
             Systems.update(World);
 
             try {
-                Renderer.render(World);
+                Renderer.render(World, Resources);
              } catch (IOException e) {
                 e.printStackTrace();
             }

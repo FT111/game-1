@@ -6,6 +6,7 @@ import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 import engine_interfaces.objects.rendering.RenderBuffer;
 import engine_interfaces.objects.rendering.RenderPass;
+import engine_interfaces.objects.rendering.renderObjects;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,11 +23,11 @@ public class Renderer {
     }
 
     // Renders the world to the screen given by the graphics API
-    protected void render(World world) throws IOException {
+    protected void render(World world, Resources resources) throws IOException {
         CameraView cameraView = getCameraView(world);
 
         for (RenderPass pass : renderPasses) {
-            pass.render(world, cameraView, renderBuffer, previousBuffer);
+            pass.render(new renderObjects(world, resources, cameraView), renderBuffer, previousBuffer);
         }
 
         Api.render(renderBuffer);

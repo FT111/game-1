@@ -1,4 +1,4 @@
-﻿package engine;
+package engine;
 
 /// Factory class for creating Engine instances with optional configuration
 public class EngineFactory {

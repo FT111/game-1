@@ -1,4 +1,4 @@
-﻿package engine_interfaces.objects;
+package engine_interfaces.objects;
 
 /// Event bus event
 public abstract class Event {

@@ -1,4 +1,4 @@
-﻿package engine_interfaces.objects.rendering;
+package engine_interfaces.objects.rendering;
 
 import engine.Resources;
 import engine.World;

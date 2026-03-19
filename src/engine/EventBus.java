@@ -1,4 +1,4 @@
-﻿package engine;
+package engine;
 
 import engine_interfaces.objects.Event;
 import engine_interfaces.objects.EventHandle;

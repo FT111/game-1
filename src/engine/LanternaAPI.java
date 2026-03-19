@@ -1,4 +1,4 @@
-﻿package engine;
+package engine;
 
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
@@ -16,24 +16,43 @@ import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 import java.io.IOException;
 
 public class LanternaAPI implements GraphicsAPI {
-    SwingTerminalFrame terminal;
+    Terminal terminal;
     Screen screen;
 
     public LanternaAPI() throws IOException {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
-        terminal = factory.createSwingTerminal();
-        screen = new TerminalScreen(terminal);
+        terminal = factory.createTerminalEmulator();
+        terminal.enterPrivateMode();
 
-        terminal.createBufferStrategy(1);
-        terminal.setVisible(true);
+
+        screen = new TerminalScreen(terminal);
+        screen.setCursorPosition(null);
+        screen.startScreen();
+//        terminal.createBufferStrategy(1);
     }
 
     @Override
     public void render(RenderBuffer buffer) throws IOException {
         for (int i = 0; i < buffer.cells.length; i++) {
                 for (int j = 0; j < buffer.cells[i].length; j++) {
-                    TextColor foregroundColour = new TextColor.RGB(buffer.cells[i][j].fgColour.R, buffer.cells[i][j].fgColour.G, buffer.cells[i][j].fgColour.B);
-                    TextColor backgroundColour = new TextColor.RGB(buffer.cells[i][j].bgColour.R, buffer.cells[i][j].bgColour.G, buffer.cells[i][j].bgColour.B);
+
+                    if (buffer.cells[i][j] == null) {
+                        continue;
+                    }
+
+                    TextColor foregroundColour;
+                    if (buffer.cells[i][j].fgColour == null) {
+                        foregroundColour = TextColor.ANSI.WHITE;
+                    } else {
+                        foregroundColour = new TextColor.RGB(buffer.cells[i][j].fgColour.R, buffer.cells[i][j].fgColour.G, buffer.cells[i][j].fgColour.B);
+                    }
+                    TextColor backgroundColour;
+                    if (buffer.cells[i][j].bgColour == null) {
+                        backgroundColour = TextColor.ANSI.BLACK;
+                    } else {
+                        backgroundColour = new TextColor.RGB(buffer.cells[i][j].bgColour.R, buffer.cells[i][j].bgColour.G, buffer.cells[i][j].bgColour.B);
+                    }
+
                     TextCharacter lanternaCell = TextCharacter.fromCharacter(buffer.cells[i][j].content, foregroundColour, backgroundColour)[0];
                     screen.setCharacter(i, j, lanternaCell);
                 }

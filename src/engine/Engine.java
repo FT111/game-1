@@ -1,4 +1,6 @@
-﻿package engine;
+package engine;
+
+import engine.rendering.TileMapRenderPass;
 
 import java.io.IOException;
 
@@ -13,6 +15,9 @@ public class Engine {
         World = (world != null) ? world : new World();
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
         TicksPerSecond = ticksPerSecond;
+
+        this.Renderer.renderPasses
+                .add(new TileMapRenderPass());
     }
 
     public void StartGameLoop() {

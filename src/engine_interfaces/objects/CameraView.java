@@ -1,4 +1,4 @@
-﻿package engine_interfaces.objects;
+package engine_interfaces.objects;
 
 import engine_interfaces.objects.Point;
 
@@ -21,6 +21,14 @@ public class CameraView {
         return point.x() >= originX && point.x() < originX + width &&
                point.y() >= originY && point.y() < originY + height;
     }
+
+    // Overload for checking if a rectangle defined by two points is in view
+    public boolean isInView(Point pointX, Point pointY) {
+        return pointX.x() >= originX && pointX.x() < originX + width &&
+               pointY.y() >= originY && pointY.y() < originY + height;
+    }
+
+
 
     public Point worldToScreen(Point worldPoint) {
         return new Point(worldPoint.x() - originX, worldPoint.y() - originY);

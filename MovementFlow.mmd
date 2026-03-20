@@ -1,0 +1,18 @@
+sequenceDiagram
+    actor Player
+    participant InputHandlerSystem
+    participant Event Bus
+    participant PlayerMovementSystem
+    participant CollisionSystem
+    participant PlayerEntity
+
+    Player->>InputHandlerSystem: Provide Input [e.g., WASD keys]
+    InputHandlerSystem->>Event Bus: InputEvent [Movement]
+    Event Bus-->>PlayerMovementSystem: InputEvent [Movement]
+
+    PlayerMovementSystem->>Event Bus: ProposeMovementEvent
+    Event Bus-->>CollisionSystem: ProposeMovementEvent
+    CollisionSystem-->>Event Bus: CollisionEvent [IF Collision Detected]
+    Event Bus-->>PlayerMovementSystem: CollisionEvent [IF Collision Detected]
+    PlayerMovementSystem->>PlayerEntity: UpdatePosition [IF No Collision]
+

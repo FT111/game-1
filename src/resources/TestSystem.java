@@ -30,8 +30,5 @@ public class TestSystem extends System {
     @Override
     public void update(World world) {
 
-        PositionComponent cameraPos = (PositionComponent) world.Entities.get(level).get(PositionComponent.class);
-        cameraPos.Origin = new Point(cameraPos.Origin.x()-1, cameraPos.Origin.y()-2);
-
     }
 }

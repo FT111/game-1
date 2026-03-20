@@ -3,6 +3,7 @@ package engine;
 import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
+import com.googlecode.lanterna.input.KeyStroke;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
@@ -87,11 +88,14 @@ public class LanternaAPI implements GraphicsAPI {
     public void listenForInput(java.util.function.Consumer<Character> callback) throws IOException {
         new Thread(() -> {
             while (true) {
+                KeyStroke input = null;
                 try {
-                    char input = screen.readInput().getCharacter();
-                    callback.accept(input);
+                    input = screen.pollInput();
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    throw new RuntimeException(e);
+                }
+                if (input != null) {
+                    callback.accept(input.getCharacter());
                 }
             }
         }).start();

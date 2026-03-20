@@ -24,8 +24,11 @@ public class LanternaAPI implements GraphicsAPI {
         terminal = factory.createTerminal();
         terminal.enterPrivateMode();
 
-
         screen = new TerminalScreen(terminal);
+        terminal.addResizeListener((TerminalResizeListener) (terminal, newSize) -> {
+            screen.doResizeIfNecessary();
+        });
+        screen.doResizeIfNecessary();
         screen.setCursorPosition(null);
         screen.startScreen();
     }
@@ -54,7 +57,7 @@ public class LanternaAPI implements GraphicsAPI {
                     }
 
                     TextCharacter lanternaCell = TextCharacter.fromCharacter(buffer.cells[i][j].content, foregroundColour, backgroundColour)[0];
-                    screen.setCharacter(i, j, lanternaCell);
+                    screen.setCharacter(j, i, lanternaCell);
                 }
         }
         screen.refresh();

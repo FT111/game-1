@@ -1,25 +1,37 @@
 package resources;
 
 import engine.World;
+import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
+import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.components.PositionComponent;
-import engine_interfaces.objects.components.TileMapComponent;
+import engine_interfaces.objects.rendering.GraphicsAPI;
+
+import java.io.Console;
 
 public class TestSystem extends System {
-    LayerID level;
+    EntityID level;
 
-    public TestSystem(LayerID level) {
+    public TestSystem(EntityID level, GraphicsAPI api, World world) {
         super();
         this.level = level;
+
+        api.onResize( () -> {
+            CameraComponent camera = (CameraComponent) world.Entities.get(level).get(CameraComponent.class);
+            camera.viewWidth = api.getWidth();
+            camera.viewHeight = api.getHeight();
+            IO.println("Resized to: " + api.getWidth() + "x" + api.getHeight());
+        });
     }
 
 
     @Override
     public void update(World world) {
-        PositionComponent levelPos = (PositionComponent) world.Layers.get(level).get(PositionComponent.class);
-        levelPos.Origin = new Point(levelPos.Origin.x(), levelPos.Origin.y()+1);
+
+        PositionComponent cameraPos = (PositionComponent) world.Entities.get(level).get(PositionComponent.class);
+        cameraPos.Origin = new Point(cameraPos.Origin.x()-1, cameraPos.Origin.y()-2);
 
     }
 }

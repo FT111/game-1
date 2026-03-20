@@ -37,11 +37,13 @@ public class Engine {
     }
 
     private void delay(long CurrentTime) {
-        var TimeTaken = System.nanoTime() - CurrentTime;
-        var TimeToSleep = (1000000000 / TicksPerSecond) - TimeTaken;
-        if (TimeToSleep > 0) {
+        long targetTime = 1_000_000_000 / TicksPerSecond;
+        long elapsedTime = System.nanoTime() - CurrentTime;
+        long sleepTime = targetTime - elapsedTime;
+
+        if (sleepTime > 0) {
             try {
-                Thread.sleep(TimeToSleep / 1000000, (int)(TimeToSleep % 1000000));
+                Thread.sleep(sleepTime / 1_000_000, (int) (sleepTime % 1_000_000));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }

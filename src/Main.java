@@ -24,7 +24,7 @@ public class Main {
         engine.World.addComponentToEntity(camera, new PositionComponent(new Point(0,0)));
         engine.World.addComponentToEntity(camera, new engine_interfaces.objects.components.CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true));
 
-        engine.Systems.addSystem(new TestSystem(levelMap));
+        engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.StartGameLoop();
     }
 }

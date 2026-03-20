@@ -4,7 +4,7 @@ package engine;
 public class EngineFactory {
     World world = null;
     Renderer renderer = null;
-    int ticksPerSecond = 60;
+    int ticksPerSecond = 2;
 
     public EngineFactory withWorld(World world) {
         this.world = world;

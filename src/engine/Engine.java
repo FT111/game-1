@@ -1,28 +1,45 @@
 package engine;
 
+import engine.rendering.EntityRenderPass;
 import engine.rendering.TileMapRenderPass;
+import engine.systems.InputHandlerSystem;
+import engine_interfaces.objects.rendering.RenderPass;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class Engine {
     public World World;
     public Renderer Renderer;
     public Systems Systems = new Systems();
     public Resources Resources = new Resources();
+    public EventBus EventBus = new EventBus();
+
+    // Turn these into a config class later
     public int TicksPerSecond = 60;
+    private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
+        add(new TileMapRenderPass());
+        add(new EntityRenderPass());
+    }};
+    // ------------------------------------
 
     public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException {
         World = (world != null) ? world : new World();
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
         TicksPerSecond = ticksPerSecond;
 
-        this.Renderer.renderPasses
-                .add(new TileMapRenderPass());
+        // Add default render passes
+        Renderer.renderPasses.addAll(CoreRenderPasses);
+
+        // Add input system
+        Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
     }
 
     public void StartGameLoop() {
         while (Thread.currentThread().isAlive()) {
             var CurrentTime = System.nanoTime();
+
+            this.EventBus.flush();
 
             Systems.update(World);
 

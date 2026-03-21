@@ -2,6 +2,7 @@ import engine.Engine;
 import engine.EngineFactory;
 import engine.rendering.TileMapRenderPass;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.components.LayerColliderComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.RenderableComponent;
 import engine_interfaces.objects.components.TileMapComponent;
@@ -9,6 +10,9 @@ import engine_interfaces.objects.rendering.Cell;
 import resources.MapAssetLoader;
 import resources.PlayerSystem;
 import resources.TestSystem;
+
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 public class Main {
     public static void main(String[] args) {
@@ -22,6 +26,9 @@ public class Main {
         var levelMap = engine.World.createLayer();
         engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false, true));
         engine.World.addComponentToLayer(levelMap, new PositionComponent(new Point(0,0)));
+        engine.World.addComponentToLayer(levelMap, new LayerColliderComponent(new HashSet<>() {{
+            add('#');
+        }}));
         var camera = engine.World.createEntity();
         engine.World.addComponentToEntity(camera, new PositionComponent(new Point(0,0)));
         engine.World.addComponentToEntity(camera, new engine_interfaces.objects.components.CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true));

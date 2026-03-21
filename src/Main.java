@@ -30,7 +30,7 @@ public class Main {
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
-        engine.Systems.addSystem(new PlayerSystem(engine.EventBus, engine.World, player));
+        engine.Systems.addSystem(new PlayerSystem(engine.EventBus, engine.World, player, camera));
         engine.StartGameLoop();
     }
 }

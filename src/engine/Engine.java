@@ -2,8 +2,9 @@ package engine;
 
 import engine.rendering.EntityRenderPass;
 import engine.rendering.TileMapRenderPass;
-import engine.systems.CollisionSystem;
+import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
+import engine.systems.movement.CollisionProcessor;
 import engine_interfaces.objects.rendering.RenderPass;
 
 import java.io.IOException;
@@ -34,7 +35,9 @@ public class Engine {
 
         // Add input system
         Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
-        this.Systems.addSystem(new CollisionSystem(EventBus, World, this.Resources));
+        MovementSystem movementSys = new MovementSystem(EventBus);
+        movementSys.movementPipeline.add(new CollisionProcessor(EventBus, World, Resources));
+        Systems.addSystem(movementSys);
     }
 
     public void StartGameLoop() {

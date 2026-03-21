@@ -1,10 +1,10 @@
-package engine.systems;
+package engine.systems.movement;
 
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
+import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.Point;
-import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.LayerColliderComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
@@ -13,15 +13,16 @@ import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 import engine_interfaces.objects.rendering.Cell;
 
-import javax.sound.midi.MidiFileFormat;
-import java.util.HashMap;
 import java.util.HashSet;
 
-public class CollisionSystem extends System {
+public class CollisionProcessor implements MovementProcessor {
     // Stores baked collision data from non-moving layers.
     public HashSet<Point> staticCollisionMap = new HashSet<>();
+    private final EventBus Bus;
 
-    public CollisionSystem(EventBus Bus, World world, Resources resources) {
+    public CollisionProcessor(EventBus Bus, World world, Resources resources) {
+        this.Bus = Bus;
+
         Bus.subscribe(LayerRegisteredEvent.class, "CollisionSystem",
             event -> {
                 var layerRegisteredEvent = (LayerRegisteredEvent) event;
@@ -55,19 +56,18 @@ public class CollisionSystem extends System {
                     }
                 }
             });
-
-        Bus.subscribe(MovementProposalEvent.class, "CollisionSystem",
-            event -> {
-            var proposedMovement = (MovementProposalEvent) event;
-                MovementProposalEvent movementDetails = (MovementProposalEvent) event;
-                if (staticCollisionMap.contains(movementDetails.proposedPosition)) {
-                    Bus.publish(new CollisionEvent(movementDetails.entityID));
-                }
-            });
     }
 
     @Override
-    public void update(World world, int tickCount) {
+    public boolean validateMove(MovementProposalEvent proposal) {
+        // only validates against static collision map for now
 
+
+        boolean canMove = !staticCollisionMap.contains(proposal.proposedPosition);
+        if (!canMove) {
+            Bus.publish(new CollisionEvent(proposal.entityID));
+        }
+
+        return canMove;
     }
 }

@@ -23,7 +23,6 @@ public class PlayerSystem extends System {
         put('d', new Point(1, 0));
     }};
 
-    private final Queue<Point> QueuedMovements = new ConcurrentLinkedDeque<>();
     private final EntityID playerEntity;
     private final EntityID cameraEntity;
 
@@ -37,19 +36,25 @@ public class PlayerSystem extends System {
         lockCameraToPlayer(world, cameraEntity, getPlayerPosition(world).Origin);
 
 
-        bus.subscribe(CollisionEvent.class, "PlayerSystem", event ->
-        {
-            var collision = (CollisionEvent) event;
-            if (collision.entityId == playerEntity) QueuedMovements.clear();
-        });
+//        bus.subscribe(CollisionEvent.class, "PlayerSystem", event ->
+//        {
+//            var collision = (CollisionEvent) event;
+//            if (collision.entityId == playerEntity) QueuedMovements.clear();
+//        });
 
         bus.subscribe(InputEvent.class, "PlayerSystem", event -> {
             var input = (InputEvent) event;
 
             if (movementDirections.containsKey(input.key)) {
                 Point direction = movementDirections.get(input.key);
+
+                // propose player movement
                 bus.publish(new MovementProposalEvent(playerEntity, getPlayerPosition(world).Origin.add(direction), getPlayerPosition(world).Origin));
-                QueuedMovements.add(direction);
+                // calculate and propose camera movement in the same direction as the player movement, but only if the player is outside a 4x4 deadzone around the center of the camera
+                if (Math.abs(getPlayerPosition(world).Origin.x() + direction.x() - (getPlayerPosition(world).Origin.x() + direction.x() + 0.5)) > 2 || Math.abs(getPlayerPosition(world).Origin.y() + direction.y() - (getPlayerPosition(world).Origin.y() + direction.y() + 0.5)) > 2) {
+                    bus.publish(new MovementProposalEvent(cameraEntity, new Point(getPlayerPosition(world).Origin.x() + direction.x(), getPlayerPosition(world).Origin.y() + direction.y()), getPlayerPosition(world).Origin));
+                }
+
             }
         });
     }
@@ -63,17 +68,17 @@ public class PlayerSystem extends System {
         world.Entities.get(playerEntity).put(PositionComponent.class, new PositionComponent(
                 new Point(newPosition.x(), newPosition.y())
         ));
-        CameraComponent cameraDetails = (CameraComponent) world.Entities.get(cameraEntity).get(CameraComponent.class);
-        PositionComponent cameraPosition = getPlayerPosition(world);
-
-        // first check if player is with a 4x4 deadzone around the center of the camera, if so, don't move the camera
-        if (Math.abs(newPosition.x() - (cameraPosition.Origin.x() + cameraDetails.viewWidth / 2)) <= 2 && Math.abs(newPosition.y() - (cameraPosition.Origin.y() + cameraDetails.viewHeight / 2)) <= 2) {
-            return;
-        }
-        // move the camera by the same amount as the player movement
-        world.Entities.get(cameraEntity).put(PositionComponent.class, new PositionComponent(
-                new Point(cameraPosition.Origin.x() + direction.x(), cameraPosition.Origin.y() + direction.y())
-        ));
+//        CameraComponent cameraDetails = (CameraComponent) world.Entities.get(cameraEntity).get(CameraComponent.class);
+//        PositionComponent cameraPosition = getPlayerPosition(world);
+//
+//        // first check if player is with a 4x4 deadzone around the center of the camera, if so, don't move the camera
+//        if (Math.abs(newPosition.x() - (cameraPosition.Origin.x() + cameraDetails.viewWidth / 2)) <= 2 && Math.abs(newPosition.y() - (cameraPosition.Origin.y() + cameraDetails.viewHeight / 2)) <= 2) {
+//            return;
+//        }
+//        // move the camera by the same amount as the player movement
+//        world.Entities.get(cameraEntity).put(PositionComponent.class, new PositionComponent(
+//                new Point(cameraPosition.Origin.x() + direction.x(), cameraPosition.Origin.y() + direction.y())
+//        ));
     }
 
     private PositionComponent getPlayerPosition(World world) {
@@ -92,9 +97,5 @@ public class PlayerSystem extends System {
 
     @Override
     public void update(World world, int tickCount) {
-        if (!QueuedMovements.isEmpty()) {
-            Point direction = QueuedMovements.poll();
-            moveInDirection(world, direction);
-        }
     }
 }

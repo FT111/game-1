@@ -33,7 +33,7 @@ public class Systems {
         return systems.get(systemClass);
     }
 
-    protected void update(World world) {
-        systemOrder.forEach(systemClass -> systems.get(systemClass).update(world));
+    protected void update(World world, int tickCount) {
+        systemOrder.forEach(systemClass -> systems.get(systemClass).update(world, tickCount));
     }
 }

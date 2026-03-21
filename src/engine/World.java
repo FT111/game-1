@@ -4,6 +4,8 @@ import engine_interfaces.objects.Component;
 import engine_interfaces.objects.ComponentIndex;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
+import engine_interfaces.objects.events.EntityRegisteredEvent;
+import engine_interfaces.objects.events.LayerRegisteredEvent;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,29 +17,34 @@ import java.util.UUID;
 public class World {
     public HashMap<EntityID, HashMap<Class<? extends Component>, Component>> Entities = new HashMap<>();
     public HashMap<LayerID, HashMap<Class<? extends Component>, Component>> Layers = new HashMap<>();
+    private EventBus bus;
+
+    public World(EventBus bus) {
+        this.bus = bus;
+    }
 
     public EntityID createEntity(String Id) {
         EntityID newId = new EntityID(Id);
         Entities.put(newId, new HashMap<>());
+        bus.publish(new EntityRegisteredEvent(newId));
         return newId;
     }
 
     public EntityID createEntity() {
-        EntityID newId = new EntityID(UUID.randomUUID().toString());
-        Entities.put(newId, new HashMap<>());
-        return newId;
+        String newId = UUID.randomUUID().toString();
+        return createEntity(newId);
     }
 
     public LayerID createLayer(String Id) {
         LayerID newId = new LayerID(Id);
         Layers.put(newId, new HashMap<>());
+        bus.publish(new LayerRegisteredEvent(newId));
         return newId;
     }
 
     public LayerID createLayer() {
-        LayerID newId = new LayerID(UUID.randomUUID().toString());
-        Layers.put(newId, new HashMap<>());
-        return newId;
+        String newId = UUID.randomUUID().toString();
+        return createLayer(newId);
     }
 
     public void addComponentToEntity(EntityID entityId, Component component) {

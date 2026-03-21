@@ -2,6 +2,7 @@ package engine;
 
 import engine.rendering.EntityRenderPass;
 import engine.rendering.TileMapRenderPass;
+import engine.systems.CollisionSystem;
 import engine.systems.InputHandlerSystem;
 import engine_interfaces.objects.rendering.RenderPass;
 
@@ -24,7 +25,7 @@ public class Engine {
     // ------------------------------------
 
     public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException {
-        World = (world != null) ? world : new World();
+        World = (world != null) ? world : new World(EventBus);
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
         TicksPerSecond = ticksPerSecond;
 
@@ -33,15 +34,18 @@ public class Engine {
 
         // Add input system
         Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
+        this.Systems.addSystem(new CollisionSystem(EventBus, World, this.Resources));
     }
 
     public void StartGameLoop() {
+        int tick = 0;
+
         while (Thread.currentThread().isAlive()) {
             var CurrentTime = System.nanoTime();
 
             this.EventBus.flush();
 
-            Systems.update(World);
+            Systems.update(World, tick);
 
             try {
                 Renderer.render(World, Resources);
@@ -50,6 +54,7 @@ public class Engine {
             }
 
             delay(CurrentTime);
+            tick++;
         }
     }
 

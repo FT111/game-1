@@ -6,7 +6,7 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="CS1OP-Coursework-1" />
+        <module name="game-1" />
       </profile>
     </annotationProcessing>
   </component>

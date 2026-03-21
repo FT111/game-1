@@ -20,7 +20,7 @@ public class InputHandlerSystem extends System {
     }
 
     @Override
-    public void update(World world) {
+    public void update(World world, int tickCount) {
 
     }
 }

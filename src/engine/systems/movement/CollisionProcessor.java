@@ -3,6 +3,8 @@ package engine.systems.movement;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
+import engine_interfaces.objects.Component;
+import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.LayerColliderComponent;
@@ -13,6 +15,7 @@ import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 import engine_interfaces.objects.rendering.Cell;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 public class CollisionProcessor implements MovementProcessor {
@@ -43,8 +46,12 @@ public class CollisionProcessor implements MovementProcessor {
                 var tileMapAsset = resources.getAsset(tileMapDetails.resourceId, tileMapDetails.assetId, Cell[][].class);
 
                 // find collidable cells
-                for (int y = 0; y < tileMapAsset.length; y++) {
-                    for (int x = 0; x < tileMapAsset[0].length; x++) {
+                for (int y = 0; y < ((TileMapComponent) tileMapComponent).width; y++) {
+                    for (int x = 0; x < ((TileMapComponent) tileMapComponent).height; x++) {
+                        if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
+                            continue;
+                        }
+
                         Cell cell = tileMapAsset[y][x];
                         if (cell == null) {
                             continue;
@@ -59,7 +66,7 @@ public class CollisionProcessor implements MovementProcessor {
     }
 
     @Override
-    public boolean validateMove(MovementProposalEvent proposal) {
+    public boolean validateMove(HashMap<EntityID, HashMap<Class<? extends Component>, Component>> entityState, int tickCount, MovementProposalEvent proposal) {
         // only validates against static collision map for now
 
 

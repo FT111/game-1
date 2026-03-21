@@ -11,11 +11,16 @@ public class TileMapComponent extends Component {
     public boolean isStatic;
     public boolean isVisible;
 
-    public TileMapComponent(String resourceId, String assetId, String originPosition, boolean isStatic, boolean isVisible) {
+    public int width;
+    public int height;
+
+    public TileMapComponent(String resourceId, String assetId, String originPosition, boolean isStatic, boolean isVisible, int width, int height) {
         this.resourceId = resourceId;
         this.assetId = assetId;
         this.originPosition = originPosition;
         this.isStatic = isStatic;
         this.isVisible = isVisible;
+        this.width = width;
+        this.height = height;
     }
 }

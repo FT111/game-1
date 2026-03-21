@@ -11,8 +11,22 @@ public class MapAssetLoader implements ResourceLoader {
             {new Cell('#'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell('#')},
             {new Cell('#'), new Cell('.'), new Cell('.'), new Cell
                     ('.'), new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'), new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'), new Cell('#'), new Cell('#'),new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'), new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'), new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell('.'),  new Cell
+                    ('.'), new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'),  new Cell('#'),new Cell('#'),new Cell('#')},
+            {new Cell('#'), new Cell('.'), new Cell('.'), new Cell
+                    ('.'), new Cell('#')},
             {new Cell('#'), new Cell('.'), new Cell('.'), new Cell('.'), new Cell('#')},
-            {new Cell('#'), new Cell('#'), new Cell('#'), new Cell('#'), new Cell('#')}
+            {new Cell('#'), new Cell('#'), new Cell('.'), new Cell('#'), new Cell('#')}
     };
 
 

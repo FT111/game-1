@@ -41,7 +41,7 @@ public class MovementSystem extends System {
         while (!pendingMovements.isEmpty()) {
             var movementProposal = pendingMovements.poll();
 
-            boolean shouldMove = movementPipeline.stream().allMatch(processor -> processor.validateMove(movementProposal));
+            boolean shouldMove = movementPipeline.stream().allMatch(processor -> processor.validateMove(entityStateSnapshot, tickCount, movementProposal));
 
             if (shouldMove) {
                 var positionComponent = (PositionComponent) entityStateSnapshot.get(movementProposal.entityID).get(PositionComponent.class);

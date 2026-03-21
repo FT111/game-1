@@ -6,7 +6,15 @@ import engine_interfaces.objects.Point;
 public class PositionComponent extends Component {
     public Point Origin;
 
+
+
+
+    public PositionComponent(Point origin, int maxMovementFrequency) {
+        this.Origin = origin;
+    }
+
     public PositionComponent(Point origin) {
         this.Origin = origin;
     }
 }
+

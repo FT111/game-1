@@ -21,7 +21,7 @@ public class Main {
 
 
         var levelMap = engine.World.createLayer();
-        engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false, true, 12, 8));
+        engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false, true, 100, 100));
         engine.World.addComponentToLayer(levelMap, new PositionComponent(new Point(0,0)));
         engine.World.addComponentToLayer(levelMap, new LayerColliderComponent(new HashSet<>() {{
             add('#');
@@ -32,7 +32,7 @@ public class Main {
         var player = engine.World.createEntity();
         engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
-        engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 2, 4,  "exponential"));
+        engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 10,  "exponential"));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);

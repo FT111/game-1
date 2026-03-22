@@ -27,24 +27,28 @@ public class VelocityProcessor implements MovementProcessor {
         }
 
 
-        if ((tickCount - velocityComponent.lastMovementTick) <= velocityComponent.maxMovementFrequency) {
+        var isVerticalMovement = proposal.proposedPosition.y() != proposal.currentPosition.y();
+        var tickFrequency = isVerticalMovement ? velocityComponent.minMovementTickFrequency * velocityComponent.verticalMinMovementFrequencyMultiplier : velocityComponent.minMovementTickFrequency;
+        if ((tickCount - velocityComponent.lastMovementTick) <= tickFrequency) {
+            IO.println("blocking due to velocity: " + (tickCount - velocityComponent.lastMovementTick) + " <= " + tickFrequency);
             return false; // too soon to move again
         }
 
-        switch (velocityComponent.accelerationFunction) {
-            case "linear" -> {
-                break;
-            }
-            case "exponential" -> {
-                int ticksSinceLastMove = tickCount - velocityComponent.lastMovementTick;
-                int currentMaxMovementFrequency = (int) Math.max(velocityComponent.baseMovementFrequency * Math.pow(velocityComponent.accelerationScaleConstant, ticksSinceLastMove), velocityComponent.maxMovementFrequency);
-
-                if (ticksSinceLastMove < currentMaxMovementFrequency) {
-                    IO.println("blocking due to acceration: " + ticksSinceLastMove + " < " + currentMaxMovementFrequency);
-                    return false; // Not enough time has passed for the next move
-                }
-            }
-        }
+//        switch (velocityComponent.accelerationFunction) {
+//            case "linear" -> {
+//                break;
+//            }
+//            case "exponential" -> {
+//                break;
+////                int ticksSinceLastMove = tickCount - velocityComponent.lastMovementTick;
+////                int currentMaxMovementFrequency = (int)
+////
+////                if (ticksSinceLastMove < currentMaxMovementFrequency) {
+////                    IO.println("blocking due to acceration: " + ticksSinceLastMove + " < " + currentMaxMovementFrequency);
+////                    return false; // Not enough time has passed for the next move
+////                }
+//            }
+//        }
 
 
         velocityComponent.lastMovementTick = tickCount; // Update last movement tick

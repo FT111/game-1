@@ -32,10 +32,14 @@ public class Main {
         var player = engine.World.createEntity();
         engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
-        engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 1, 4,  "exponential"));
+        engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 2, 4,  "exponential"));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
-        engine.Systems.addSystem(new PlayerSystem(engine.EventBus, engine.World, player, camera));
+        PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
+        engine.Renderer.Api.onResize(() -> {
+            playerSystem.lockCameraToPlayer(engine.World, camera);
+        });
+        engine.Systems.addSystem(playerSystem);
         engine.StartGameLoop();
     }
 }

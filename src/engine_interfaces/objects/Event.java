@@ -1,7 +1,10 @@
 package engine_interfaces.objects;
 
+import java.util.UUID;
+
 /// Event bus event
 public abstract class Event {
+    public UUID eventID = UUID.randomUUID();
 //    private final long tick;
 
 

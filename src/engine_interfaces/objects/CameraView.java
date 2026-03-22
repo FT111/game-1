@@ -24,8 +24,8 @@ public class CameraView {
 
     // Overload for checking if a rectangle defined by two points is in view
     public boolean isInView(Point pointX, Point pointY) {
-        return pointX.x() >= originX && pointX.x() < originX + width &&
-               pointY.y() >= originY && pointY.y() < originY + height;
+        return pointX.x() >= originX || pointX.x() < originX + width ||
+               pointY.y() >= originY || pointY.y() < originY + height;
     }
 
 

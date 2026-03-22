@@ -43,15 +43,17 @@ public class TileMapRenderPass extends RenderPass {
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < tileMapComponent.width; y++) {
                 for (int x = 0; x < tileMapComponent.height; x++) {
+                    // Check bounds of tile map asset
                     if (y >= tileMap.length || x >= tileMap[y].length) {
                         continue;
                     }
+
                     Cell cell = tileMap[y][x];
                     if (cell == null) {
                         continue;
                     }
                     Point cellPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
-                    if (!renderObjects.camera().isInView(cellPosition, cellPosition)) {
+                    if (!renderObjects.camera().isInView(cellPosition)) {
                         continue;
                     }
 

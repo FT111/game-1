@@ -61,7 +61,7 @@ public class LanternaAPI implements GraphicsAPI {
                     screen.setCharacter(j, i, lanternaCell);
                 }
         }
-        screen.refresh();
+        screen.refresh(Screen.RefreshType.DELTA);
     }
 
     @Override

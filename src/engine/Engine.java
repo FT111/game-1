@@ -18,8 +18,11 @@ public class Engine {
     public Resources Resources = new Resources();
     public EventBus EventBus = new EventBus();
 
+    private long Accumulator = 0;
+
     // Turn these into a config class later
     public int TicksPerSecond = 60;
+    public int FrameRateLimit = 240;
     private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
         add(new TileMapRenderPass());
         add(new EntityRenderPass());
@@ -45,21 +48,39 @@ public class Engine {
 
     public void StartGameLoop() {
         int tick = 0;
+        var previousTime = System.nanoTime();
+        long currentTime;
 
         while (Thread.currentThread().isAlive()) {
-            var CurrentTime = System.nanoTime();
+            currentTime = System.nanoTime();
+            Accumulator += currentTime - previousTime;
+            previousTime = currentTime;
 
-            this.EventBus.flush();
+            // Update game state based on fixed tick rate
+            while (Accumulator >= 1_000_000_000 / TicksPerSecond) {
+                this.EventBus.flush();
+                Systems.update(World, tick);
 
-            Systems.update(World, tick);
-
-            try {
-                Renderer.render(World, Resources);
-             } catch (IOException e) {
-                e.printStackTrace();
+                Accumulator -= 1_000_000_000 / TicksPerSecond;
             }
 
-            delay(CurrentTime);
+            // Decoupled rendering from tick updates
+            try {
+                Renderer.render(World, Resources);
+
+                // Sleep if we're ahead of the frame rate limit
+                long frameTime = System.nanoTime() - currentTime;
+                long targetFrameTime = 1_000_000_000 / FrameRateLimit;
+                if (frameTime < targetFrameTime) {
+                    Thread.sleep((targetFrameTime - frameTime) / 1_000_000, (int) ((targetFrameTime - frameTime) % 1_000_000));
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+
+
             tick++;
         }
     }

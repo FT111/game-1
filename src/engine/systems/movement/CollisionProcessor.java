@@ -18,6 +18,8 @@ import engine_interfaces.objects.rendering.Cell;
 import java.util.HashMap;
 import java.util.HashSet;
 
+import static engine.Utils.extractTilePointsFromTileMap;
+
 public class CollisionProcessor implements MovementProcessor {
     // Stores baked collision data from non-moving layers.
     public HashSet<Point> staticCollisionMap = new HashSet<>();
@@ -46,22 +48,7 @@ public class CollisionProcessor implements MovementProcessor {
                 var tileMapAsset = resources.getAsset(tileMapDetails.resourceId, tileMapDetails.assetId, Cell[][].class);
 
                 // find collidable cells
-                for (int y = 0; y < ((TileMapComponent) tileMapComponent).width; y++) {
-                    for (int x = 0; x < ((TileMapComponent) tileMapComponent).height; x++) {
-                        if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
-                            continue;
-                        }
-
-                        Cell cell = tileMapAsset[y][x];
-                        if (cell == null) {
-                            continue;
-                        }
-                        if (colliderDetails.collidableTiles.contains(cell.content)) {
-                            Point collisionPoint = new Point(positionDetails.Origin.x() + x, positionDetails.Origin.y() + y);
-                            staticCollisionMap.add(collisionPoint);
-                        }
-                    }
-                }
+                staticCollisionMap = extractTilePointsFromTileMap((TileMapComponent) tileMapComponent, tileMapAsset, colliderDetails.collidableTiles, positionDetails);
             });
     }
 

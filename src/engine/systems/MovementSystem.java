@@ -7,6 +7,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.PositionComponent;
+import engine_interfaces.objects.events.MovementEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 
 import java.util.ArrayList;
@@ -18,12 +19,14 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class MovementSystem extends System {
     private final ConcurrentLinkedDeque<MovementProposalEvent> pendingMovements;
     private final HashSet<UUID> approvedMovementEventsThisTick = new HashSet<>();
+    private EventBus Bus;
 
     public ArrayList<MovementProcessor> movementPipeline;
 
     public MovementSystem(EventBus Bus) {
         pendingMovements = new ConcurrentLinkedDeque<>();
         movementPipeline = new ArrayList<>();
+        this.Bus = Bus;
 
 
         // Accumulate movement proposals
@@ -52,6 +55,7 @@ public class MovementSystem extends System {
                 var positionComponent = (PositionComponent) entityStateSnapshot.get(movementProposal.entityID).get(PositionComponent.class);
                 positionComponent.Origin = movementProposal.proposedPosition;
                 approvedMovementEventsThisTick.add(movementProposal.eventID);
+                Bus.publish(new MovementEvent(movementProposal.entityID, movementProposal.currentPosition, movementProposal.proposedPosition));
             }
         }
 

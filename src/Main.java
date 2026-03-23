@@ -1,28 +1,31 @@
 import engine.Engine;
 import engine.EngineFactory;
-import engine.rendering.TileMapRenderPass;
+import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.*;
-import engine_interfaces.objects.rendering.Cell;
-import resources.MapAssetLoader;
-import resources.PlayerSystem;
-import resources.TestSystem;
+import resources.*;
+import resources.components.VisionBlockerComponent;
+import resources.components.VisionEmitterComponent;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         EngineFactory factory = new EngineFactory();
         Engine engine = factory.build();
 
-
         engine.Resources.addResourceLoader(new MapAssetLoader());
 
+        HashMap<Point, HashSet<EntityID>> chunkMap = new HashMap<>();
 
         var levelMap = engine.World.createLayer();
         engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false, true, 100, 100));
         engine.World.addComponentToLayer(levelMap, new PositionComponent(new Point(0,0)));
+        engine.World.addComponentToLayer(levelMap, new VisionBlockerComponent(new HashSet<>() {{
+            add('#');
+        }}));
         engine.World.addComponentToLayer(levelMap, new LayerColliderComponent(new HashSet<>() {{
             add('#');
         }}));
@@ -30,16 +33,22 @@ public class Main {
         engine.World.addComponentToEntity(camera, new PositionComponent(new Point(0,0), 100));
         engine.World.addComponentToEntity(camera, new engine_interfaces.objects.components.CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true));
         var player = engine.World.createEntity();
+        var playerVision = engine.World.createLayer();
         engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
         engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 10,  "exponential"));
+        engine.World.addComponentToEntity(player, new VisionEmitterComponent(100, 75, 1, playerVision));
+        engine.World.addComponentToEntity(player, new OrientationComponent(90));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
+        engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
         PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
         engine.Renderer.Api.onResize(() -> {
             playerSystem.lockCameraToPlayer(engine.World, camera);
         });
         engine.Systems.addSystem(playerSystem);
+        engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
+
         engine.StartGameLoop();
     }
 }

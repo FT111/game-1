@@ -46,6 +46,14 @@ public class Engine {
         Systems.addSystem(movementSys);
     }
 
+    public void ShowOutput() throws IOException {
+        Renderer.Api.showWindow();
+    }
+
+    public void HideOutput() throws IOException {
+        Renderer.Api.hideWindow();
+    }
+
     public void StartGameLoop() {
         int tick = 0;
         var previousTime = System.nanoTime();

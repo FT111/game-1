@@ -70,6 +70,16 @@ public class LanternaAPI implements GraphicsAPI {
     }
 
     @Override
+    public void showWindow() throws IOException {
+        screen.stopScreen();
+    }
+
+    @Override
+    public void hideWindow() throws IOException {
+        screen.startScreen();
+    }
+
+    @Override
     public int getWidth() {
         return screen.getTerminalSize().getColumns();
     }

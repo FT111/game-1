@@ -7,6 +7,8 @@ public interface GraphicsAPI
 {
     void render(RenderBuffer buffer) throws IOException;
     void clear();
+    void showWindow() throws IOException;
+    void hideWindow() throws IOException;
 
     int getWidth();
     int getHeight();

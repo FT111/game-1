@@ -58,10 +58,22 @@ public class TileMapRenderPass extends RenderPass {
                     }
 
                     // Skip empty cells -- Allows transparency
-                    if (cell.content == ' ') continue;
+                    if (cell.content == ' ') {
+                        continue;
+                    }
 
                     // Make cells relative to the camera position
                     Point relativePoint = renderObjects.camera().worldToScreen(new Point(x, y));
+                    try {
+                        Cell existingCell = buffer.cells[relativePoint.y()][relativePoint.x()];
+
+                        if (existingCell != null && existingCell.content != ' ') {
+                            continue;
+                        }
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
+                        continue;
+                    }
                     buffer.cells[relativePoint.y()][relativePoint.x()] = cell;
                 }
             }

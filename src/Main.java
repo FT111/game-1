@@ -37,8 +37,11 @@ public class Main {
         engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
         engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 10,  "exponential"));
-        engine.World.addComponentToEntity(player, new VisionEmitterComponent(100, 75, 1, playerVision));
+        engine.World.addComponentToEntity(player, new VisionEmitterComponent(100, 75, 200, playerVision));
         engine.World.addComponentToEntity(player, new OrientationComponent(90));
+
+        engine.World.addComponentToLayer(playerVision, new PositionComponent(((PositionComponent) engine.World.Entities.get(player).get(PositionComponent.class)).Origin ));
+        engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false, true, 50, 50));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
@@ -48,6 +51,8 @@ public class Main {
         });
         engine.Systems.addSystem(playerSystem);
         engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
+
+        engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 
         engine.StartGameLoop();
     }

@@ -1,6 +1,7 @@
 package engine;
 
 import engine_interfaces.objects.ResourceLoader;
+import engine_interfaces.objects.rendering.Cell;
 
 import java.util.HashMap;
 
@@ -44,4 +45,11 @@ public class Resources {
                 throw new IllegalArgumentException("Resource " + key + " not found or not savable");
             }
         }
+
+    public void setAsset(String resourceId, String assetId, Object asset) {
+        if (!loadedResources.containsKey(resourceId)) {
+            throw new IllegalArgumentException("Resource " + resourceId + " not found");
+        }
+        loadedResources.get(resourceId).put(assetId, asset);
+    }
 }

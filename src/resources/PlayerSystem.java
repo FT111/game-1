@@ -103,5 +103,6 @@ public class PlayerSystem extends System {
 
     @Override
     public void update(World world, int tickCount) {
+        IO.println("Player position: " + getPlayerPosition(world).Origin);
     }
 }

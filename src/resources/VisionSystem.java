@@ -22,6 +22,13 @@ public class VisionSystem extends System {
     private HashSet<Point> staticVisionBlockMap = new HashSet<>();
     private World world;
     private Resources resources;
+    private static final Point EMITTER_ORIGIN = new Point(0, 0);
+    private static final int[][] OCTANT_TRANSFORMS = new int[][]{
+            {1, 0, 0, -1, -1, 0, 0, 1},
+            {0, 1, -1, 0, 0, -1, 1, 0},
+            {0, 1, 1, 0, 0, -1, -1, 0},
+            {1, 0, 0, 1, -1, 0, 0, -1}
+    };
 
     public VisionSystem(World world, Resources resources, HashMap<Point, HashSet<EntityID>> chunkMap, int globalTickFrequency) {
         this.world = world;
@@ -45,85 +52,131 @@ public class VisionSystem extends System {
 
             Cell[][] tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
             staticVisionBlockMap.addAll(Utils.extractTilePointsFromTileMap(tileMap, tileMapAsset, visionBlocker.blockingTiles, position));
-            });
-        }
+        });
+    }
+
+    private HashSet<Point> buildRelativeVisionBlockMap(Point emitterPos, int maxRange) {
+        var relativeBlockers = new HashSet<Point>();
+        staticVisionBlockMap.forEach(blocker -> {
+            Point relative = blocker.subtract(emitterPos);
+            if (Math.max(Math.abs(relative.x()), Math.abs(relative.y())) <= maxRange) {
+                relativeBlockers.add(relative);
+            }
+        });
+        return relativeBlockers;
+    }
 
 
-    private static HashSet<Point> castView(Point emitterPos, double startGradient, double endGradient, int maxRange, HashSet<Point> visionBlockMap) {
-        // Recursive shadow caster, divides into 8 octants and casts shadows for each octant separately, then combines results
+    private static HashSet<Point> castView(Point emitterPos, int maxRange, HashSet<Point> visionBlockMap) {
         var visiblePoints = new HashSet<Point>();
+        visiblePoints.add(emitterPos);
 
         for (int octant = 0; octant < 8; octant++) {
-            visiblePoints.addAll(castViewInOctant(emitterPos, startGradient, endGradient, maxRange, visionBlockMap,  octant));
+            castLight(visiblePoints, visionBlockMap, emitterPos.x(), emitterPos.y(), 1, 1.0, 0.0, maxRange,
+                    OCTANT_TRANSFORMS[0][octant], OCTANT_TRANSFORMS[1][octant],
+                    OCTANT_TRANSFORMS[2][octant], OCTANT_TRANSFORMS[3][octant]);
         }
 
         return visiblePoints;
     }
 
-    private static HashSet<Point> castViewInOctant(Point emitterPos, double startGradient, double endGradient, int maxRange, HashSet<Point> visionBlockMap, int octant) {
-        // Casts view in a single octant, recursively dividing into smaller sections
-        // Returns a set of points that are visible in this octant
-        var visiblePoints = new HashSet<Point>();
+    private static void castLight(HashSet<Point> visiblePoints, HashSet<Point> visionBlockMap,
+                                  int originX, int originY, int row, double startSlope, double endSlope,
+                                  int radius, int xx, int xy, int yx, int yy) {
+        if (startSlope < endSlope) {
+            return;
+        }
 
-        for (int depth = 1; depth <= maxRange; depth++) {
-            // for each point at this depth, calculate the gradient and check if it is within the start and end gradients for this section
-            for (int i = 0; i <= depth; i++) {
-                Point point = getPointInOctant(emitterPos, i, depth, octant);
-                double gradient = calculateGradient(emitterPos, point);
+        int radiusSquared = radius * radius;
 
-                if (gradient < startGradient || gradient > endGradient) {
+        for (int depth = row; depth <= radius; depth++) {
+            int dx = -depth - 1;
+            int dy = -depth;
+            boolean blocked = false;
+            double newStartSlope = 0.0;
+
+            while (dx <= 0) {
+                dx += 1;
+
+                int translatedX = originX + dx * xx + dy * xy;
+                int translatedY = originY + dx * yx + dy * yy;
+                double leftSlope = (dx - 0.5) / (dy + 0.5);
+                double rightSlope = (dx + 0.5) / (dy - 0.5);
+
+                if (startSlope < rightSlope) {
                     continue;
                 }
+                if (endSlope > leftSlope) {
+                    break;
+                }
 
-                visiblePoints.add(point);
+                Point currentPoint = new Point(translatedX, translatedY);
+                int distanceSquared = (translatedX - originX) * (translatedX - originX)
+                        + (translatedY - originY) * (translatedY - originY);
 
-                if (visionBlockMap.contains(point)) {
-                    // If this point is a vision blocker, we need to cast a shadow behind it by recursively calling this function with updated gradients
-                    double newStartGradient = calculateGradient(emitterPos, getPointInOctant(emitterPos, i - 1, depth, octant));
-                    double newEndGradient = calculateGradient(emitterPos, getPointInOctant(emitterPos, i + 1, depth, octant));
+                if (distanceSquared <= radiusSquared) {
+                    visiblePoints.add(currentPoint);
+                }
 
-                    visiblePoints.addAll(castViewInOctant(emitterPos, newStartGradient, newEndGradient, maxRange - depth, visionBlockMap, octant));
+                boolean blocksVision = visionBlockMap.contains(currentPoint);
+
+                if (blocked) {
+                    if (blocksVision) {
+                        newStartSlope = rightSlope;
+                        continue;
+                    }
+
+                    blocked = false;
+                    startSlope = newStartSlope;
+                } else if (blocksVision && depth < radius) {
+                    blocked = true;
+                    castLight(visiblePoints, visionBlockMap, originX, originY, depth + 1, startSlope, leftSlope,
+                            radius, xx, xy, yx, yy);
+                    newStartSlope = rightSlope;
                 }
             }
-        }
 
-        return visiblePoints;
-    }
-
-    private static Point getPointInOctant(Point emitterPos, int i, int depth, int octant) {
-        // Returns the point at the given depth and index in the given octant
-        switch (octant) {
-            case 0:
-                return new Point(emitterPos.x() + i, emitterPos.y() - depth);
-            case 1:
-                return new Point(emitterPos.x() + depth, emitterPos.y() - i);
-            case 2:
-                return new Point(emitterPos.x() + depth, emitterPos.y() + i);
-            case 3:
-                return new Point(emitterPos.x() + i, emitterPos.y() + depth);
-            case 4:
-                return new Point(emitterPos.x() - i, emitterPos.y() + depth);
-            case 5:
-                return new Point(emitterPos.x() - depth, emitterPos.y() + i);
-            case 6:
-                return new Point(emitterPos.x() - depth, emitterPos.y() - i);
-            case 7:
-                return new Point(emitterPos.x() - i, emitterPos.y() - depth);
-            default:
-                throw new IllegalArgumentException("Invalid octant: " + octant);
+            if (blocked) {
+                break;
+            }
         }
     }
 
-    private static double calculateGradient(Point emitterPos, Point point) {
-        return Math.atan2(point.y() - emitterPos.y(), point.x() - emitterPos.x());
+    private static HashSet<Point> filterPointsWithinFov(HashSet<Point> points, OrientationComponent orientation, int fieldOfViewAngle) {
+        var filteredPoints = new HashSet<Point>();
+        double facingRadians = Math.toRadians(orientation.facingAngle);
+        double halfFov = Math.toRadians(Math.max(0, Math.min(fieldOfViewAngle, 360))) / 2.0;
+
+        points.forEach(point -> {
+            if (point.x() == 0 && point.y() == 0) {
+                filteredPoints.add(point);
+                return;
+            }
+            double angle = Math.atan2(point.y(), point.x());
+            double delta = normalizeAngle(angle - facingRadians);
+            if (Math.abs(delta) <= halfFov) {
+                filteredPoints.add(point);
+            }
+        });
+
+        return filteredPoints;
     }
 
-    public HashSet<Point> calculatePointsInLineOfSight(Point emitterPos, OrientationComponent orientation, int range) {
-        // Calculate the points in line of sight for a given emitter position, orientation and range, using the shadowcaster and the static vision block map
-        double startGradient = Math.toRadians(orientation.facingAngle - 45);
-        double endGradient = Math.toRadians(orientation.facingAngle + 45);
+    private static double normalizeAngle(double angle) {
+        double twoPi = Math.PI * 2;
+        while (angle <= -Math.PI) {
+            angle += twoPi;
+        }
+        while (angle > Math.PI) {
+            angle -= twoPi;
+        }
+        return angle;
+    }
 
-        return castView(emitterPos, startGradient, endGradient, range, staticVisionBlockMap);
+    public HashSet<Point> calculatePointsInLineOfSight(Point emitterPos, OrientationComponent orientation, int fieldOfViewAngle, int range) {
+        var relativeVisionBlocks = buildRelativeVisionBlockMap(emitterPos, range);
+        var allVisiblePoints = castView(EMITTER_ORIGIN, range, relativeVisionBlocks);
+        return filterPointsWithinFov(allVisiblePoints, orientation, fieldOfViewAngle);
     }
 
 
@@ -141,36 +194,42 @@ public class VisionSystem extends System {
             var outputLayerID = (LayerID) ((VisionEmitterComponent) entity.get(VisionEmitterComponent.class)).visionLayer;
             var visionTileMap = (TileMapComponent) world.Layers.get(outputLayerID).get(TileMapComponent.class);
 
-            // only update vision for this emitter every visionTickFrequency ticks - for optimisation
-            if (tickCount % emitter.visionTickFrequency != 0) {
-                return;
-            }
+//            // only update vision for this emitter every visionTickFrequency ticks - for optimisation
+//            if (tickCount % emitter.visionTickFrequency != 0) {
+//                return;
+//            }
 
             var orientation = (OrientationComponent) entity.get(OrientationComponent.class);
             var position = (PositionComponent) entity.get(PositionComponent.class);
 
             // Update vision layer position
             var visionLayerPosition = (PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class);
-            visionLayerPosition.Origin = new Point(position.Origin.x() - visionTileMap.width / 2, position.Origin.y() - visionTileMap.height / 2);
 
-            var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.visionRange);
+            var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.fieldOfViewAngle, emitter.visionRange);
             IO.println(pointsInSight);
 
-            // Create a new tile map with the same dimensions as the vision layer, with cells that are visible in sight set to a specific character (e.g. 'V') and cells that are not visible set to null
+            // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
             Cell[][] visionTileMapAsset = new Cell[visionTileMap.height][visionTileMap.width];
-            for (int y = 0; y < visionTileMap.height; y++) {
-                for (int x = 0; x < visionTileMap.width; x++) {
-                    Point cellPoint = new Point(visionLayerPosition.Origin.x() + x, visionLayerPosition.Origin.y() + y);
-                    if (pointsInSight.contains(cellPoint)) {
-                        visionTileMapAsset[y][x] = new Cell('V');
-                    } else {
-                        visionTileMapAsset[y][x] = null;
-                    }
+            for (Point point : pointsInSight) {
+                int x = point.x() + visionTileMap.width / 2;
+                int y = point.y();
+                if (y >= 0 && y < visionTileMap.height && x >= 0 && x < visionTileMap.width) {
+                    visionTileMapAsset[y][x] = new Cell('+');
                 }
             }
 
-                // Update the vision layer tile map asset with the new vision tile map
-                resources.setAsset(visionTileMap.resourceId, visionTileMap.assetId, visionTileMapAsset);
+
+
+            // Update the vision layer tile map asset with the new vision tile map
+            resources.setAsset(visionTileMap.resourceId, visionTileMap.assetId, visionTileMapAsset);
+
+            // Make the top center of the asset appear as the origin point of the vision layer, and thus the emitter
+            var newVisionOutputLayerPosition = new PositionComponent(
+                    new Point(position.Origin.x() - visionTileMap.width / 2, position.Origin.y())
+            );
+            world.Layers.get(outputLayerID).put(PositionComponent.class, newVisionOutputLayerPosition);
+
+            IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);
             });
     }
 }

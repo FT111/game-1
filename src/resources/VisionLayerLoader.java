@@ -11,13 +11,20 @@ import java.util.List;
 
 public class VisionLayerLoader implements ResourceLoader {
     private HashMap<String, Object> blankVisionTileMaps = new HashMap<>();
+    private Cell[][] debugFilledTileMap = new Cell[50][50];
 
     public VisionLayerLoader(World world) {
+        for (Cell[] cells : debugFilledTileMap) {
+            for (Cell cell : cells) {
+                if (cell == null) { cell = new Cell('&');}
+            }
+        }
+
         // Get emitting entities
         HashSet<EntityID> emittingEntities = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(resources.components.VisionEmitterComponent.class);
 
         emittingEntities.forEach(entityId -> {
-            blankVisionTileMaps.put(entityId.toString(), new Cell[50][50]);
+            blankVisionTileMaps.put(entityId.toString(), debugFilledTileMap);
         });
 
     }

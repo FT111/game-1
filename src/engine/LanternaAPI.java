@@ -1,24 +1,43 @@
 package engine;
 
-import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
+import com.googlecode.lanterna.input.KeyType;
+import com.googlecode.lanterna.input.MouseAction;
+import com.googlecode.lanterna.input.MouseActionType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
-import com.googlecode.lanterna.terminal.SimpleTerminalResizeListener;
 import com.googlecode.lanterna.terminal.Terminal;
 import com.googlecode.lanterna.terminal.TerminalResizeListener;
-import com.googlecode.lanterna.terminal.swing.SwingTerminalFrame;
+import engine_interfaces.objects.MouseEventTypes;
+import engine_interfaces.objects.Point;
+import engine_interfaces.objects.events.KeyInputEvent;
+import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 import engine_interfaces.objects.rendering.RenderBuffer;
 import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class LanternaAPI implements GraphicsAPI {
     Terminal terminal;
     Screen screen;
+    private ArrayList<Consumer<KeyInputEvent>> keyInputListeners = new ArrayList<>();
+    private ArrayList<Consumer<MouseInputEvent>> mouseInputListeners = new ArrayList<>();
+
+    private MouseEventTypes mapLanternaMouseEventToNative(MouseActionType type) {
+        return switch (type) {
+            case CLICK_DOWN -> MouseEventTypes.DOWN;
+            case CLICK_RELEASE -> MouseEventTypes.UP;
+            case DRAG -> MouseEventTypes.DRAG;
+            case MOVE -> MouseEventTypes.MOVE;
+            case SCROLL_UP -> MouseEventTypes.SCROLL_UP;
+            case SCROLL_DOWN -> MouseEventTypes.SCROLL_DOWN;
+        };
+    }
 
     public LanternaAPI() throws IOException {
         DefaultTerminalFactory factory = new DefaultTerminalFactory();
@@ -32,6 +51,7 @@ public class LanternaAPI implements GraphicsAPI {
         screen.doResizeIfNecessary();
         screen.setCursorPosition(null);
         screen.startScreen();
+        startInputHandling();
     }
 
     @Override
@@ -94,8 +114,7 @@ public class LanternaAPI implements GraphicsAPI {
             terminal.addResizeListener((terminal, terminalSize) -> callback.run());
     }
 
-    @Override
-    public void listenForInput(java.util.function.Consumer<Character> callback) throws IOException {
+    public void startInputHandling() throws IOException {
         new Thread(() -> {
             while (true) {
                 KeyStroke input = null;
@@ -105,9 +124,34 @@ public class LanternaAPI implements GraphicsAPI {
                     throw new RuntimeException(e);
                 }
                 if (input != null) {
-                    callback.accept(input.getCharacter());
+                    if (input instanceof MouseAction mouseAction) {
+                        MouseInputEvent event = new MouseInputEvent(new Point(mouseAction.getPosition().getColumn(),
+                                mouseAction.getPosition().getRow()), mapLanternaMouseEventToNative(mouseAction.getActionType()));
+
+                        for (Consumer<MouseInputEvent> listener : mouseInputListeners) {
+                            listener.accept(event);
+                        }
+                        continue;
+                    }
+
+                    if (input.getKeyType() == KeyType.Character) {
+                        char character = input.getCharacter();
+                        KeyInputEvent event = new KeyInputEvent(character);
+                        for (Consumer<KeyInputEvent> listener : keyInputListeners) {
+                            listener.accept(event);
+                    }
                 }
             }
-        }).start();
+        }}).start();
+    }
+
+    @Override
+    public void listenForKeyInput(Consumer<KeyInputEvent> callback) throws IOException {
+        keyInputListeners.add(callback);
+    }
+
+    @Override
+    public void listenForMouseInput(Consumer<MouseInputEvent> callback) throws IOException {
+        mouseInputListeners.add(callback);
     }
 }

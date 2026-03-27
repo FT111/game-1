@@ -7,13 +7,10 @@ import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.components.PositionComponent;
-import engine_interfaces.objects.events.CollisionEvent;
-import engine_interfaces.objects.events.InputEvent;
+import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 
 import java.util.HashMap;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class PlayerSystem extends System {
     private final HashMap<Character, Point> movementDirections = new HashMap<>() {{
@@ -42,8 +39,8 @@ public class PlayerSystem extends System {
 //            if (collision.entityId == playerEntity) QueuedMovements.clear();
 //        });
 
-        bus.subscribe(InputEvent.class, "PlayerSystem", event -> {
-            var input = (InputEvent) event;
+        bus.subscribe(KeyInputEvent.class, "PlayerSystem", event -> {
+            var input = (KeyInputEvent) event;
 
             if (movementDirections.containsKey(input.key)) {
                 Point direction = movementDirections.get(input.key);

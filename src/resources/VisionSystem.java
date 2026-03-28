@@ -11,6 +11,7 @@ import engine_interfaces.objects.components.OrientationComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
+import engine_interfaces.objects.rendering.Colour;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
 
@@ -214,7 +215,7 @@ public class VisionSystem extends System {
                 int x = point.x() + visionTileMap.width / 2;
                 int y = point.y() + visionTileMap.height /2;
                 if (y >= 0 && y < visionTileMap.height && x >= 0 && x < visionTileMap.width) {
-                    visionTileMapAsset[y][x] = new Cell('+');
+                    visionTileMapAsset[y][x] = new Cell(null, null, new Colour(0, 40, 40));
                 }
             }
 

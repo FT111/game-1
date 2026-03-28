@@ -6,10 +6,7 @@ import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
-import engine_interfaces.objects.rendering.Cell;
-import engine_interfaces.objects.rendering.RenderBuffer;
-import engine_interfaces.objects.rendering.RenderPass;
-import engine_interfaces.objects.rendering.renderObjects;
+import engine_interfaces.objects.rendering.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -19,7 +16,7 @@ public class TileMapRenderPass extends RenderPass {
 
     @Override
     public void render(renderObjects renderObjects, RenderBuffer buffer, RenderBuffer previousBuffer) {
-        HashSet tileMapEntities = renderObjects.world().ComponentLayersIndex.query(new Class[] {TileMapComponent.class, PositionComponent.class});
+        HashSet<LayerID> tileMapEntities = (HashSet<LayerID>) renderObjects.world().ComponentLayersIndex.query(new Class[] {TileMapComponent.class, PositionComponent.class});
 
         tileMapEntities.forEach(layerID -> {
             // Get the tile map and position components for this layer
@@ -50,7 +47,6 @@ public class TileMapRenderPass extends RenderPass {
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < tileMapComponent.width; y++) {
                 for (int x = 0; x < tileMapComponent.height; x++) {
-                    // check if not level - for debugging breakpoint
                     // Check bounds of tile map asset
                     if (y >= tileMap.length || x >= tileMap[y].length) {
                         continue;
@@ -65,20 +61,13 @@ public class TileMapRenderPass extends RenderPass {
                         continue;
                     }
 
-                    // Skip empty cells -- Allows transparency
-                    if (cell.content == ' ') {
-                        continue;
-                    }
-
 
                     // Make cells relative to the camera position
                     Point relativePoint = renderObjects.camera().worldToScreen(cellPosition);
                     try {
                         Cell existingCell = buffer.cells[relativePoint.y()][relativePoint.x()];
 
-                        if (existingCell != null && existingCell.content != ' ') {
-                            continue;
-                        }
+                        cell = collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
@@ -87,6 +76,32 @@ public class TileMapRenderPass extends RenderPass {
                 }
             }
         });
+    }
+
+    // merges the properties, prioritising the existing cell
+    public static Cell collateCells(Cell existing, Cell added) {
+        if (existing == null) {
+            return added;
+        }
+        if (added == null) {
+            return existing;
+        }
+
+        // Always prefer the non null content. If both are non null, prefer the existing cell's content (only if not a space or '.'). If both null, use a space.
+        Character content;
+        if (existing.content != null && existing.content != ' ' && existing.content != '.') {
+            content = existing.content;
+        } else if (added.content != null && added.content != ' ' && added.content != '.') {
+            content = added.content;
+        } else {
+            content = ' ';
+        }
+
+
+        Colour fgColour = (existing.fgColour != null) ? existing.fgColour : added.fgColour;
+        Colour bgColour = (existing.bgColour != null) ? existing.bgColour : added.bgColour;
+
+        return new Cell(content, fgColour, bgColour);
     }
 
     public static void debugPrintTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset) {

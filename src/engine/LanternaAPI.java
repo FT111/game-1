@@ -121,7 +121,7 @@ public class LanternaAPI implements GraphicsAPI {
             while (true) {
                 KeyStroke input = null;
                 try {
-                    input = screen.pollInput();
+                    input = screen.readInput();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

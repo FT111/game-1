@@ -15,6 +15,7 @@ public class InputHandlerSystem extends System {
         this.Api = Api;
 
         Api.listenForKeyInput(Bus::publish);
+        Api.listenForMouseInput(Bus::publish);
     }
 
     @Override

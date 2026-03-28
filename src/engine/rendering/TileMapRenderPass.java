@@ -42,15 +42,15 @@ public class TileMapRenderPass extends RenderPass {
             if (!renderObjects.camera().isInView(positionComponent.Origin, tileEndPoint)) {
                 return;
             }
+            if (!Objects.equals(tileMapComponent.assetId, "level")) {
+//                // IO.println("Debug:  Rendering tile map at layer " + layerID + " with asset ID " + tileMapComponent.assetId);
+//                debugPrintTileMap(tileMapComponent, tileMap);
+            }
 
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < tileMapComponent.width; y++) {
                 for (int x = 0; x < tileMapComponent.height; x++) {
                     // check if not level - for debugging breakpoint
-                    if (!Objects.equals(tileMapComponent.assetId, "level")) {
-                        IO.println("Debug:  Rendering tile map at layer " + layerID + " with asset ID " + tileMapComponent.assetId);
-//                        debugPrintTileMap(tileMapComponent, tileMap);
-                    }
                     // Check bounds of tile map asset
                     if (y >= tileMap.length || x >= tileMap[y].length) {
                         continue;
@@ -80,7 +80,7 @@ public class TileMapRenderPass extends RenderPass {
                             continue;
                         }
                     } catch (ArrayIndexOutOfBoundsException e) {
-                        IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
+                        // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
                     }
                     buffer.cells[relativePoint.y()][relativePoint.x()] = cell;
@@ -90,7 +90,7 @@ public class TileMapRenderPass extends RenderPass {
     }
 
     public static void debugPrintTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset) {
-        IO.println("Debug: Printing tile map for layer " + tileMapComponent.assetId);
+        // IO.println("Debug: Printing tile map for layer " + tileMapComponent.assetId);
         for (int y = 0; y < tileMapComponent.width; y++) {
             StringBuilder row = new StringBuilder();
             for (int x = 0; x < tileMapComponent.height; x++) {
@@ -105,7 +105,7 @@ public class TileMapRenderPass extends RenderPass {
                     row.append(cell.content);
                 }
             }
-            IO.println(row.toString());
+            // IO.println(row.toString());
         }
     }
 }

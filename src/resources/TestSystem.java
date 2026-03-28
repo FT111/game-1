@@ -22,7 +22,7 @@ public class TestSystem extends System {
             CameraComponent camera = (CameraComponent) world.Entities.get(level).get(CameraComponent.class);
             camera.viewWidth = api.getWidth();
             camera.viewHeight = api.getHeight();
-            IO.println("Resized to: " + api.getWidth() + "x" + api.getHeight());
+            // IO.println("Resized to: " + api.getWidth() + "x" + api.getHeight());
         });
     }
 

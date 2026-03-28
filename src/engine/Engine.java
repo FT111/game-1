@@ -22,14 +22,14 @@ public class Engine {
 
     // Turn these into a config class later
     public int TicksPerSecond = 60;
-    public int FrameRateLimit = 240;
+    public int FrameRateLimit = 120;
     private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
         add(new TileMapRenderPass());
         add(new EntityRenderPass());
     }};
     // ------------------------------------
 
-    public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException {
+    public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException, InterruptedException {
         World = (world != null) ? world : new World(EventBus);
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
         TicksPerSecond = ticksPerSecond;

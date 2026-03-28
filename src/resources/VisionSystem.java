@@ -114,11 +114,11 @@ public class VisionSystem extends System {
                 int distanceSquared = (translatedX - originX) * (translatedX - originX)
                         + (translatedY - originY) * (translatedY - originY);
 
-                if (distanceSquared <= radiusSquared) {
+                boolean blocksVision = visionBlockMap.contains(currentPoint);
+                if (distanceSquared <= radiusSquared && !blocksVision) {
                     visiblePoints.add(currentPoint);
                 }
 
-                boolean blocksVision = visionBlockMap.contains(currentPoint);
 
                 if (blocked) {
                     if (blocksVision) {
@@ -206,7 +206,7 @@ public class VisionSystem extends System {
             var visionLayerPosition = (PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class);
 
             var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.fieldOfViewAngle, emitter.visionRange);
-            IO.println(pointsInSight);
+            // IO.println(pointsInSight);
 
             // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
             Cell[][] visionTileMapAsset = new Cell[visionTileMap.height][visionTileMap.width];
@@ -229,7 +229,7 @@ public class VisionSystem extends System {
             );
             world.Layers.get(outputLayerID).put(PositionComponent.class, newVisionOutputLayerPosition);
 
-            IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);
+            // IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);
             });
     }
 }

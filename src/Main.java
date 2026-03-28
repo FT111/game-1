@@ -37,7 +37,7 @@ public class Main {
         engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
         engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
         engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 10,  "exponential"));
-        engine.World.addComponentToEntity(player, new VisionEmitterComponent(100, 100, 5, playerVision));
+        engine.World.addComponentToEntity(player, new VisionEmitterComponent(100, 140, 5, playerVision));
         engine.World.addComponentToEntity(player, new OrientationComponent(90));
 
         engine.World.addComponentToLayer(playerVision, new PositionComponent(((PositionComponent) engine.World.Entities.get(player).get(PositionComponent.class)).Origin ));

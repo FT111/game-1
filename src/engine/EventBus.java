@@ -36,7 +36,7 @@ public class EventBus {
 
         pendingEventIDs.add(event.eventID);
         pendingEvents.add(event);
-        IO.println("Published event: " + event.getClass().getSimpleName());
+        // IO.println("Published event: " + event.getClass().getSimpleName());
         return event;
     }
 

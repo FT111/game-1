@@ -1,5 +1,6 @@
 package engine;
 
+import com.googlecode.lanterna.TerminalSize;
 import com.googlecode.lanterna.TextCharacter;
 import com.googlecode.lanterna.TextColor;
 import com.googlecode.lanterna.input.KeyStroke;
@@ -8,15 +9,15 @@ import com.googlecode.lanterna.input.MouseAction;
 import com.googlecode.lanterna.input.MouseActionType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
-import com.googlecode.lanterna.terminal.Terminal;
-import com.googlecode.lanterna.terminal.TerminalResizeListener;
+import com.googlecode.lanterna.terminal.*;
+import com.googlecode.lanterna.terminal.swing.SwingTerminal;
+import com.googlecode.lanterna.terminal.swing.SwingTerminalFrame;
 import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 import engine_interfaces.objects.rendering.RenderBuffer;
-import com.googlecode.lanterna.terminal.DefaultTerminalFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,16 +40,17 @@ public class LanternaAPI implements GraphicsAPI {
         };
     }
 
-    public LanternaAPI() throws IOException {
-        DefaultTerminalFactory factory = new DefaultTerminalFactory();
+    public LanternaAPI() throws IOException, InterruptedException {
+        DefaultTerminalFactory factory = new DefaultTerminalFactory()
+                .setMouseCaptureMode(MouseCaptureMode.CLICK_RELEASE_DRAG_MOVE)
+                .setInitialTerminalSize(new TerminalSize(80, 24));
+
         terminal = factory.createTerminal();
-        terminal.enterPrivateMode();
 
         screen = new TerminalScreen(terminal);
         terminal.addResizeListener((TerminalResizeListener) (terminal, newSize) -> {
             screen.doResizeIfNecessary();
         });
-        screen.doResizeIfNecessary();
         screen.setCursorPosition(null);
         screen.startScreen();
         startInputHandling();
@@ -126,7 +128,8 @@ public class LanternaAPI implements GraphicsAPI {
                 if (input != null) {
                     if (input instanceof MouseAction mouseAction) {
                         MouseInputEvent event = new MouseInputEvent(new Point(mouseAction.getPosition().getColumn(),
-                                mouseAction.getPosition().getRow()), mapLanternaMouseEventToNative(mouseAction.getActionType()));
+                                mouseAction.getPosition().getRow()),
+                                mapLanternaMouseEventToNative(mouseAction.getActionType()));
 
                         for (Consumer<MouseInputEvent> listener : mouseInputListeners) {
                             listener.accept(event);

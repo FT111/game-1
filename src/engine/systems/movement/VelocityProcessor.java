@@ -30,7 +30,7 @@ public class VelocityProcessor implements MovementProcessor {
         var isVerticalMovement = proposal.proposedPosition.y() != proposal.currentPosition.y();
         var tickFrequency = isVerticalMovement ? velocityComponent.minMovementTickFrequency * velocityComponent.verticalMinMovementFrequencyMultiplier : velocityComponent.minMovementTickFrequency;
         if ((tickCount - velocityComponent.lastMovementTick) <= tickFrequency) {
-            IO.println("blocking due to velocity: " + (tickCount - velocityComponent.lastMovementTick) + " <= " + tickFrequency);
+            // IO.println("blocking due to velocity: " + (tickCount - velocityComponent.lastMovementTick) + " <= " + tickFrequency);
             return false; // too soon to move again
         }
 
@@ -44,7 +44,7 @@ public class VelocityProcessor implements MovementProcessor {
 ////                int currentMaxMovementFrequency = (int)
 ////
 ////                if (ticksSinceLastMove < currentMaxMovementFrequency) {
-////                    IO.println("blocking due to acceration: " + ticksSinceLastMove + " < " + currentMaxMovementFrequency);
+////                    // IO.println("blocking due to acceration: " + ticksSinceLastMove + " < " + currentMaxMovementFrequency);
 ////                    return false; // Not enough time has passed for the next move
 ////                }
 //            }

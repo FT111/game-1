@@ -153,7 +153,7 @@ public class VisionSystem extends System {
                 return;
             }
             double angle = Math.atan2(point.y(), point.x());
-            double delta = normalizeAngle(angle - facingRadians);
+            double delta = normaliseAngle(angle - facingRadians);
             if (Math.abs(delta) <= halfFov) {
                 filteredPoints.add(point);
             }
@@ -162,7 +162,7 @@ public class VisionSystem extends System {
         return filteredPoints;
     }
 
-    private static double normalizeAngle(double angle) {
+    private static double normaliseAngle(double angle) {
         double twoPi = Math.PI * 2;
         while (angle <= -Math.PI) {
             angle += twoPi;
@@ -212,21 +212,18 @@ public class VisionSystem extends System {
             Cell[][] visionTileMapAsset = new Cell[visionTileMap.height][visionTileMap.width];
             for (Point point : pointsInSight) {
                 int x = point.x() + visionTileMap.width / 2;
-                int y = point.y();
+                int y = point.y() + visionTileMap.height /2;
                 if (y >= 0 && y < visionTileMap.height && x >= 0 && x < visionTileMap.width) {
                     visionTileMapAsset[y][x] = new Cell('+');
                 }
             }
 
-
-
             // Update the vision layer tile map asset with the new vision tile map
             resources.setAsset(visionTileMap.resourceId, visionTileMap.assetId, visionTileMapAsset);
 
             // Make the top center of the asset appear as the origin point of the vision layer, and thus the emitter
-            var newVisionOutputLayerPosition = new PositionComponent(
-                    new Point(position.Origin.x() - visionTileMap.width / 2, position.Origin.y())
-            );
+            var newVisionOutputLayerPosition = new PositionComponent(new Point(position.Origin.x() - visionTileMap.width / 2,
+                    position.Origin.y() - visionTileMap.height /2));
             world.Layers.get(outputLayerID).put(PositionComponent.class, newVisionOutputLayerPosition);
 
             // IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);

@@ -6,6 +6,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
+import engine_interfaces.objects.components.OrientationComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
@@ -24,7 +25,7 @@ public class PlayerSystem extends System {
 
     private final EntityID playerEntity;
     private final EntityID cameraEntity;
-    private final PositionComponent cameraPosition;
+    private PositionComponent cameraPosition;
     private Point cursorWorldPosition;
 
     private EventBus bus;
@@ -35,19 +36,20 @@ public class PlayerSystem extends System {
         this.cameraEntity = cameraEntity;
         this.bus = bus;
 
-        this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
         lockCameraToPlayer(world, cameraEntity);
+        this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
 
         bus.subscribe(MouseInputEvent.class, "PlayerSystem", event -> {
-            IO.println("Mouse input received: " + ((MouseInputEvent) event).screenPosition);
             var input = (MouseInputEvent) event;
+            this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
             this.cursorWorldPosition = new Point(
                 input.screenPosition.x() + cameraPosition.Origin.x(),
                 input.screenPosition.y() + cameraPosition.Origin.y()
             );
             var playerVision = (VisionEmitterComponent) world.Entities.get(playerEntity).get(VisionEmitterComponent.class);
+            var orientation = (OrientationComponent) world.Entities.get(playerEntity).get(OrientationComponent.class);
             var playerPosition = getPlayerWorldPosition(world);
-            playerVision.fieldOfViewAngle = (int) Math.toDegrees(Math.atan2(cursorWorldPosition.y() - playerPosition.Origin.y(), cursorWorldPosition.x() - playerPosition.Origin.x()));
+            orientation.facingAngle = (int) Math.toDegrees(Math.atan2((cursorWorldPosition.y() - playerPosition.Origin.y())*2, cursorWorldPosition.x() - playerPosition.Origin.x()));
         });
 
         bus.subscribe(KeyInputEvent.class, "PlayerSystem", event -> {

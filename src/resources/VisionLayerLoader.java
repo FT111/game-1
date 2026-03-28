@@ -24,7 +24,7 @@ public class VisionLayerLoader implements ResourceLoader {
         HashSet<EntityID> emittingEntities = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(resources.components.VisionEmitterComponent.class);
 
         emittingEntities.forEach(entityId -> {
-            blankVisionTileMaps.put(entityId.toString(), debugFilledTileMap);
+            blankVisionTileMaps.put(entityId.toString(), new Cell[100][100]);
         });
 
     }

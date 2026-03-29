@@ -56,23 +56,26 @@ public class TileMapRenderPass extends RenderPass {
                     if (cell == null) {
                         continue;
                     }
-                    Point cellPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
-                    if (!renderObjects.camera().isInView(cellPosition)) {
+
+                    cell.zIndex = positionComponent.zIndex;
+                    // convert from tilemap-relative coords to world coords
+                    Point cellWorldPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
+                    // cull if world coords not in view of screen
+                    if (!renderObjects.camera().isInView(cellWorldPosition)) {
                         continue;
                     }
 
-
-                    // Make cells relative to the camera position
-                    Point relativePoint = renderObjects.camera().worldToScreen(cellPosition);
+                    // convert from world coords to screen coords
+                    Point cellScreenPosition = renderObjects.camera().worldToScreen(cellWorldPosition);
                     try {
-                        Cell existingCell = buffer.cells[relativePoint.y()][relativePoint.x()];
+                        Cell existingCell = buffer.cells[cellScreenPosition.y()][cellScreenPosition.x()];
 
                         cell = collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
                     }
-                    buffer.cells[relativePoint.y()][relativePoint.x()] = cell;
+                    buffer.cells[cellScreenPosition.y()][cellScreenPosition.x()] = cell;
                 }
             }
         });
@@ -87,25 +90,22 @@ public class TileMapRenderPass extends RenderPass {
             return existing;
         }
 
-        // Always prefer the non null content. If both are non null, prefer the existing cell's content (only if not a space or '.'). If both null, use a space.
-        // If the existing is a . and the new is null, prefer the .
-        Character content;
-        if (existing.content != null && existing.content != ' ' && existing.content != '.') {
-            content = existing.content;
-        } else if (added.content != null && added.content != ' ' && added.content != '.') {
-            content = added.content;
-        } else if (existing.content != null) {
-            content = existing.content;
+        // Always prefer the non null content. If both are non null, prefer the cell with the higher z-index (same for colours)
+        char content = collateCellProperty(existing.content, added.content, existing.zIndex, added.zIndex);
+        Colour bgColour = collateCellProperty(existing.bgColour, added.bgColour, existing.zIndex, added.zIndex);
+        Colour fgColour = collateCellProperty(existing.fgColour, added.fgColour, existing.zIndex, added.zIndex );
+
+        return new Cell(content, fgColour, bgColour, Math.max(existing.zIndex, added.zIndex));
+    }
+
+    private static <T> T collateCellProperty(T existing, T added, int existingZ, int addedZ) {
+        T outputProperty;
+        if (existing != null && added != null) {
+            outputProperty = (existingZ >= addedZ) ? existing : added;
+        } else {
+            outputProperty = (existing != null) ? existing : added;
         }
-        else {
-            content = ' ';
-        }
-
-
-        Colour fgColour = (added.fgColour == null) ? existing.fgColour : added.fgColour;
-        Colour bgColour = (added.bgColour == null) ? existing.bgColour : added.bgColour;
-
-        return new Cell(content, fgColour, bgColour);
+        return (T) outputProperty;
     }
 
     public static void debugPrintTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset) {

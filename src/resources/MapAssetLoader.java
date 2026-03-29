@@ -2,6 +2,7 @@ package resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import engine_interfaces.objects.rendering.Cell;
+import engine_interfaces.objects.rendering.Colour;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +46,7 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
                     if (!allowedTiles.contains(tile)) {
                         tile = '.'; // fallback for unknown chars
                     }
-                    map[y][x] = new Cell(tile);
+                    map[y][x] = new Cell(tile, null, new Colour(0, 15, 15));
                 }
             }
 

@@ -88,18 +88,22 @@ public class TileMapRenderPass extends RenderPass {
         }
 
         // Always prefer the non null content. If both are non null, prefer the existing cell's content (only if not a space or '.'). If both null, use a space.
+        // If the existing is a . and the new is null, prefer the .
         Character content;
         if (existing.content != null && existing.content != ' ' && existing.content != '.') {
             content = existing.content;
         } else if (added.content != null && added.content != ' ' && added.content != '.') {
             content = added.content;
-        } else {
+        } else if (existing.content != null) {
+            content = existing.content;
+        }
+        else {
             content = ' ';
         }
 
 
-        Colour fgColour = (existing.fgColour != null) ? existing.fgColour : added.fgColour;
-        Colour bgColour = (existing.bgColour != null) ? existing.bgColour : added.bgColour;
+        Colour fgColour = (added.fgColour == null) ? existing.fgColour : added.fgColour;
+        Colour bgColour = (added.bgColour == null) ? existing.bgColour : added.bgColour;
 
         return new Cell(content, fgColour, bgColour);
     }

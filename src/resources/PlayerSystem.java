@@ -3,6 +3,7 @@ package resources;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
@@ -41,6 +42,10 @@ public class PlayerSystem extends System {
 
         bus.subscribe(MouseInputEvent.class, "PlayerSystem", event -> {
             var input = (MouseInputEvent) event;
+            if (input.eventType != MouseEventTypes.DRAG) {
+                return;
+            }
+
             this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
             this.cursorWorldPosition = new Point(
                 input.screenPosition.x() + cameraPosition.Origin.x(),

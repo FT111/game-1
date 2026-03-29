@@ -2,8 +2,11 @@ package resources;
 
 import engine.World;
 import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.ResourceLoader;
+import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
+import resources.components.VisionLayerComponent;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,10 +24,14 @@ public class VisionLayerLoader implements ResourceLoader {
         }
 
         // Get emitting entities
-        HashSet<EntityID> emittingEntities = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(resources.components.VisionEmitterComponent.class);
+        HashSet<LayerID> visionLayers = (HashSet<LayerID>) world.ComponentLayersIndex.query(new Class[]{VisionLayerComponent.class, TileMapComponent.class});
 
-        emittingEntities.forEach(entityId -> {
-            blankVisionTileMaps.put(entityId.toString(), new Cell[100][100]);
+        visionLayers.forEach(layerId -> {
+            var layer = world.Layers.get(layerId);
+            var emitterId =((VisionLayerComponent) layer.get(VisionLayerComponent.class)).emitter;
+            var tileMap = (TileMapComponent) layer.get(TileMapComponent.class);
+
+            blankVisionTileMaps.put(emitterId.toString(), new Cell[tileMap.height][tileMap.width]);
         });
 
     }

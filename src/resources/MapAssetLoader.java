@@ -21,7 +21,7 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
     }
 
     private static final Set<Character> allowedTiles = Set.of(
-            '#', '.', 'D', 'G', 'R', 'd', 'c', 'f', 'x', 'p', 'k', 'b', 'E', 'S', 't', 's', ' '
+            '#', '.', 'D', 'G', 'R', 'd', 'c', 'f', 'x', 'p', 'k', 'b', 'E', 'S', 't', 's', ' ','=',':', '+','*'
     );
 
     public Cell[][] loadMapFromJsonFile(String filePath) {
@@ -46,7 +46,7 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
                     if (!allowedTiles.contains(tile)) {
                         tile = '.'; // fallback for unknown chars
                     }
-                    map[y][x] = new Cell(tile, null, new Colour(0, 15, 15));
+                    map[y][x] = new Cell(tile, null, null);
                 }
             }
 

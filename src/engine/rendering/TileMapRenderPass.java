@@ -1,14 +1,11 @@
 package engine.rendering;
 
-import engine_interfaces.objects.Component;
-import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.*;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 
@@ -35,13 +32,9 @@ public class TileMapRenderPass extends RenderPass {
 
 //            debugPrintTileMap(tileMapComponent, tileMap);
 
-            // Cull tile map if it is not in view of the camera
-            if (!renderObjects.camera().isInView(positionComponent.Origin, tileEndPoint)) {
+            // Cull tile map if it is not in view of the camera and a world-positioned object
+            if (!positionComponent.isStatic && !renderObjects.camera().isInView(positionComponent.Origin, tileEndPoint)) {
                 return;
-            }
-            if (!Objects.equals(tileMapComponent.assetId, "level")) {
-//                // IO.println("Debug:  Rendering tile map at layer " + layerID + " with asset ID " + tileMapComponent.assetId);
-//                debugPrintTileMap(tileMapComponent, tileMap);
             }
 
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
@@ -58,30 +51,32 @@ public class TileMapRenderPass extends RenderPass {
                     }
 
                     cell.zIndex = positionComponent.zIndex;
-                    // convert from tilemap-relative coords to world coords
-                    Point cellWorldPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
+                    // convert from tilemap-relative coords to world coords (or screen coords if a static tilemap)
+                    Point cellPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
                     // cull if world coords not in view of screen
-                    if (!renderObjects.camera().isInView(cellWorldPosition)) {
+                    if (!renderObjects.camera().isInView(cellPosition)) {
                         continue;
                     }
 
-                    // convert from world coords to screen coords
-                    Point cellScreenPosition = renderObjects.camera().worldToScreen(cellWorldPosition);
+                    // convert from world coords to screen coords, if the tilemap isn't static (meaning it is already in screen coords)
+                    if (!positionComponent.isStatic) {
+                        cellPosition = renderObjects.camera().worldToScreen(cellPosition);
+                    }
                     try {
-                        Cell existingCell = buffer.cells[cellScreenPosition.y()][cellScreenPosition.x()];
+                        Cell existingCell = buffer.cells[cellPosition.y()][cellPosition.x()];
 
                         cell = collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
                     }
-                    buffer.cells[cellScreenPosition.y()][cellScreenPosition.x()] = cell;
+                    buffer.cells[cellPosition.y()][cellPosition.x()] = cell;
                 }
             }
         });
     }
 
-    // merges the properties, prioritising the existing cell
+    // merges the properties, prioritising the non null content. If both are non null, prefer the cell with the higher z-index
     public static Cell collateCells(Cell existing, Cell added) {
         if (existing == null) {
             return added;
@@ -90,7 +85,7 @@ public class TileMapRenderPass extends RenderPass {
             return existing;
         }
 
-        // Always prefer the non null content. If both are non null, prefer the cell with the higher z-index (same for colours)
+        // Always prefer the non null content. If both are non null, prefer the cell with the higher z-index
         char content = collateCellProperty(existing.content, added.content, existing.zIndex, added.zIndex);
         Colour bgColour = collateCellProperty(existing.bgColour, added.bgColour, existing.zIndex, added.zIndex);
         Colour fgColour = collateCellProperty(existing.fgColour, added.fgColour, existing.zIndex, added.zIndex );

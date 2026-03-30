@@ -47,7 +47,7 @@ public class TextRenderPass extends RenderPass {
                         charPosition = renderObjects.camera().worldToScreen(charPosition);
                     }
 
-                    if (!renderObjects.camera().isInView(charPosition)) {
+                    if (!positionComponent.isStatic && !renderObjects.camera().isInView(charPosition)) {
                         continue;
                     }
 

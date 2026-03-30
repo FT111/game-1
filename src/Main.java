@@ -46,7 +46,7 @@ public class Main {
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false, true, 200, 200));
 
         var testText = engine.World.createLayer();
-        engine.World.addComponentToLayer(testText, new PositionComponent(new Point(0,0), 1, true));
+        engine.World.addComponentToLayer(testText, new PositionComponent(new Point(3,3), 1, true));
         engine.World.addComponentToLayer(testText, new TextComponent("Hello, World!"));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));

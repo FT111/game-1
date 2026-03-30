@@ -42,9 +42,9 @@ public class PlayerSystem extends System {
 
         bus.subscribe(MouseInputEvent.class, "PlayerSystem", event -> {
             var input = (MouseInputEvent) event;
-            if (input.eventType != MouseEventTypes.DRAG) {
-                return;
-            }
+//            if (input.eventType != MouseEventTypes.DRAG) {
+//                return;
+//            }
 
             this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
             this.cursorWorldPosition = new Point(
@@ -54,6 +54,8 @@ public class PlayerSystem extends System {
             var playerVision = (VisionEmitterComponent) world.Entities.get(playerEntity).get(VisionEmitterComponent.class);
             var orientation = (OrientationComponent) world.Entities.get(playerEntity).get(OrientationComponent.class);
             var playerPosition = getPlayerWorldPosition(world);
+            // get the angle of the mouse cursor relative to the player
+            // the y-axis is multiplied by two to account for grid cells being ~2x taller than they are wide
             orientation.facingAngle = (int) Math.toDegrees(Math.atan2((cursorWorldPosition.y() - playerPosition.Origin.y())*2, cursorWorldPosition.x() - playerPosition.Origin.x()));
         });
 

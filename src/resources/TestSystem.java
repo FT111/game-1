@@ -2,14 +2,9 @@ package resources;
 
 import engine.World;
 import engine_interfaces.objects.EntityID;
-import engine_interfaces.objects.LayerID;
-import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
-import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
-
-import java.io.Console;
 
 public class TestSystem extends System {
     EntityID level;

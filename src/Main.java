@@ -45,6 +45,10 @@ public class Main {
         engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false, true, 200, 200));
 
+        var testText = engine.World.createLayer();
+        engine.World.addComponentToLayer(testText, new PositionComponent(new Point(0,0), 1, true));
+        engine.World.addComponentToLayer(testText, new TextComponent("Hello, World!"));
+
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
         PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);

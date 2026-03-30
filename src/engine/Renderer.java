@@ -1,7 +1,6 @@
 package engine;
 
 import engine_interfaces.objects.CameraView;
-import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.components.PositionComponent;

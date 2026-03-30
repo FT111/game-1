@@ -1,6 +1,7 @@
 package engine;
 
 import engine.rendering.EntityRenderPass;
+import engine.rendering.TextRenderPass;
 import engine.rendering.TileMapRenderPass;
 import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
@@ -26,6 +27,7 @@ public class Engine {
     private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
         add(new TileMapRenderPass());
         add(new EntityRenderPass());
+        add(new TextRenderPass());
     }};
     // ------------------------------------
 

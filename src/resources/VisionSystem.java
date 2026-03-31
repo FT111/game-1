@@ -7,6 +7,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
+import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.OrientationComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
@@ -46,13 +47,14 @@ public class VisionSystem extends System {
     }
 
     private void bakeStaticVisionMap(World world, Resources resources) {
-        world.ComponentLayersIndex.query(new Class[]{VisionBlockerComponent.class, TileMapComponent.class, PositionComponent.class}).forEach(layerID -> {
+        world.ComponentLayersIndex.query(new Class[]{VisionBlockerComponent.class, TileMapComponent.class, PositionComponent.class, DimensionsComponent.class}).forEach(layerID -> {
             var visionBlocker = (VisionBlockerComponent) world.Layers.get(layerID).get(VisionBlockerComponent.class);
             var tileMap = (TileMapComponent) world.Layers.get(layerID).get(TileMapComponent.class);
             var position = (PositionComponent) world.Layers.get(layerID).get(PositionComponent.class);
+            var dimensions = (DimensionsComponent) world.Layers.get(layerID).get(DimensionsComponent.class);
 
             Cell[][] tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
-            staticVisionBlockMap.addAll(Utils.extractTilePointsFromTileMap(tileMap, tileMapAsset, visionBlocker.blockingTiles, position));
+            staticVisionBlockMap.addAll(Utils.extractTilePointsFromTileMap(tileMap, dimensions, tileMapAsset, visionBlocker.blockingTiles, position));
         });
     }
 
@@ -194,6 +196,7 @@ public class VisionSystem extends System {
             var emitter = (VisionEmitterComponent) entity.get(VisionEmitterComponent.class);
             var outputLayerID = (LayerID) ((VisionEmitterComponent) entity.get(VisionEmitterComponent.class)).visionLayer;
             var visionTileMap = (TileMapComponent) world.Layers.get(outputLayerID).get(TileMapComponent.class);
+            var visionTileMapDimensions = (DimensionsComponent) world.Layers.get(outputLayerID).get(DimensionsComponent.class);
 
 //            // only update vision for this emitter every visionTickFrequency ticks - for optimisation
 //            if (tickCount % emitter.visionTickFrequency != 0) {
@@ -210,11 +213,11 @@ public class VisionSystem extends System {
             // IO.println(pointsInSight);
 
             // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
-            Cell[][] visionTileMapAsset = new Cell[visionTileMap.height][visionTileMap.width];
+            Cell[][] visionTileMapAsset = new Cell[visionTileMapDimensions.height][visionTileMapDimensions.width];
             for (Point point : pointsInSight) {
-                int x = point.x() + visionTileMap.width / 2;
-                int y = point.y() + visionTileMap.height /2;
-                if (y >= 0 && y < visionTileMap.height && x >= 0 && x < visionTileMap.width) {
+                int x = point.x() + visionTileMapDimensions.width / 2;
+                int y = point.y() + visionTileMapDimensions.height /2;
+                if (y >= 0 && y < visionTileMapDimensions.height && x >= 0 && x < visionTileMapDimensions.width) {
                     visionTileMapAsset[y][x] = new Cell(null, null, new Colour(0, 40, 40));
                 }
             }
@@ -223,8 +226,8 @@ public class VisionSystem extends System {
             resources.setAsset(visionTileMap.resourceId, visionTileMap.assetId, visionTileMapAsset);
 
             // Make the top center of the asset appear as the origin point of the vision layer, and thus the emitter
-            var newVisionOutputLayerPosition = new PositionComponent(new Point(position.Origin.x() - visionTileMap.width / 2,
-                    position.Origin.y() - visionTileMap.height /2));
+            var newVisionOutputLayerPosition = new PositionComponent(new Point(position.Origin.x() - visionTileMapDimensions.width / 2,
+                    position.Origin.y() - visionTileMapDimensions.height /2));
             world.Layers.get(outputLayerID).put(PositionComponent.class, newVisionOutputLayerPosition);
 
             // IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);

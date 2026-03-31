@@ -22,8 +22,10 @@ public class Main {
         HashMap<Point, HashSet<EntityID>> chunkMap = new HashMap<>();
 
         var levelMap = engine.World.createLayer();
-        engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false, true, 100, 100));
+        engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false));
         engine.World.addComponentToLayer(levelMap, new PositionComponent(new Point(0,0), -1));
+        engine.World.addComponentToLayer(levelMap, new DimensionsComponent(100,100));
+        engine.World.addComponentToLayer(levelMap, new VisibilityComponent(true));
         engine.World.addComponentToLayer(levelMap, new VisionBlockerComponent(new HashSet<>() {{
             add('#');
         }}));
@@ -43,7 +45,10 @@ public class Main {
 
         engine.World.addComponentToLayer(playerVision, new PositionComponent(new Point(0,0), 1));
         engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
-        engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false, true, 200, 200));
+        engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
+        engine.World.addComponentToLayer(playerVision, new VisibilityComponent(true));
+        engine.World.addComponentToLayer(playerVision, new DimensionsComponent(250,250));
+
 
         var testText = engine.World.createLayer();
         engine.World.addComponentToLayer(testText, new PositionComponent(new Point(3,3), 1, true));

@@ -1,6 +1,7 @@
 package engine;
 
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
@@ -8,11 +9,11 @@ import engine_interfaces.objects.rendering.Cell;
 import java.util.HashSet;
 
 public class Utils {
-    public static HashSet<Point> extractTilePointsFromTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset, HashSet<Character> extractedTiles, PositionComponent positionDetails) {
+    public static HashSet<Point> extractTilePointsFromTileMap(TileMapComponent tileMapComponent, DimensionsComponent dimensionsComponent, Cell[][] tileMapAsset, HashSet<Character> extractedTiles, PositionComponent positionDetails) {
         HashSet<Point> extractedPoints = new HashSet<>();
 
-        for (int y = 0; y < tileMapComponent.width; y++) {
-            for (int x = 0; x < tileMapComponent.height; x++) {
+        for (int y = 0; y < dimensionsComponent.width; y++) {
+            for (int x = 0; x < dimensionsComponent.height; x++) {
                 if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
                     continue;
                 }

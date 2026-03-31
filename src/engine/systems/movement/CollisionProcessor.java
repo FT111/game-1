@@ -7,6 +7,7 @@ import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.LayerColliderComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
@@ -35,6 +36,7 @@ public class CollisionProcessor implements MovementProcessor {
                 var colliderComponent = layerComponents.getOrDefault(LayerColliderComponent.class, null);
                 var positionComponent = layerComponents.getOrDefault(PositionComponent.class, null);
                 var tileMapComponent = layerComponents.getOrDefault(TileMapComponent.class, null);
+                var dimensionsComponent = (DimensionsComponent) layerComponents.getOrDefault(DimensionsComponent.class, null);
 
                 // check all exist
                 if (colliderComponent == null || positionComponent == null || tileMapComponent == null) {
@@ -48,7 +50,7 @@ public class CollisionProcessor implements MovementProcessor {
                 var tileMapAsset = resources.getAsset(tileMapDetails.resourceId, tileMapDetails.assetId, Cell[][].class);
 
                 // find collidable cells
-                staticCollisionMap = extractTilePointsFromTileMap((TileMapComponent) tileMapComponent, tileMapAsset, colliderDetails.collidableTiles, positionDetails);
+                staticCollisionMap.addAll(extractTilePointsFromTileMap((TileMapComponent) tileMapComponent, dimensionsComponent, tileMapAsset, colliderDetails.collidableTiles, positionDetails));
             });
     }
 

@@ -46,6 +46,11 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
                     if (!allowedTiles.contains(tile)) {
                         tile = '.'; // fallback for unknown chars
                     }
+
+//                    if (tile == '#') {
+//                        map[y][x] = new Cell(' ', new Colour(255, 255, 255), new Colour(255, 255, 255));
+//                        continue;
+//                    }
                     map[y][x] = new Cell(tile, null, null);
                 }
             }

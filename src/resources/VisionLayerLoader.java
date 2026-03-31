@@ -4,6 +4,7 @@ import engine.World;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.ResourceLoader;
+import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
 import resources.components.VisionLayerComponent;
@@ -24,14 +25,15 @@ public class VisionLayerLoader implements ResourceLoader {
         }
 
         // Get emitting entities
-        HashSet<LayerID> visionLayers = (HashSet<LayerID>) world.ComponentLayersIndex.query(new Class[]{VisionLayerComponent.class, TileMapComponent.class});
+        HashSet<LayerID> visionLayers = (HashSet<LayerID>) world.ComponentLayersIndex.query(new Class[]{VisionLayerComponent.class, TileMapComponent.class, DimensionsComponent.class});
 
         visionLayers.forEach(layerId -> {
             var layer = world.Layers.get(layerId);
             var emitterId =((VisionLayerComponent) layer.get(VisionLayerComponent.class)).emitter;
             var tileMap = (TileMapComponent) layer.get(TileMapComponent.class);
+            var dimensions = (DimensionsComponent) layer.get(DimensionsComponent.class);
 
-            blankVisionTileMaps.put(emitterId.toString(), new Cell[tileMap.height][tileMap.width]);
+            blankVisionTileMaps.put(emitterId.toString(), new Cell[dimensions.height][dimensions.width]);
         });
 
     }

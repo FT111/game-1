@@ -1,8 +1,12 @@
 import engine.Engine;
 import engine.EngineFactory;
+import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.*;
+import engine_interfaces.objects.components.ui.ButtonComponent;
+import engine_interfaces.objects.components.ui.UIElementComponent;
+import engine_interfaces.objects.ui.SelectionStrategies;
 import resources.*;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
@@ -53,6 +57,12 @@ public class Main {
         var testText = engine.World.createLayer();
         engine.World.addComponentToLayer(testText, new PositionComponent(new Point(3,3), 1, true));
         engine.World.addComponentToLayer(testText, new TextComponent("Hello, World!"));
+        var testButton = engine.World.createLayer();
+        engine.World.addComponentToLayer(testButton, new PositionComponent(new Point(3,5), 1, true));
+        engine.World.addComponentToLayer(testButton, new DimensionsComponent(5, 3));
+        engine.World.addComponentToLayer(testButton, new UIElementComponent(SelectionStrategies.BOUNDING));
+        engine.World.addComponentToLayer(testButton, new VisibilityComponent(true));
+        engine.World.addComponentToLayer(testButton, new TextComponent("Click"));
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
@@ -62,6 +72,13 @@ public class Main {
         });
         engine.Systems.addSystem(playerSystem);
         engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
+        engine.Systems.addSystem(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources));
+        MenuSystem menu = new MenuSystem(engine.EventBus);
+        menu.buttonCallbacks.put(testButton, ()->{
+            IO.println("Button clicked!");
+        });
+
+        engine.Systems.addSystem(menu);
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 

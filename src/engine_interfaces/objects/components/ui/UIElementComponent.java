@@ -6,4 +6,7 @@ import engine_interfaces.objects.ui.SelectionStrategies;
 public class UIElementComponent extends Component {
     public SelectionStrategies SelectionStrategy;
 
+    public UIElementComponent(SelectionStrategies selectionStrategy) {
+        SelectionStrategy = selectionStrategy;
+    }
 }

@@ -5,4 +5,7 @@ import engine_interfaces.objects.ui.SelectionStrategies;
 
 public class ButtonComponent extends UIElementComponent {
 
+    public ButtonComponent(SelectionStrategies selectionStrategy) {
+        super(selectionStrategy);
+    }
 }

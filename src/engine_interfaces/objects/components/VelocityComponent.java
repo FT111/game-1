@@ -7,7 +7,7 @@ public class VelocityComponent extends Component {
 
     public double accelerationScaleConstant;
     public int minMovementTickFrequency;
-    public double verticalMinMovementFrequencyMultiplier = 1.8; // Multiplier applied to maxMovementFrequency when moving vertically, typically more than one to keep visual movement speed consistent due to the rectangular grid
+    public double verticalMinMovementFrequencyMultiplier = 2; // Multiplier applied to maxMovementFrequency when moving vertically, typically more than one to keep visual movement speed consistent due to the rectangular grid
     public String accelerationFunction;
 
     public VelocityComponent(double accelerationScaleConstant, int minMovementTickFrequency, String accelerationFunction) {

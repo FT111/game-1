@@ -4,6 +4,7 @@ import engine_interfaces.objects.Event;
 import engine_interfaces.objects.EventHandle;
 import engine_interfaces.objects.EventSubscription;
 import engine_interfaces.objects.EventSubscriptionReceipt;
+import engine_interfaces.objects.events.ButtonClickEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -51,6 +52,9 @@ public class EventBus {
 //        new Thread(() -> {
             while (!currentEvents.isEmpty()) {
                 var event = currentEvents.poll();
+                if (event instanceof ButtonClickEvent) {
+                    IO.println("Processing ButtonClickEvent for layer: " + ((ButtonClickEvent) event).buttonLayerId);
+                }
                 subscribers.getOrDefault(event.getClass(), new ArrayList<>()).forEach(subscriber -> subscriber.handle().handleEvent(event));
             }
 //        }).start();

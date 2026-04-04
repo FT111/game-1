@@ -18,16 +18,20 @@ import engine_interfaces.objects.ui.IndexedInteractable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class UiInteractionSystem extends System {
     private IndexedInteractable focusedLayer = null;
-    private AtomicReference<HashMap<Point, IndexedInteractable>> uiElementIndex = new AtomicReference<>(new HashMap<>());
-    private HashMap<Point, IndexedInteractable> stagingUiElementIndex = new HashMap<>();
-    private HashMap<LayerID, ArrayList<Point>> layerIndexPoints = new HashMap<>();
+    private World world;
+    private final AtomicReference<HashMap<Point, IndexedInteractable>> staticUiElementIndex = new AtomicReference<>(new HashMap<>()); // Screen points
+    private final AtomicReference<HashMap<Point, IndexedInteractable>> dynamicUiElementIndex = new AtomicReference<>(new HashMap<>()); // World points;
+    private final HashMap<Point, IndexedInteractable> stagingStaticElementIndex = new HashMap<>();
+    private final HashMap<Point, IndexedInteractable> stagingDynamicElementIndex = new HashMap<>();
+    private final HashMap<LayerID, ArrayList<Point>> layerIndexPoints = new HashMap<>();
 
     public UiInteractionSystem(World world, EventBus bus, Resources resources) {
+        this.world = world;
+
         bus.subscribe(MouseInputEvent.class,"UiInteractionSystem", event -> {
             var input = (MouseInputEvent) event;
             if (input.eventType != MouseEventTypes.DOWN) {
@@ -36,18 +40,25 @@ public class UiInteractionSystem extends System {
 
             var camera = world.ComponentEntitiesIndex.query(CameraComponent.class).toArray()[0];
             var cameraPos = (PositionComponent) world.Entities.get(camera).get(PositionComponent.class);
-//            Point clickWorldPosition = screenToWorldPos(input.screenPosition, cameraPos);
-            Point clickWorldPosition = input.screenPosition;
+            Point clickWorldPosition = screenToWorldPos(input.screenPosition, cameraPos);
+
+            // not elegant but prioritises screen element intersecting clicks over world clicks
+            var screenElement = staticUiElementIndex.get().get(input.screenPosition);
+            if (screenElement != null) {
+                focusedLayer = screenElement;
+                bus.publish(new ButtonClickEvent(screenElement.layerID()));
+                return;
+            }
 
             // check if the click intersects with any UI elements
-            var element = uiElementIndex.get().get(clickWorldPosition);
-            if (element == null) {
+            var worldElement = dynamicUiElementIndex.get().get(clickWorldPosition);
+            if (worldElement == null) {
                 focusedLayer = null;
                 return;
             }
 
-            focusedLayer = new IndexedInteractable(element.layerID(), element.zIndex());
-            bus.publish(new ButtonClickEvent(element.layerID()));
+            focusedLayer = worldElement;
+            bus.publish(new ButtonClickEvent(worldElement.layerID()));
         });
 
         bus.subscribe(LayerRegisteredEvent.class, "UiInteractionSystem", event -> {
@@ -103,31 +114,43 @@ public class UiInteractionSystem extends System {
                 }
         }}
 
-        uiElementIndex.set(stagingUiElementIndex);
+        if (position.isStatic) {
+            staticUiElementIndex.set(stagingStaticElementIndex);
+        } else {
+            dynamicUiElementIndex.set(stagingDynamicElementIndex);
+        }
     }
 
     private void removeIndexedUIElement(LayerID layerId) {
         var points = layerIndexPoints.get(layerId);
+        var positionDetails = (PositionComponent) world.Layers.get(layerId).get(PositionComponent.class);
+
         if (points == null) {
             return;
         }
 
+        var index = (positionDetails.isStatic) ? stagingStaticElementIndex : stagingDynamicElementIndex;
+
         for (Point point : points) {
-            stagingUiElementIndex.remove(point);
+            index.remove(point);
         }
 
-        uiElementIndex.set(stagingUiElementIndex);
+        if (positionDetails.isStatic) {
+            staticUiElementIndex.set(stagingStaticElementIndex);
+        } else {
+            dynamicUiElementIndex.set(stagingDynamicElementIndex);
+        }
     }
 
     private void stageElementCell(PositionComponent position, int x, int y, IndexedInteractable interactable) {
         Point cellPoint = new Point(position.Origin.x() + x, position.Origin.y() + y);
 
         // check for overlapping UI elements and only keep the one with the highest z index
-        var existingCellIndex = stagingUiElementIndex.get(cellPoint);
+        var existingCellIndex = stagingStaticElementIndex.get(cellPoint);
         if (existingCellIndex != null && existingCellIndex.zIndex() > position.zIndex) {
             return;
         }
-        stagingUiElementIndex.put(cellPoint, interactable);
+        stagingStaticElementIndex.put(cellPoint, interactable);
     }
 
     public Point screenToWorldPos(Point screenPoint, PositionComponent cameraPosition) {

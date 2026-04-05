@@ -35,6 +35,22 @@ public class World {
         return createEntity(newId);
     }
 
+    public EntityID createEntity(String Id, Component... components) {
+        EntityID newId = createEntity(Id);
+        for (Component component : components) {
+            addComponentToEntity(newId, component);
+        }
+        return newId;
+    }
+
+    public EntityID createEntity(Component... components) {
+        EntityID newId = createEntity();
+        for (Component component : components) {
+            addComponentToEntity(newId, component);
+        }
+        return newId;
+    }
+
     public LayerID createLayer(String Id) {
         LayerID newId = new LayerID(Id);
         Layers.put(newId, new HashMap<>());
@@ -45,6 +61,22 @@ public class World {
     public LayerID createLayer() {
         String newId = UUID.randomUUID().toString();
         return createLayer(newId);
+    }
+
+    public LayerID createLayer(String Id, Component... components) {
+        LayerID newId = createLayer(Id);
+        for (Component component : components) {
+            addComponentToLayer(newId, component);
+        }
+        return newId;
+    }
+
+    public LayerID createLayer(Component... components) {
+        LayerID newId = createLayer();
+        for (Component component : components) {
+            addComponentToLayer(newId, component);
+        }
+        return newId;
     }
 
     public void addComponentToEntity(EntityID entityId, Component component) {

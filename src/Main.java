@@ -25,44 +25,47 @@ public class Main {
 
         HashMap<Point, HashSet<EntityID>> chunkMap = new HashMap<>();
 
-        var levelMap = engine.World.createLayer();
-        engine.World.addComponentToLayer(levelMap, new TileMapComponent("mapAssets", "level", "tl", false));
-        engine.World.addComponentToLayer(levelMap, new PositionComponent(new Point(0,0), -1));
-        engine.World.addComponentToLayer(levelMap, new DimensionsComponent(100,100));
-        engine.World.addComponentToLayer(levelMap, new VisibilityComponent(true));
-        engine.World.addComponentToLayer(levelMap, new VisionBlockerComponent(new HashSet<>() {{
+        var levelMap = engine.World.createLayer(
+            new TileMapComponent("mapAssets", "level", "tl", false),
+            new PositionComponent(new Point(0,0), -1),
+            new DimensionsComponent(100,100),
+            new VisibilityComponent(true),
+            new VisionBlockerComponent(new HashSet<>() {{
             add('#');
-        }}));
-        engine.World.addComponentToLayer(levelMap, new LayerColliderComponent(new HashSet<>() {{
+        }}),
+            new LayerColliderComponent(new HashSet<>() {{
             add('#');
-        }}));
-        var camera = engine.World.createEntity();
-        engine.World.addComponentToEntity(camera, new PositionComponent(new Point(0,0), 100));
-        engine.World.addComponentToEntity(camera, new engine_interfaces.objects.components.CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true));
-        var player = engine.World.createEntity();
-        var playerVision = engine.World.createLayer();
-        engine.World.addComponentToEntity(player, new PositionComponent(new Point(3,3), 3));
-        engine.World.addComponentToEntity(player, new RenderableComponent('@', null, null, true));
-        engine.World.addComponentToEntity(player, new VelocityComponent(1.2, 6,  "exponential"));
-        engine.World.addComponentToEntity(player, new VisionEmitterComponent(150, 140, 5, playerVision));
-        engine.World.addComponentToEntity(player, new OrientationComponent(90));
+        }})
+        );
+        var camera = engine.World.createEntity(
+            new PositionComponent(new Point(0,0), 100),
+            new CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true)
+        );
 
-        engine.World.addComponentToLayer(playerVision, new PositionComponent(new Point(0,0), 1));
+        var playerVision = engine.World.createLayer(
+            new PositionComponent(new Point(0,0), 1),
+            new VisibilityComponent(true),
+            new DimensionsComponent(250,250)
+        );
+
+        var player = engine.World.createEntity(
+            new PositionComponent(new Point(3,3), 3),
+            new RenderableComponent('@', null, null, true),
+            new VelocityComponent(1.2, 6,  "exponential"),
+            new VisionEmitterComponent(150, 110, 5, playerVision),
+            new OrientationComponent(90)
+        );
+
         engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
-        engine.World.addComponentToLayer(playerVision, new VisibilityComponent(true));
-        engine.World.addComponentToLayer(playerVision, new DimensionsComponent(250,250));
 
-
-        var testText = engine.World.createLayer();
-        engine.World.addComponentToLayer(testText, new PositionComponent(new Point(3,3), 1, true));
-        engine.World.addComponentToLayer(testText, new TextComponent("Hello, World!"));
-        var testButton = engine.World.createLayer();
-        engine.World.addComponentToLayer(testButton, new PositionComponent(new Point(3,5), 1, true));
-        engine.World.addComponentToLayer(testButton, new DimensionsComponent(5, 3));
-        engine.World.addComponentToLayer(testButton, new UIElementComponent(SelectionStrategies.BOUNDING));
-        engine.World.addComponentToLayer(testButton, new VisibilityComponent(true));
-        engine.World.addComponentToLayer(testButton, new TextComponent("Click"));
+        var testButton = engine.World.createLayer(
+            new PositionComponent(new Point(3,5), 1, false),
+            new DimensionsComponent(5, 3),
+            new UIElementComponent(SelectionStrategies.BOUNDING),
+            new VisibilityComponent(true),
+            new TextComponent("Click")
+        );
 
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));

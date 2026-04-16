@@ -3,6 +3,7 @@ package engine.rendering;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
@@ -11,7 +12,6 @@ import engine_interfaces.objects.rendering.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Objects;
 
 public class TileMapRenderPass extends RenderPass {
 
@@ -33,13 +33,11 @@ public class TileMapRenderPass extends RenderPass {
 
             Cell[][] tileMap = renderObjects.resources().getAsset(tileMapComponent.resourceId, tileMapComponent.assetId, Cell[][].class);
             Point tileEndPoint = new Point(positionComponent.Origin.x() + tileMap[0].length, positionComponent.Origin.y() + tileMap.length);
-
-//            debugPrintTileMap(tileMapComponent, tileMap);
-
             // Cull tile map if it is not in view of the camera and a world-positioned object
-            if (!positionComponent.isStatic && !renderObjects.camera().isInView(positionComponent.Origin, tileEndPoint)) {
+            if (!positionComponent.positionStrategy.equals(Positioning.FIXED)  && !renderObjects.camera().isWorldPointInView(positionComponent.Origin, tileEndPoint)) {
                 return;
             }
+
 
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < dimensionsComponent.width; y++) {
@@ -55,26 +53,26 @@ public class TileMapRenderPass extends RenderPass {
                     }
 
                     cell.zIndex = positionComponent.zIndex;
-                    // convert from tilemap-relative coords to world coords (or screen coords if a static tilemap)
-                    Point cellPosition = new Point(positionComponent.Origin.x() + x, positionComponent.Origin.y() + y);
-                    // cull if world coords not in view of screen
-                    if (!renderObjects.camera().isInView(cellPosition)) {
+
+                    var screenPosition = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
+                            new Point(positionComponent.Origin.x(), positionComponent.Origin.y()),
+                            layerID,
+                            renderObjects.world(),
+                            renderObjects.camera()
+                    );
+                    if (!renderObjects.camera().isScreenPointInView(screenPosition)) {
                         continue;
                     }
 
-                    // convert from world coords to screen coords, if the tilemap isn't static (meaning it is already in screen coords)
-                    if (!positionComponent.isStatic) {
-                        cellPosition = renderObjects.camera().worldToScreen(cellPosition);
-                    }
                     try {
-                        Cell existingCell = buffer.cells[cellPosition.y()][cellPosition.x()];
+                        Cell existingCell = buffer.cells[screenPosition.y()][screenPosition.x()];
 
                         cell = collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
                     }
-                    buffer.cells[cellPosition.y()][cellPosition.x()] = cell;
+                    buffer.cells[screenPosition.y()][screenPosition.x()] = cell;
                 }
             }
         });

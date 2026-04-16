@@ -10,7 +10,9 @@ import com.googlecode.lanterna.input.MouseActionType;
 import com.googlecode.lanterna.screen.Screen;
 import com.googlecode.lanterna.screen.TerminalScreen;
 import com.googlecode.lanterna.terminal.*;
+import com.googlecode.lanterna.terminal.swing.AWTTerminalFontConfiguration;
 import com.googlecode.lanterna.terminal.swing.SwingTerminal;
+import com.googlecode.lanterna.terminal.swing.SwingTerminalFontConfiguration;
 import com.googlecode.lanterna.terminal.swing.SwingTerminalFrame;
 import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
@@ -19,6 +21,7 @@ import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 import engine_interfaces.objects.rendering.RenderBuffer;
 
+import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -44,7 +47,7 @@ public class LanternaAPI implements GraphicsAPI {
         DefaultTerminalFactory factory = new DefaultTerminalFactory()
                 .setMouseCaptureMode(MouseCaptureMode.CLICK_RELEASE_DRAG_MOVE)
                 .setInitialTerminalSize(new TerminalSize(80, 24));
-
+//                .setTerminalEmulatorFontConfiguration(new SwingTerminalFontConfiguration(true, AWTTerminalFontConfiguration.BoldMode.NOTHING, new Font("Monospaced", Font.PLAIN, 16)));
         terminal = factory.createTerminal();
 
         screen = new TerminalScreen(terminal);

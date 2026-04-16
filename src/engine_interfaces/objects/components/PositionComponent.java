@@ -2,11 +2,13 @@ package engine_interfaces.objects.components;
 
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.Positioning;
 
 public class PositionComponent extends Component {
     public Point Origin;
     public int zIndex = 0;
     public boolean isStatic = false; // Switches the origin from world position to screen position
+    public Positioning positionStrategy = Positioning.ABSOLUTE; 
 
     public PositionComponent(Point origin) {
         this.Origin = origin;

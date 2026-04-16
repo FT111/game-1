@@ -22,7 +22,7 @@ public class EntityRenderPass extends RenderPass {
                 return;
             }
 
-            if (!renderObjects.camera().isInView(positionDetails.Origin)) {
+            if (!renderObjects.camera().isWorldPointInView(positionDetails.Origin)) {
                 return;
             }
 

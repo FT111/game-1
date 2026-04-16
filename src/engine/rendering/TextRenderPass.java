@@ -3,6 +3,7 @@ package engine.rendering;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TextComponent;
 import engine_interfaces.objects.rendering.Cell;
@@ -43,12 +44,12 @@ public class TextRenderPass extends RenderPass {
                     char c = line.charAt(j);
                     Point charPosition = new Point(positionComponent.Origin.x() + j, positionComponent.Origin.y() + i);
 
-                    if (!positionComponent.isStatic) {
+                    if (!positionComponent.positionStrategy.equals(Positioning.FIXED)) {
                         charPosition = renderObjects.camera().worldToScreen(charPosition);
-                    }
 
-                    if (!positionComponent.isStatic && !renderObjects.camera().isInView(charPosition)) {
-                        continue;
+                        if (!renderObjects.camera().isWorldPointInView(charPosition)) {
+                            continue;
+                        }
                     }
 
                     // handle z index

@@ -6,6 +6,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.events.EntityRegisteredEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
+import engine_interfaces.objects.scene.SceneNode;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,9 +16,13 @@ import java.util.UUID;
 /// Contains all entities and layers in the game world.
 /// Responsible for world data, but not logic.
 public class World {
+    private EventBus bus;
+
     public HashMap<EntityID, HashMap<Class<? extends Component>, Component>> Entities = new HashMap<>();
     public HashMap<LayerID, HashMap<Class<? extends Component>, Component>> Layers = new HashMap<>();
-    private EventBus bus;
+
+    public SceneNode<LayerID> layerSceneGraphRoot = new SceneNode<>(null, null);
+    public HashMap<LayerID, SceneNode<LayerID>> layerSceneGraphNodes = new HashMap<>();
 
     public World(EventBus bus) {
         this.bus = bus;

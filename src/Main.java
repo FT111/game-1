@@ -3,6 +3,7 @@ import engine.EngineFactory;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
 import engine_interfaces.objects.components.ui.ButtonComponent;
 import engine_interfaces.objects.components.ui.UIElementComponent;
@@ -27,7 +28,7 @@ public class Main {
 
         var levelMap = engine.World.createLayer(
             new TileMapComponent("mapAssets", "level", "tl", false),
-            new PositionComponent(new Point(0,0), -1),
+            new PositionComponent(new Point(0,0), -1, Positioning.ABSOLUTE),
             new DimensionsComponent(100,100),
             new VisibilityComponent(true),
             new VisionBlockerComponent(new HashSet<>() {{
@@ -60,7 +61,7 @@ public class Main {
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
         var testButton = engine.World.createLayer(
-            new PositionComponent(new Point(3,5), 1, false),
+            new PositionComponent(new Point(3,5), 1, Positioning.FIXED),
             new DimensionsComponent(5, 3),
             new UIElementComponent(SelectionStrategies.BOUNDING),
             new VisibilityComponent(true),

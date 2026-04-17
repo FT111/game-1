@@ -38,6 +38,12 @@ public class TileMapRenderPass extends RenderPass {
                 return;
             }
 
+            var screenTileMapOrigin = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
+                    new Point(positionComponent.Origin.x(), positionComponent.Origin.y()),
+                    layerID,
+                    renderObjects.world(),
+                    renderObjects.camera()
+            );
 
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < dimensionsComponent.width; y++) {
@@ -53,26 +59,20 @@ public class TileMapRenderPass extends RenderPass {
                     }
 
                     cell.zIndex = positionComponent.zIndex;
-
-                    var screenPosition = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
-                            new Point(positionComponent.Origin.x(), positionComponent.Origin.y()),
-                            layerID,
-                            renderObjects.world(),
-                            renderObjects.camera()
-                    );
-                    if (!renderObjects.camera().isScreenPointInView(screenPosition)) {
+                    var screenPoint = new Point(screenTileMapOrigin.x() + x, screenTileMapOrigin.y() + y);
+                    if (!renderObjects.camera().isScreenPointInView(screenPoint)) {
                         continue;
                     }
 
                     try {
-                        Cell existingCell = buffer.cells[screenPosition.y()][screenPosition.x()];
+                        Cell existingCell = buffer.cells[screenPoint.y()][screenPoint.x()];
 
                         cell = collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
                     }
-                    buffer.cells[screenPosition.y()][screenPosition.x()] = cell;
+                    buffer.cells[screenPoint.y()][screenPoint.x()] = cell;
                 }
             }
         });

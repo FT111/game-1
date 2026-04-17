@@ -7,8 +7,14 @@ import engine_interfaces.objects.Positioning;
 public class PositionComponent extends Component {
     public Point Origin;
     public int zIndex = 0;
-    public boolean isStatic = false; // Switches the origin from world position to screen position
-    public Positioning positionStrategy = Positioning.ABSOLUTE; 
+    public Positioning positionStrategy = Positioning.ABSOLUTE;
+
+    public PositionComponent(Point origin, int zIndex, Positioning positionStrategy) {
+        Origin = origin;
+        this.zIndex = zIndex;
+        this.positionStrategy = positionStrategy;
+    }
+
 
     public PositionComponent(Point origin) {
         this.Origin = origin;
@@ -17,12 +23,6 @@ public class PositionComponent extends Component {
     public PositionComponent(Point origin, int zIndex) {
         Origin = origin;
         this.zIndex = zIndex;
-    }
-
-    public PositionComponent(Point origin, int zIndex, boolean isStatic) {
-        Origin = origin;
-        this.zIndex = zIndex;
-        this.isStatic = isStatic;
     }
 }
 

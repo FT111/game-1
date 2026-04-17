@@ -6,10 +6,7 @@ import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TextComponent;
-import engine_interfaces.objects.rendering.Cell;
-import engine_interfaces.objects.rendering.RenderBuffer;
-import engine_interfaces.objects.rendering.RenderPass;
-import engine_interfaces.objects.rendering.renderObjects;
+import engine_interfaces.objects.rendering.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,26 +39,25 @@ public class TextRenderPass extends RenderPass {
                 String line = wrappedText.get(i);
                 for (int j = 0; j < line.length(); j++) {
                     char c = line.charAt(j);
-                    Point charPosition = new Point(positionComponent.Origin.x() + j, positionComponent.Origin.y() + i);
-
-                    if (!positionComponent.positionStrategy.equals(Positioning.FIXED)) {
-                        charPosition = renderObjects.camera().worldToScreen(charPosition);
-
-                        if (!renderObjects.camera().isWorldPointInView(charPosition)) {
-                            continue;
-                        }
-                    }
+                    Point worldPosition = new Point(positionComponent.Origin.x() + j, positionComponent.Origin.y() + i);
+                    Point screenPosition = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
+                            worldPosition,
+                            textLayer,
+                            renderObjects.world(),
+                            renderObjects.camera()
+                    );
+                    if (!renderObjects.camera().isScreenPointInView(screenPosition)) {continue;}
 
                     // handle z index
                     try {
-                        var existingCell = buffer.cells[charPosition.y()][charPosition.x()];
+                        var existingCell = buffer.cells[screenPosition.y()][screenPosition.x()];
                         if (existingCell != null && existingCell.zIndex > positionComponent.zIndex) {
                             continue;
                     }}  catch (ArrayIndexOutOfBoundsException e) {
                         continue;
                     }
 
-                    buffer.cells[charPosition.y()][charPosition.x()] = new Cell(c, positionComponent.zIndex);
+                    buffer.cells[screenPosition.y()][screenPosition.x()] = new Cell(c, positionComponent.zIndex);
                 }
             }
 

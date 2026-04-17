@@ -5,6 +5,7 @@ import engine.rendering.TextRenderPass;
 import engine.rendering.TileMapRenderPass;
 import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
+import engine.systems.SceneGraphSystem;
 import engine.systems.movement.CollisionProcessor;
 import engine.systems.movement.VelocityProcessor;
 import engine_interfaces.objects.rendering.RenderPass;
@@ -46,6 +47,8 @@ public class Engine {
         movementSys.movementPipeline.add(new CollisionProcessor(EventBus, World, Resources));
         movementSys.movementPipeline.add(new VelocityProcessor());
         Systems.addSystem(movementSys);
+
+        Systems.addSystem(new SceneGraphSystem(World, EventBus));
     }
 
     public void ShowOutput() throws IOException {

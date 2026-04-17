@@ -114,7 +114,7 @@ public class UiInteractionSystem extends System {
                 }
         }}
 
-        if (position.isStatic) {
+        if (position.positionStrategy.equals(Positioning.FIXED)) {
             staticUiElementIndex.set(stagingStaticElementIndex);
         } else {
             dynamicUiElementIndex.set(stagingDynamicElementIndex);
@@ -129,13 +129,13 @@ public class UiInteractionSystem extends System {
             return;
         }
 
-        var index = (positionDetails.isStatic) ? stagingStaticElementIndex : stagingDynamicElementIndex;
+        var index = (positionDetails.positionStrategy.equals(Positioning.FIXED)) ? stagingStaticElementIndex : stagingDynamicElementIndex;
 
         for (Point point : points) {
             index.remove(point);
         }
 
-        if (positionDetails.isStatic) {
+        if (positionDetails.positionStrategy.equals(Positioning.FIXED)) {
             staticUiElementIndex.set(stagingStaticElementIndex);
         } else {
             dynamicUiElementIndex.set(stagingDynamicElementIndex);

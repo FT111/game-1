@@ -28,7 +28,7 @@ public class SceneGraphSystem extends System {
     private static void registerToScene(LayerID id, World world, ParentComponent layerParent) {
         var node = new SceneNode<>(id);
 
-        if (layerParent.parentLayerId != null) {
+        if (layerParent != null && layerParent.parentLayerId != null) {
             var parentNode = world.layerSceneGraphRoot.findNode(layerParent.parentLayerId);
             if (parentNode == null) { throw new NoSuchElementException("Parent node not registered");}
 
@@ -37,8 +37,8 @@ public class SceneGraphSystem extends System {
             return;
         }
 
-        world.layerSceneGraphNodes.put(id, node);
         world.layerSceneGraphRoot.attach(node);
+        world.layerSceneGraphNodes.put(id, node);
     }
 
     @Override

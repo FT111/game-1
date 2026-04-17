@@ -1,12 +1,13 @@
 package engine_interfaces.objects.scene;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /// Scene Graph Tree
 public class SceneNode<T> {
     public T objectId;
     public SceneNode<T> parent;
-    public List<SceneNode<T>> children;
+    public List<SceneNode<T>> children = new ArrayList<>();
 
     public SceneNode(T objectId, SceneNode<T> parent) {
         this.objectId = objectId;

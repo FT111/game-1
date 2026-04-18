@@ -12,19 +12,12 @@ public class TextComponent extends Component {
     public int maxWidth;
     public int maxHeight;
 
-    public TextComponent(String text, int maxWidth) {
+    public TextComponent(String text, int maxWidth, int maxHeight) {
         this.text = text;
         this.maxWidth = maxWidth;
     }
 
-    public TextComponent(String resourceId, String assetId, int maxWidth) {
-        this.resourceId = resourceId;
-        this.assetId = assetId;
-        this.maxWidth = maxWidth;
-    }
-
-    public TextComponent(String text, String resourceId, String assetId, int maxHeight, int maxWidth) {
-        this.text = text;
+    public TextComponent(String resourceId, String assetId, int maxHeight, int maxWidth) {
         this.resourceId = resourceId;
         this.assetId = assetId;
         this.maxHeight = maxHeight;

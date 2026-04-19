@@ -2,6 +2,7 @@ package engine.rendering;
 
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.RenderableComponent;
+import engine_interfaces.objects.components.VisibilityComponent;
 import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.RenderBuffer;
 import engine_interfaces.objects.rendering.RenderPass;
@@ -17,8 +18,9 @@ public class EntityRenderPass extends RenderPass {
         entities.forEach(entity -> {
             var renderDetails = (RenderableComponent) renderObjects.world().Entities.get(entity).get(RenderableComponent.class);
             var positionDetails = (PositionComponent) renderObjects.world().Entities.get(entity).get(PositionComponent.class);
+            var visibilityDetails = (VisibilityComponent) renderObjects.world().Entities.get(entity).get(engine_interfaces.objects.components.VisibilityComponent.class);
 
-            if (!renderDetails.isVisible) {
+            if (visibilityDetails != null && !visibilityDetails.isVisible) {
                 return;
             }
 

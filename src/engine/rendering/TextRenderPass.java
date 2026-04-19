@@ -6,6 +6,7 @@ import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TextComponent;
+import engine_interfaces.objects.components.VisibilityComponent;
 import engine_interfaces.objects.rendering.*;
 
 import java.util.ArrayList;
@@ -23,6 +24,9 @@ public class TextRenderPass extends RenderPass {
             HashMap<Class<? extends Component>, Component> textLayerComps = renderObjects.world().Layers.get(textLayer);
             TextComponent textComponent = (TextComponent) textLayerComps.get(TextComponent.class);
             PositionComponent positionComponent = (PositionComponent) textLayerComps.get(PositionComponent.class);
+            VisibilityComponent visibilityComponent = (VisibilityComponent) textLayerComps.get(VisibilityComponent.class);
+
+            if (visibilityComponent != null && !visibilityComponent.isVisible) { return; }
 
             String text;
             if (textComponent.text != null) {

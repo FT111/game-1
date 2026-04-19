@@ -67,22 +67,46 @@ public class TextRenderPass extends RenderPass {
     private List<String> wrapText(String text, int maxWidth) {
         ArrayList<String> output = new ArrayList<>();
 
-        // base case where text wrapping is disabled
-        if (maxWidth == 0) {
-            output.add(text);
+        if (maxWidth <= 0 || text == null || text.isEmpty()) {
+            output.add(text != null ? text : "");
             return output;
         }
 
-        StringBuilder currentLine = new StringBuilder();
+        // handle existing explicit newlines by splitting them first
+        String[] lines = text.split("\n");
 
-        for (String word : text.split(" ")) {
-            if (currentLine.length() + word.length() + 1 > maxWidth) {
+        for (String logicalLine : lines) {
+            StringBuilder currentLine = new StringBuilder();
+            String[] words = logicalLine.split(" ");
+
+            for (String word : words) {
+                // handle words that are individually longer than maxWidth
+                while (word.length() > maxWidth) {
+                    if (!currentLine.isEmpty()) {
+                        output.add(currentLine.toString());
+                        currentLine = new StringBuilder();
+                    }
+                    output.add(word.substring(0, maxWidth));
+                    word = word.substring(maxWidth);
+                }
+
+                if (currentLine.length() + word.length() + (currentLine.isEmpty() ? 0 : 1) > maxWidth) {
+                    output.add(currentLine.toString());
+                    currentLine = new StringBuilder(word);
+                } else {
+                    if (!currentLine.isEmpty()) {
+                        currentLine.append(" ");
+                    }
+                    currentLine.append(word);
+                }
+            }
+
+            // add remainder
+            if (!currentLine.isEmpty()) {
                 output.add(currentLine.toString());
-                currentLine = new StringBuilder(word);
-            } else {
-                currentLine.append(" ").append(word);
             }
         }
+
         return output;
     }
 }

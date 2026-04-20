@@ -4,11 +4,8 @@ import engine.World;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
-import engine_interfaces.objects.components.DimensionsComponent;
-import engine_interfaces.objects.components.PositionComponent;
-import engine_interfaces.objects.components.TextComponent;
-import engine_interfaces.objects.components.VisibilityComponent;
-import engine_interfaces.objects.components.ui.ButtonComponent;
+import engine_interfaces.objects.components.*;
+import engine_interfaces.objects.components.ui.UIElementComponent;
 import engine_interfaces.objects.ui.SelectionStrategies;
 
 public class UiBuilders {
@@ -42,16 +39,50 @@ public class UiBuilders {
             return self();
         }
 
+        public B withParent(LayerID layerId) {
+            this.parent = layerId;
+            return self();
+        }
+
         public B withZIndex(int zIndex) {
             this.zIndex = zIndex;
             return self();
         }
     }
 
+    public class ContainerBuilder extends Builder<ContainerBuilder, LayerID> {
+        private int height;
+        private int width;
+
+        @Override
+        public ContainerBuilder self() {
+            return this;
+        }
+
+        public ContainerBuilder withDimensions(int width, int height) {
+            this.width = width;
+            this.height = height;
+
+            return this;
+        }
+
+        @Override
+        public LayerID build() {
+            LayerID containerLayer = world.createLayer(
+                    new VisibilityComponent(false),
+                    new PositionComponent(position, zIndex, positioningStrategy),
+                    new DimensionsComponent(width, height)
+            );
+            if (parent != null) { world.addComponentToLayer(containerLayer, new ParentComponent(parent));}
+
+            return containerLayer;
+        }
+    }
+
     public class ButtonBuilder extends Builder<ButtonBuilder, LayerID> {
         private String staticTextString;
 
-        private String textResouceId;
+        private String textResourceId;
         private String textAssetId;
 
         private int height;
@@ -68,7 +99,7 @@ public class UiBuilders {
         }
 
         public ButtonBuilder withDynamicText(String resourceId, String assetId) {
-            this.textResouceId = resourceId;
+            this.textResourceId = resourceId;
             this.textAssetId = assetId;
             return this;
         }
@@ -83,17 +114,19 @@ public class UiBuilders {
         @Override
         public LayerID build() {
             LayerID buttonLayer = world.createLayer(
-                    new VisibilityComponent(true),
+                    new VisibilityComponent(false),
                     new PositionComponent(position, zIndex, positioningStrategy),
-                    new ButtonComponent(SelectionStrategies.BOUNDING),
+                    new UIElementComponent(SelectionStrategies.BOUNDING),
                     new DimensionsComponent(width, height)
             );
             if (staticTextString != null) {
-                world.Layers.get(buttonLayer).put(TextComponent.class, new TextComponent(staticTextString, width, height));
+                world.addComponentToLayer(buttonLayer, new TextComponent(staticTextString, width, height));
             }
-            if (textResouceId != null && textAssetId != null) {
-                world.Layers.get(buttonLayer).put(TextComponent.class, new TextComponent(textResouceId, textAssetId, height, width));
+            if (textResourceId != null && textAssetId != null) {
+                world.addComponentToLayer(buttonLayer, new TextComponent(textResourceId, textAssetId, height, width));
             }
+            if (parent != null) { world.addComponentToLayer(buttonLayer, new ParentComponent(parent));}
+
 
             return buttonLayer;
         }

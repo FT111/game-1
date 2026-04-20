@@ -5,10 +5,7 @@ import engine.Resources;
 import engine.World;
 import engine_interfaces.objects.*;
 import engine_interfaces.objects.System;
-import engine_interfaces.objects.components.CameraComponent;
-import engine_interfaces.objects.components.DimensionsComponent;
-import engine_interfaces.objects.components.PositionComponent;
-import engine_interfaces.objects.components.TileMapComponent;
+import engine_interfaces.objects.components.*;
 import engine_interfaces.objects.components.ui.UIElementComponent;
 import engine_interfaces.objects.events.ButtonClickEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
@@ -66,6 +63,7 @@ public class UiInteractionSystem extends System {
             var components = world.Layers.get(layerRegisteredEvent.id);
             if (components.containsKey(UIElementComponent.class)) {
                 indexUIElement(layerRegisteredEvent.id, world, resources);
+                return;
             }
         });
 

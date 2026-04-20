@@ -52,9 +52,6 @@ public class EventBus {
 //        new Thread(() -> {
             while (!currentEvents.isEmpty()) {
                 var event = currentEvents.poll();
-                if (event instanceof ButtonClickEvent) {
-                    IO.println("Processing ButtonClickEvent for layer: " + ((ButtonClickEvent) event).buttonLayerId);
-                }
                 subscribers.getOrDefault(event.getClass(), new ArrayList<>()).forEach(subscriber -> subscriber.handle().handleEvent(event));
             }
 //        }).start();

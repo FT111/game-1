@@ -1,19 +1,21 @@
 package resources.menus.states;
 
 import engine_interfaces.objects.Point;
-import resources.UiBuilders;
+import engine_interfaces.objects.Positioning;
 import resources.menus.MenuState;
-
-import java.util.function.Consumer;
+import resources.menus.StateContext;
 
 public class MainMenu extends MenuState {
-    public MainMenu(Consumer<MenuState> switchTo, UiBuilders ui) {
-        var continueButton = ui.new ButtonBuilder()
-                .withStaticText("Continue")
-                .withPosition(new Point(10,10))
+    public MainMenu(StateContext stateContext) {
+        String continueText = "Continue";
+        var continueButton = stateContext.ui().new ButtonBuilder()
+                .withStaticText(continueText)
+                .withPosition(new Point(20,15), Positioning.FIXED)
+                .withDimensions(continueText.length()+2, 1)
                 .build();
 
         show(continueButton);
+        bind(continueButton, () -> {stateContext.switchTo().accept(stateContext.states().gameHud);});
     }
 
 

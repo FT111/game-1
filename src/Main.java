@@ -2,11 +2,14 @@ import engine.Engine;
 import engine.EngineFactory;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
 import engine_interfaces.objects.components.ui.ButtonComponent;
 import engine_interfaces.objects.components.ui.UIElementComponent;
+import engine_interfaces.objects.events.KeyInputEvent;
+import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.ui.SelectionStrategies;
 import resources.*;
 import resources.components.VisionBlockerComponent;
@@ -77,15 +80,22 @@ public class Main {
         engine.Systems.addSystem(playerSystem);
         engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         engine.Systems.addSystem(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources));
-        MenuSystem menu = new MenuSystem(engine.EventBus);
-        menu.buttonCallbacks.put(testButton, ()->{
-            IO.println("Button clicked!");
-        });
+        MenuSystem menu = new MenuSystem(engine.EventBus, engine.World);
 
         engine.Systems.addSystem(menu);
+
+//        engine.EventBus.subscribe(KeyInputEvent.class,"Main", event -> {
+//            var keyEvent = (KeyInputEvent) event;
+//
+//            if (keyEvent.key == 'q') {
+//                IO.println("Publishing 20,15 mouse event");
+//                engine.EventBus.publish(new MouseInputEvent(new Point(20, 15), MouseEventTypes.DOWN));
+//            }
+//        });
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 
         engine.StartGameLoop();
+
     }
 }

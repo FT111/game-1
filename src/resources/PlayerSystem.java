@@ -40,7 +40,7 @@ public class PlayerSystem extends System {
         lockCameraToPlayer(world, cameraEntity);
         this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
 
-        bus.subscribe(MouseInputEvent.class, "PlayerSystem", event -> {
+        bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
             var input = (MouseInputEvent) event;
 //            if (input.eventType != MouseEventTypes.DRAG) {
 //                return;
@@ -59,7 +59,7 @@ public class PlayerSystem extends System {
             orientation.facingAngle = (int) Math.toDegrees(Math.atan2((cursorWorldPosition.y() - playerPosition.Origin.y())*2, cursorWorldPosition.x() - playerPosition.Origin.x()));
         });
 
-        bus.subscribe(KeyInputEvent.class, "PlayerSystem", event -> {
+        bus.subscribe(KeyInputEvent.class, () -> isEnabled, event -> {
             var input = (KeyInputEvent) event;
 
             if (movementDirections.containsKey(input.key)) {

@@ -21,7 +21,7 @@ public class ChunkSystem extends System {
         this.chunkSize = chunkSize;
         this.chunkEntities = chunkMap;
 
-        Bus.subscribe(MovementEvent.class, "ChunkSystem", event -> {
+        Bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
             var movementEvent = (MovementEvent) event;
             var chunkComponent = (ChunkableComponent) world.Entities.get(movementEvent.entityID).get(ChunkableComponent.class);
 

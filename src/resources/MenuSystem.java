@@ -29,8 +29,8 @@ public class MenuSystem extends System{
         this.states = new MenuStates(this::switchState, uiBuilders, bus);
 
         this.currentMenuState = states.mainMenu;
-        bus.subscribe(ButtonClickEvent.class,"MenuSystem", this::handleButtonClick);
-        bus.subscribe(KeyInputEvent.class,"MenuSystem", this::handleKeyPress);
+        bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick);
+        bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress);
 
         switchState(currentMenuState);
     }

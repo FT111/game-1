@@ -29,7 +29,7 @@ public class CollisionProcessor implements MovementProcessor {
     public CollisionProcessor(EventBus Bus, World world, Resources resources) {
         this.Bus = Bus;
 
-        Bus.subscribe(LayerRegisteredEvent.class, "CollisionSystem",
+        Bus.subscribe(LayerRegisteredEvent.class, () -> true,
             event -> {
                 var layerRegisteredEvent = (LayerRegisteredEvent) event;
                 var layerComponents = world.Layers.get(layerRegisteredEvent.id);

@@ -1,5 +1,14 @@
 package engine_interfaces.objects;
 
-public record EventSubscription(String systemID, EventHandle handle) {
+import java.util.function.BooleanSupplier;
 
+public class EventSubscription{
+    public BooleanSupplier isEnabled;
+    public EventHandle handle;
+
+
+    public EventSubscription(BooleanSupplier isEnabled, EventHandle handler) {
+        this.isEnabled = isEnabled;
+        this.handle = handler;
+    }
 }

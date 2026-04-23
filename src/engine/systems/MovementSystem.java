@@ -30,7 +30,7 @@ public class MovementSystem extends System {
 
 
         // Accumulate movement proposals
-        Bus.subscribe(MovementProposalEvent.class, "MovementSystem",
+        Bus.subscribe(MovementProposalEvent.class, () -> isEnabled,
         event -> {
             var movementProposal = (MovementProposalEvent) event;
             pendingMovements.add(movementProposal);

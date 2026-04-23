@@ -34,6 +34,12 @@ public class Systems {
     }
 
     protected void update(World world, int tickCount) {
-        systemOrder.forEach(systemClass -> systems.get(systemClass).update(world, tickCount));
+        systemOrder.forEach(systemClass -> {
+            System system = systems.get(systemClass);
+            if (!system.isEnabled) {
+                return;
+            }
+            system.update(world, tickCount);
+        });
     }
 }

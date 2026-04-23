@@ -14,8 +14,7 @@ import java.util.NoSuchElementException;
 public class SceneGraphSystem extends System {
 
     public SceneGraphSystem(World world, EventBus bus) {
-        bus.subscribe(LayerRegisteredEvent.class, "SceneGraphSystem", (event -> handleLayerRegistered((LayerRegisteredEvent) event, world)));
-//        bus.subscribe(EntityRegisteredEvent.class, "SceneGraphSystem", (event -> handleEntityRegistered((EntityRegisteredEvent) event, world)));
+        bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, (event -> handleLayerRegistered((LayerRegisteredEvent) event, world)));
     }
 
     private void handleLayerRegistered(LayerRegisteredEvent event, World world) {

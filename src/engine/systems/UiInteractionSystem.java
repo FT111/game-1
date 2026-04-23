@@ -29,7 +29,7 @@ public class UiInteractionSystem extends System {
     public UiInteractionSystem(World world, EventBus bus, Resources resources) {
         this.world = world;
 
-        bus.subscribe(MouseInputEvent.class,"UiInteractionSystem", event -> {
+        bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
             var input = (MouseInputEvent) event;
             if (input.eventType != MouseEventTypes.DOWN) {
                 return;
@@ -58,7 +58,7 @@ public class UiInteractionSystem extends System {
             bus.publish(new ButtonClickEvent(worldElement.layerID()));
         });
 
-        bus.subscribe(LayerRegisteredEvent.class, "UiInteractionSystem", event -> {
+        bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
             var layerRegisteredEvent = (LayerRegisteredEvent) event;
             var components = world.Layers.get(layerRegisteredEvent.id);
             if (components.containsKey(UIElementComponent.class)) {

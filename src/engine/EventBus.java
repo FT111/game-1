@@ -4,10 +4,12 @@ import engine_interfaces.objects.Event;
 import engine_interfaces.objects.EventHandle;
 import engine_interfaces.objects.EventSubscription;
 import engine_interfaces.objects.EventSubscriptionReceipt;
+import engine_interfaces.objects.System;
 import engine_interfaces.objects.events.ButtonClickEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.function.BooleanSupplier;
 
 public class EventBus {
     private ConcurrentLinkedDeque<Event> pendingEvents = new ConcurrentLinkedDeque<>();
@@ -16,8 +18,9 @@ public class EventBus {
 
     private final HashMap<Class<? extends Event>, ArrayList<EventSubscription>> subscribers = new HashMap<>();
 
-    public final EventSubscriptionReceipt subscribe(Class<? extends Event> eventType, String systemID, EventHandle handler) {
-        var subscription = new EventSubscription(systemID, handler);
+    public final EventSubscriptionReceipt subscribe(Class<? extends Event> eventType, BooleanSupplier isEnabled, EventHandle handler) {
+        var subscription = new EventSubscription(isEnabled, handler);
+
 
 
         if (!subscribers.containsKey(eventType)) {
@@ -52,12 +55,18 @@ public class EventBus {
 //        new Thread(() -> {
             while (!currentEvents.isEmpty()) {
                 var event = currentEvents.poll();
-                subscribers.getOrDefault(event.getClass(), new ArrayList<>()).forEach(subscriber -> subscriber.handle().handleEvent(event));
+                ArrayList<EventSubscription> subscriptions = subscribers.getOrDefault(event.getClass(), new ArrayList<>());
+                subscriptions.forEach(subscriber -> {
+                    // check if enabled
+                    if (!subscriber.isEnabled.getAsBoolean()) {
+                        return;
+                    }
+
+                    subscriber.handle.handleEvent(event);
+                });
             }
 //        }).start();
-//        currentEvents.forEach(event -> {
-//            subscribers.get(event).forEach(subscriber -> subscriber.handle().handleEvent(event));
-//        });
+
     }
 
 

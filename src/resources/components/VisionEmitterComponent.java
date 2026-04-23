@@ -3,6 +3,7 @@ package resources.components;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
+import engine_interfaces.objects.Point;
 
 import java.util.HashSet;
 import java.util.List;

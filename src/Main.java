@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         EngineFactory factory = new EngineFactory();
         Engine engine = factory.build();
 
@@ -63,14 +63,6 @@ public class Main {
         engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
-        var testButton = engine.World.createLayer(
-            new PositionComponent(new Point(3,5), 1, Positioning.FIXED),
-            new DimensionsComponent(5, 3),
-            new UIElementComponent(SelectionStrategies.BOUNDING),
-            new VisibilityComponent(true),
-            new TextComponent("Click")
-        );
-
         engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
         engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
         PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
@@ -83,15 +75,6 @@ public class Main {
         MenuSystem menu = new MenuSystem(engine.EventBus, engine.World);
 
         engine.Systems.addSystem(menu);
-
-//        engine.EventBus.subscribe(KeyInputEvent.class,"Main", event -> {
-//            var keyEvent = (KeyInputEvent) event;
-//
-//            if (keyEvent.key == 'q') {
-//                IO.println("Publishing 20,15 mouse event");
-//                engine.EventBus.publish(new MouseInputEvent(new Point(20, 15), MouseEventTypes.DOWN));
-//            }
-//        });
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 

@@ -70,12 +70,12 @@ public class VisionSystem extends System {
     }
 
 
-    private static HashSet<Point> castView(Point emitterPos, int maxRange, HashSet<Point> visionBlockMap) {
+    private static HashSet<Point> castView(int maxRange, HashSet<Point> visionBlockMap) {
         var visiblePoints = new HashSet<Point>();
-        visiblePoints.add(emitterPos);
+        visiblePoints.add(VisionSystem.EMITTER_ORIGIN);
 
         for (int octant = 0; octant < 8; octant++) {
-            castLight(visiblePoints, visionBlockMap, emitterPos.x(), emitterPos.y(), 1, 1.0, 0.0, maxRange,
+            castLight(visiblePoints, visionBlockMap, VisionSystem.EMITTER_ORIGIN.x(), VisionSystem.EMITTER_ORIGIN.y(), 1, 1.0, 0.0, maxRange,
                     OCTANT_TRANSFORMS[0][octant], OCTANT_TRANSFORMS[1][octant],
                     OCTANT_TRANSFORMS[2][octant], OCTANT_TRANSFORMS[3][octant]);
         }
@@ -148,14 +148,19 @@ public class VisionSystem extends System {
     private static HashSet<Point> filterPointsWithinFov(HashSet<Point> points, OrientationComponent orientation, int fieldOfViewAngle) {
         var filteredPoints = new HashSet<Point>();
         double facingRadians = Math.toRadians(orientation.facingAngle);
-        double halfFov = Math.toRadians(Math.max(0, Math.min(fieldOfViewAngle, 360))) / 2.0;
+
+        // get half FOV in radians
+        double halfFov = Math.toRadians(Math.clamp(fieldOfViewAngle, 0, 360)) / 2.0;
 
         points.forEach(point -> {
             if (point.x() == 0 && point.y() == 0) {
                 filteredPoints.add(point);
                 return;
             }
-            double angle = Math.atan2(point.y(), point.x());
+
+            // y = ~1.7x to account for terminal text cells being 2x taller than they are wide
+            // reduces FOV distortion depending on orientation
+            double angle = Math.atan2(1.7*point.y(), point.x());
             double delta = normaliseAngle(angle - facingRadians);
             if (Math.abs(delta) <= halfFov) {
                 filteredPoints.add(point);
@@ -178,11 +183,9 @@ public class VisionSystem extends System {
 
     public HashSet<Point> calculatePointsInLineOfSight(Point emitterPos, OrientationComponent orientation, int fieldOfViewAngle, int range) {
         var relativeVisionBlocks = buildRelativeVisionBlockMap(emitterPos, range);
-        var allVisiblePoints = castView(EMITTER_ORIGIN, range, relativeVisionBlocks);
+        var allVisiblePoints = castView(range, relativeVisionBlocks);
         return filterPointsWithinFov(allVisiblePoints, orientation, fieldOfViewAngle);
     }
-
-
 
     @Override
     public void update(World world, int tickCount) {
@@ -206,11 +209,8 @@ public class VisionSystem extends System {
             var orientation = (OrientationComponent) entity.get(OrientationComponent.class);
             var position = (PositionComponent) entity.get(PositionComponent.class);
 
-            // Update vision layer position
-            var visionLayerPosition = (PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class);
-
             var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.fieldOfViewAngle, emitter.visionRange);
-            // IO.println(pointsInSight);
+
 
             // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
             Cell[][] visionTileMapAsset = new Cell[visionTileMapDimensions.height][visionTileMapDimensions.width];

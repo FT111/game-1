@@ -41,7 +41,7 @@ public class MenuSystem extends System{
 
     }
 
-    protected void switchState(MenuState newState) {
+    public void switchState(MenuState newState) {
        Set<LayerID> newLayers = newState.getLayers();
         // only hide layers in neither state
         var removedLayers = currentMenuState.getLayers().stream().filter(layer -> !newLayers.contains(layer)).toList();

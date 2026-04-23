@@ -11,6 +11,7 @@ public class Systems {
     private final LinkedList<Class<? extends System>> systemOrder = new LinkedList<>();
 
     public void addSystem(System system) {
+        system.isEnabled = false;
         systems.put(system.getClass(), system);
         systemOrder.add(system.getClass());
     }
@@ -21,6 +22,8 @@ public class Systems {
         if (index == -1) {
             throw new IllegalArgumentException("System " + after.getName() + " not found");
         }
+
+        system.isEnabled = false;
         systemOrder.add(index + 1, system.getClass());
     }
 

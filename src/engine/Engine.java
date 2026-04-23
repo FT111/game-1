@@ -6,12 +6,15 @@ import engine.rendering.TileMapRenderPass;
 import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
 import engine.systems.SceneGraphSystem;
+import engine.systems.UiInteractionSystem;
 import engine.systems.movement.CollisionProcessor;
 import engine.systems.movement.VelocityProcessor;
+import engine.scenes.SceneManager;
 import engine_interfaces.objects.rendering.RenderPass;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 public class Engine {
     public World World;
@@ -19,8 +22,15 @@ public class Engine {
     public Systems Systems = new Systems();
     public Resources Resources = new Resources();
     public EventBus EventBus = new EventBus();
+    public SceneManager SceneManager = new SceneManager();
 
     private long Accumulator = 0;
+    public final List<Class<? extends engine_interfaces.objects.System>> CoreSystems = new ArrayList<>() {{
+        add(InputHandlerSystem.class);
+        add(MovementSystem.class);
+        add(SceneGraphSystem.class);
+        add(UiInteractionSystem.class);
+    }};
 
     // Turn these into a config class later
     public int TicksPerSecond = 60;

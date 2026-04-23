@@ -15,6 +15,9 @@ import resources.*;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
 import resources.components.VisionLayerComponent;
+import engine.scenes.SceneManager;
+import resources.scenes.GameplayScene;
+import resources.scenes.MainMenuScene;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -63,20 +66,32 @@ public class Main {
         engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
-        engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
-        engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
+        TestSystem testSystem = new TestSystem(camera, engine.Renderer.Api, engine.World);
+        VisionSystem visionSystem = new VisionSystem(engine.World, engine.Resources, chunkMap, 1);
+        ChunkSystem chunkSystem = new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap);
+
+        engine.Systems.addSystem(testSystem);
+        engine.Systems.addSystem(visionSystem);
         PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
         engine.Renderer.Api.onResize(() -> {
             playerSystem.lockCameraToPlayer(engine.World, camera);
         });
         engine.Systems.addSystem(playerSystem);
-        engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
+        engine.Systems.addSystem(chunkSystem);
         engine.Systems.addSystem(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources));
         MenuSystem menu = new MenuSystem(engine.EventBus, engine.World);
 
         engine.Systems.addSystem(menu);
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
+
+        // Create the scenes directly on the engine
+        engine.SceneManager
+            .addScene("MainMenu", new MainMenuScene())
+            .addScene("Gameplay", new GameplayScene(visionSystem, playerSystem, chunkSystem));
+
+        // Switch to default scene
+        engine.SceneManager.switchScene("MainMenu");
 
         engine.StartGameLoop();
 

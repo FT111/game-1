@@ -18,6 +18,12 @@ public class ComponentIndex<ID> {
         if (ids != null) ids.remove(id);
     }
 
+    public void remove(ID id) {
+        for (List<ID> ids : index.values()) {
+            ids.remove(id);
+        }
+    }
+
     public HashSet<ID> query(Class<? extends Component>[] required) {
         if (required.length == 0) return new HashSet<>();
 

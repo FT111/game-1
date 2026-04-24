@@ -22,7 +22,7 @@ public class Engine {
     public Systems Systems = new Systems();
     public Resources Resources = new Resources();
     public EventBus EventBus = new EventBus();
-    public SceneManager SceneManager = new SceneManager();
+    public SceneManager SceneManager;
 
     private long Accumulator = 0;
     public final List<Class<? extends engine_interfaces.objects.System>> CoreSystems = new ArrayList<>() {{
@@ -45,6 +45,7 @@ public class Engine {
     public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException, InterruptedException {
         World = (world != null) ? world : new World(EventBus);
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
+        SceneManager = new SceneManager(EventBus, World);
         TicksPerSecond = ticksPerSecond;
 
         // Add default render passes

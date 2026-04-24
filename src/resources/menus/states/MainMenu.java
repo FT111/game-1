@@ -15,7 +15,9 @@ public class MainMenu extends MenuState {
                 .build();
 
         show(continueButton);
-        bind(continueButton, () -> {stateContext.switchTo().accept(stateContext.states().gameHud);});
+        bind(continueButton, () -> {stateContext.switchTo().accept(stateContext.states().gameHud);
+            stateContext.bus().publish(new engine_interfaces.objects.events.SwitchSceneEvent("Gameplay"));
+        });
     }
 
 

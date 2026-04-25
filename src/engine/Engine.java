@@ -43,23 +43,33 @@ public class Engine {
     // ------------------------------------
 
     public Engine(World world, Renderer renderer, int ticksPerSecond) throws IOException, InterruptedException {
+        Logs.log("Engine: constructor start");
         World = (world != null) ? world : new World(EventBus);
+        Logs.log("Engine: world ready (custom=" + (world != null) + ")");
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
+        Logs.log("Engine: renderer ready (custom=" + (renderer != null) + ", api=" + Renderer.Api.getClass().getSimpleName() + ")");
         SceneManager = new SceneManager(EventBus, World);
+        Logs.log("Engine: scene manager ready");
         TicksPerSecond = ticksPerSecond;
+        Logs.log("Engine: tick rate set to " + TicksPerSecond);
 
         // Add default render passes
         Renderer.renderPasses.addAll(CoreRenderPasses);
+        Logs.log("Engine: added core render passes (count=" + CoreRenderPasses.size() + ")");
 
         // Add input system
         Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
+        Logs.log("Engine: input handler system added");
 
         MovementSystem movementSys = new MovementSystem(EventBus);
         movementSys.movementPipeline.add(new CollisionProcessor(EventBus, World, Resources));
         movementSys.movementPipeline.add(new VelocityProcessor());
         Systems.addSystem(movementSys);
+        Logs.log("Engine: movement system added (processors=" + movementSys.movementPipeline.size() + ")");
 
-        Systems.addSystem(new SceneGraphSystem(World, EventBus));
+        Systems.addSystem(new SceneGraphSystem(EventBus));
+        Logs.log("Engine: scene graph system added");
+        Logs.log("Engine: constructor complete");
     }
 
     public void ShowOutput() throws IOException {
@@ -98,12 +108,10 @@ public class Engine {
                 if (frameTime < targetFrameTime) {
                     Thread.sleep((targetFrameTime - frameTime) / 1_000_000, (int) ((targetFrameTime - frameTime) % 1_000_000));
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            } catch (Exception e) {
+                Logs.log("Engine: rendering failed - " + e.getMessage());
 
+            }
 
             tick++;
         }

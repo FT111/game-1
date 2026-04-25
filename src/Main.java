@@ -1,32 +1,29 @@
 import engine.Engine;
 import engine.EngineFactory;
+import engine.Logs;
+import engine.systems.InputHandlerSystem;
+import engine.systems.MovementSystem;
+import engine.systems.SceneGraphSystem;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
-import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
-import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
-import engine_interfaces.objects.components.ui.ButtonComponent;
-import engine_interfaces.objects.components.ui.UIElementComponent;
-import engine_interfaces.objects.events.KeyInputEvent;
-import engine_interfaces.objects.events.MouseInputEvent;
-import engine_interfaces.objects.ui.SelectionStrategies;
 import resources.*;
-import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
 import resources.components.VisionLayerComponent;
-import engine.scenes.SceneManager;
 import resources.scenes.GameplayScene;
 import resources.scenes.MainMenuScene;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 
 public class Main {
-    public static void main(String[] args) {
+     public static void main(String[] args) {
+        Logs.log("Main: startup begin");
         EngineFactory factory = new EngineFactory();
+        Logs.log("Main: building engine");
         Engine engine = factory.build();
+        Logs.log("Main: engine built");
 
         engine.Resources.addResourceLoader(new MapAssetLoader());
 
@@ -37,6 +34,7 @@ public class Main {
             new PositionComponent(new Point(0,0), 100),
             new CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true)
         );
+        Logs.log("Main: camera entity created");
 
 
         TestSystem testSystem = new TestSystem(camera, engine.Renderer.Api, engine.World);
@@ -52,6 +50,7 @@ public class Main {
         MenuSystem menu = new MenuSystem(engine.EventBus, engine.World);
 
         engine.Systems.addSystem(menu);
+        Logs.log("Main: core gameplay systems wired");
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 
@@ -75,17 +74,29 @@ public class Main {
         gameplay.world.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         gameplay.world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
-        var playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
+        var playerSystem = new PlayerSystem(engine.EventBus, player, camera);
         gameplay.add(playerSystem);
         engine.Systems.addSystem(playerSystem);
 
         engine.SceneManager
-            .addScene("MainMenu", new MainMenuScene(menu, uiSystem))
-            .addScene("Gameplay", gameplay);
+            .addScene("MainMenu", new MainMenuScene(menu, uiSystem)
+                .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                    .add(engine.Systems.getSystem(UiInteractionSystem.class))
+                    .add(menu))
+            .addScene("Gameplay", gameplay
+                .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                .add(engine.Systems.getSystem(MovementSystem.class))
+                .add(engine.Systems.getSystem(SceneGraphSystem.class))
+                .add(engine.Systems.getSystem(VisionSystem.class))
+                    .add(chunkSystem)
+                    .add(uiSystem)
+                    .add(menu));
+        Logs.log("Main: scenes registered");
 
         // Switch to default scene
-        engine.SceneManager.switchScene("MainMenu");
-
+        engine.SceneManager.switchScene("Gameplay");
+        Logs.log("Main: switched to Gameplay scene");
+        Logs.log("Main: entering game loop");
         engine.StartGameLoop();
 
     }

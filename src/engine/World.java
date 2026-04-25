@@ -4,6 +4,7 @@ import engine_interfaces.objects.Component;
 import engine_interfaces.objects.ComponentIndex;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
+import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.EntityRegisteredEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
 
@@ -21,11 +22,13 @@ public class World extends CoreWorld {
 
     @Override
     protected void onEntityCreated(EntityID entityId) {
+        Entities.get(entityId).forEach((componentClass, component) -> ComponentEntitiesIndex.add(entityId, componentClass));
         bus.publish(new EntityRegisteredEvent(entityId));
     }
 
     @Override
     protected void onLayerCreated(LayerID layerId) {
+        Layers.get(layerId).forEach((componentClass, component) -> ComponentLayersIndex.add(layerId, componentClass));
         bus.publish(new LayerRegisteredEvent(layerId));
     }
 
@@ -36,6 +39,7 @@ public class World extends CoreWorld {
 
     @Override
     protected void onLayerRemoved(LayerID layerId) {
+        bus.publish(new LayerRemovedEvent(layerId));
         Layers.get(layerId).keySet().forEach(componentClass -> ComponentLayersIndex.remove(layerId, componentClass));
     }
 

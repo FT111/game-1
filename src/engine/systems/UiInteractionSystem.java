@@ -8,6 +8,7 @@ import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.*;
 import engine_interfaces.objects.components.ui.UIElementComponent;
 import engine_interfaces.objects.events.ButtonClickEvent;
+import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.Cell;
@@ -19,17 +20,29 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class UiInteractionSystem extends System {
     private IndexedInteractable focusedLayer = null;
-    private World world;
+    private final World world;
+    private final EventBus bus;
+    private final Resources resources;
     private final AtomicReference<HashMap<Point, IndexedInteractable>> staticUiElementIndex = new AtomicReference<>(new HashMap<>()); // Screen points
     private final AtomicReference<HashMap<Point, IndexedInteractable>> dynamicUiElementIndex = new AtomicReference<>(new HashMap<>()); // World points;
     private final HashMap<Point, IndexedInteractable> stagingStaticElementIndex = new HashMap<>();
     private final HashMap<Point, IndexedInteractable> stagingDynamicElementIndex = new HashMap<>();
     private final HashMap<LayerID, ArrayList<Point>> layerIndexPoints = new HashMap<>();
+    private final HashMap<LayerID, Positioning> layerIndexPositioning = new HashMap<>();
+
+    private EventSubscriptionReceipt mouseInputSubscription;
+    private EventSubscriptionReceipt layerRegisteredSubscription;
+    private EventSubscriptionReceipt layerRemovedSubscription;
 
     public UiInteractionSystem(World world, EventBus bus, Resources resources) {
         this.world = world;
+        this.bus = bus;
+        this.resources = resources;
+    }
 
-        bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
+    @Override
+    public void onEnter(World world) {
+        mouseInputSubscription = bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
             var input = (MouseInputEvent) event;
             if (input.eventType != MouseEventTypes.DOWN) {
                 return;
@@ -58,18 +71,53 @@ public class UiInteractionSystem extends System {
             bus.publish(new ButtonClickEvent(worldElement.layerID()));
         });
 
-        bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
+        layerRegisteredSubscription = bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
             var layerRegisteredEvent = (LayerRegisteredEvent) event;
             var components = world.Layers.get(layerRegisteredEvent.id);
-            if (components.containsKey(UIElementComponent.class)) {
+            if (components != null && components.containsKey(UIElementComponent.class)) {
                 indexUIElement(layerRegisteredEvent.id, world, resources);
-                return;
             }
         });
 
-        // register all current UI elements
+        layerRemovedSubscription = bus.subscribe(LayerRemovedEvent.class, () -> isEnabled, event -> {
+            var layerRemovedEvent = (LayerRemovedEvent) event;
+            removeIndexedUIElement(layerRemovedEvent.id);
+        });
+
+        stagingStaticElementIndex.clear();
+        stagingDynamicElementIndex.clear();
+        layerIndexPoints.clear();
+        layerIndexPositioning.clear();
+
+        // Register currently present UI elements.
         var uiLayers = world.ComponentLayersIndex.query(UIElementComponent.class);
         uiLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (mouseInputSubscription != null) {
+            mouseInputSubscription.cancel.run();
+            mouseInputSubscription = null;
+        }
+
+        if (layerRegisteredSubscription != null) {
+            layerRegisteredSubscription.cancel.run();
+            layerRegisteredSubscription = null;
+        }
+
+        if (layerRemovedSubscription != null) {
+            layerRemovedSubscription.cancel.run();
+            layerRemovedSubscription = null;
+        }
+
+        focusedLayer = null;
+        stagingStaticElementIndex.clear();
+        stagingDynamicElementIndex.clear();
+        layerIndexPoints.clear();
+        layerIndexPositioning.clear();
+        staticUiElementIndex.set(new HashMap<>());
+        dynamicUiElementIndex.set(new HashMap<>());
     }
 
     public void indexUIElement(LayerID layerID,  World world, Resources resources) {
@@ -81,12 +129,24 @@ public class UiInteractionSystem extends System {
         // Retrieve/index dynamic elements based on movement and camera position
 
         HashMap<Class<? extends Component>, Component> components = world.Layers.get(layerID);
+        if (components == null) {
+            return;
+        }
+
         var uiElement = (UIElementComponent) components.get(UIElementComponent.class);
         var position = (PositionComponent) components.get(PositionComponent.class);
         var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
         var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
 
+        if (uiElement == null || position == null || dimensions == null) {
+            return;
+        }
+
+        // Prevent duplicates when re-registering an existing layer.
+        removeIndexedUIElement(layerID);
+
         final IndexedInteractable interactable = new IndexedInteractable(layerID, position.zIndex);
+        layerIndexPositioning.put(layerID, position.positionStrategy);
         switch (uiElement.SelectionStrategy) {
             case BOUNDING -> {
                 for (int x = 0; x < dimensions.width; x++) {
@@ -121,23 +181,28 @@ public class UiInteractionSystem extends System {
 
     private void removeIndexedUIElement(LayerID layerId) {
         var points = layerIndexPoints.get(layerId);
-        var positionDetails = (PositionComponent) world.Layers.get(layerId).get(PositionComponent.class);
+        var positioning = layerIndexPositioning.get(layerId);
 
-        if (points == null) {
+        if (points == null || positioning == null) {
+            layerIndexPoints.remove(layerId);
+            layerIndexPositioning.remove(layerId);
             return;
         }
 
-        var index = (positionDetails.positionStrategy.equals(Positioning.FIXED)) ? stagingStaticElementIndex : stagingDynamicElementIndex;
+        var index = (positioning.equals(Positioning.FIXED)) ? stagingStaticElementIndex : stagingDynamicElementIndex;
 
         for (Point point : points) {
             index.remove(point);
         }
 
-        if (positionDetails.positionStrategy.equals(Positioning.FIXED)) {
+        if (positioning.equals(Positioning.FIXED)) {
             staticUiElementIndex.set(stagingStaticElementIndex);
         } else {
             dynamicUiElementIndex.set(stagingDynamicElementIndex);
         }
+
+        layerIndexPoints.remove(layerId);
+        layerIndexPositioning.remove(layerId);
     }
 
     private void stageElementCell(PositionComponent position, int x, int y, IndexedInteractable interactable) {

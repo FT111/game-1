@@ -99,8 +99,8 @@ public abstract class CoreWorld {
         if (!Layers.containsKey(layerId)) {
             throw new IllegalArgumentException("Layer ID does not exist: " + layerId);
         }
-        Layers.remove(layerId);
         onLayerRemoved(layerId);
+        Layers.remove(layerId);
     }
 
     public void merge(CoreWorld other) {

@@ -3,6 +3,7 @@ package resources;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.Event;
+import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.VisibilityComponent;
@@ -21,18 +22,51 @@ public class MenuSystem extends System{
     private UiBuilders uiBuilders;
     private MenuStates states;
     private MenuState currentMenuState;
-    private World world;
+    private final World world;
+    private final EventBus bus;
+    private EventSubscriptionReceipt buttonClickSubscription;
+    private EventSubscriptionReceipt keyInputSubscription;
 
     public MenuSystem(EventBus bus, World world) {
+        this.bus = bus;
         this.world = world;
-        this.uiBuilders = new UiBuilders(world);
-        this.states = new MenuStates(this::switchState, uiBuilders, bus);
+    }
 
-        this.currentMenuState = states.mainMenu;
-        bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick);
-        bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress);
+    @Override
+    public void onEnter(World world) {
+        if (states == null) {
+            uiBuilders = new UiBuilders(this.world);
+            states = new MenuStates(this::switchState, uiBuilders, bus);
+            currentMenuState = states.mainMenu;
+        }
 
+        buttonClickSubscription = bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick);
+        keyInputSubscription = bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress);
         switchState(currentMenuState);
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (buttonClickSubscription != null) {
+            buttonClickSubscription.cancel.run();
+            buttonClickSubscription = null;
+        }
+
+        if (keyInputSubscription != null) {
+            keyInputSubscription.cancel.run();
+            keyInputSubscription = null;
+        }
+
+        if (currentMenuState != null) {
+            currentMenuState.getLayers().forEach(layer -> {
+                if (this.world.Layers.containsKey(layer)) {
+                    this.world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(false));
+                }
+            });
+        }
+
+        buttonCallbacks.clear();
+        keyCallbacks.clear();
     }
 
 

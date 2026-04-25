@@ -7,18 +7,34 @@ import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 
 public class TestSystem extends System {
-    EntityID level;
+    private final EntityID level;
+    private final GraphicsAPI api;
+    private Runnable resizeSubscriptionCancel;
+    private World activeWorld;
 
     public TestSystem(EntityID level, GraphicsAPI api, World world) {
-        super();
         this.level = level;
+        this.api = api;
+        this.activeWorld = world;
+    }
 
-        api.onResize( () -> {
-            CameraComponent camera = (CameraComponent) world.Entities.get(level).get(CameraComponent.class);
+    @Override
+    public void onEnter(World world) {
+        activeWorld = world;
+        resizeSubscriptionCancel = api.onResize(() -> {
+            CameraComponent camera = (CameraComponent) activeWorld.Entities.get(level).get(CameraComponent.class);
             camera.viewWidth = api.getWidth();
             camera.viewHeight = api.getHeight();
             // IO.println("Resized to: " + api.getWidth() + "x" + api.getHeight());
         });
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (resizeSubscriptionCancel != null) {
+            resizeSubscriptionCancel.run();
+            resizeSubscriptionCancel = null;
+        }
     }
 
 

@@ -16,8 +16,8 @@ public interface GraphicsAPI
     int getWidth();
     int getHeight();
 
-    void onResize(Runnable callback);
+    Runnable onResize(Runnable callback);
 
-    void listenForKeyInput(Consumer<KeyInputEvent> callback) throws IOException;
-    void listenForMouseInput(Consumer<MouseInputEvent> callback) throws IOException;
+    Runnable listenForKeyInput(Consumer<KeyInputEvent> callback) throws IOException;
+    Runnable listenForMouseInput(Consumer<MouseInputEvent> callback) throws IOException;
 }

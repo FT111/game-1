@@ -1,22 +1,20 @@
 package engine.scenes;
 
 import engine.EventBus;
-import engine.Systems;
 import engine.World;
-import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.events.PopSceneEvent;
 import engine_interfaces.objects.events.PushSceneEvent;
 import engine_interfaces.objects.events.SwitchSceneEvent;
 
-import java.util.Set;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Stack;
-import java.util.stream.Collectors;
 
 public class SceneManager {
-    private Stack<Scene> sceneStack = new Stack<>();
+    private final Stack<Scene> sceneStack = new Stack<>();
     private final Map<String, Scene> scenes = new HashMap<>();
     private final World engineWorld;
 
@@ -43,56 +41,112 @@ public class SceneManager {
         return this;
     }
 
+    private Set<System> collectActiveSystems() {
+        var activeSystems = new HashSet<System>();
+        for (Scene scene : sceneStack) {
+            activeSystems.addAll(scene.getSystems());
+        }
+        return activeSystems;
+    }
+
+    private void deactivateSystems(Set<System> previousActiveSystems, Set<System> targetActiveSystems) {
+        for (System system : previousActiveSystems) {
+            if (targetActiveSystems.contains(system)) {
+                continue;
+            }
+
+            system.onExit(engineWorld);
+            system.isEnabled = false;
+        }
+    }
+
+    private void activateSystems(Set<System> previousActiveSystems, Set<System> targetActiveSystems) {
+        for (System system : targetActiveSystems) {
+            if (previousActiveSystems.contains(system)) {
+                continue;
+            }
+
+            system.isEnabled = true;
+            system.onEnter(engineWorld);
+        }
+    }
+
+    private void notifySceneChange(Set<System> previousActiveSystems, Set<System> targetActiveSystems, Scene fromScene, Scene toScene) {
+        var allTransitionedSystems = new HashSet<System>();
+        allTransitionedSystems.addAll(previousActiveSystems);
+        allTransitionedSystems.addAll(targetActiveSystems);
+
+        for (System system : allTransitionedSystems) {
+            system.onSceneChange(fromScene, toScene, engineWorld);
+        }
+    }
+
     public void switchScene(String sceneName) {
         Scene newScene = scenes.get(sceneName);
         if (newScene == null) {
             throw new IllegalArgumentException("Scene " + sceneName + " not found");
         }
 
+        if (sceneStack.size() == 1 && sceneStack.peek() == newScene) {
+            return;
+        }
+
+        Set<System> previousActiveSystems = collectActiveSystems();
+        Scene previousTopScene = sceneStack.isEmpty() ? null : sceneStack.peek();
+
+        Set<System> targetActiveSystems = new HashSet<>(newScene.getSystems());
+        deactivateSystems(previousActiveSystems, targetActiveSystems);
 
         while (!sceneStack.isEmpty()) {
             Scene activeScene = sceneStack.pop();
-            // Disable systems that are not in the new scene
-
-            engineWorld.remove(activeScene.world);
-
-            Set<System> removedSystems = activeScene.getSystems().stream()
-                .filter(system -> !newScene.getSystems().contains(system))
-                .collect(Collectors.toSet());
-
-            for (System sys : removedSystems) {
-                sys.isEnabled = false;
-            }
-
             activeScene.exit();
+            engineWorld.remove(activeScene.world);
         }
 
         sceneStack.add(newScene);
-        // Enable new systems
-        for (System sys : newScene.getSystems()) {
-            sys.isEnabled = true;
-        }
         engineWorld.merge(newScene.world);
+        newScene.enter();
+
+        activateSystems(previousActiveSystems, targetActiveSystems);
+        notifySceneChange(previousActiveSystems, targetActiveSystems, previousTopScene, newScene);
     }
 
     public void pushScene(String sceneName) {
         var scene = scenes.get(sceneName);
         if (scene == null) { throw new IllegalArgumentException("Scene " + sceneName + " not found"); }
 
-        for (System sys : scene.getSystems()) {
-            sys.isEnabled = true;
-        }
+        Set<System> previousActiveSystems = collectActiveSystems();
+        Scene previousTopScene = sceneStack.isEmpty() ? null : sceneStack.peek();
+
+        Set<System> targetActiveSystems = new HashSet<>(previousActiveSystems);
+        targetActiveSystems.addAll(scene.getSystems());
+        deactivateSystems(previousActiveSystems, targetActiveSystems);
+
         engineWorld.merge(scene.world);
         sceneStack.add(scene);
+        scene.enter();
+
+        activateSystems(previousActiveSystems, targetActiveSystems);
+        notifySceneChange(previousActiveSystems, targetActiveSystems, previousTopScene, scene);
     }
 
     public void popScene() {
-        var scene = sceneStack.pop();
-
-        engineWorld.remove(scene.world);
-        for (System system : scene.getSystems()) {
-            system.isEnabled = false;
+        if (sceneStack.isEmpty()) {
+            throw new IllegalStateException("Cannot pop scene from an empty scene stack");
         }
+
+        Set<System> previousActiveSystems = collectActiveSystems();
+        var scene = sceneStack.pop();
+        Scene newTopScene = sceneStack.isEmpty() ? null : sceneStack.peek();
+
+        Set<System> targetActiveSystems = collectActiveSystems();
+        deactivateSystems(previousActiveSystems, targetActiveSystems);
+
+        scene.exit();
+        engineWorld.remove(scene.world);
+
+        activateSystems(previousActiveSystems, targetActiveSystems);
+        notifySceneChange(previousActiveSystems, targetActiveSystems, scene, newTopScene);
     }
 
     public Stack<Scene> getSceneStack() {

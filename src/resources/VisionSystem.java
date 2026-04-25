@@ -36,14 +36,23 @@ public class VisionSystem extends System {
         this.world = world;
         this.resources = resources;
         this.globalTickFrequency = globalTickFrequency;
-        bakeStaticVisionMap(world, resources);
     }
 
     public VisionSystem(World world, Resources resources) {
         this.world = world;
         this.resources = resources;
         this.globalTickFrequency = 1;
+    }
+
+    @Override
+    public void onEnter(World world) {
+        staticVisionBlockMap.clear();
         bakeStaticVisionMap(world, resources);
+    }
+
+    @Override
+    public void onExit(World world) {
+        staticVisionBlockMap.clear();
     }
 
     private void bakeStaticVisionMap(World world, Resources resources) {

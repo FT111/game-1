@@ -4,6 +4,7 @@ import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.PositionComponent;
@@ -19,22 +20,35 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 public class MovementSystem extends System {
     private final ConcurrentLinkedDeque<MovementProposalEvent> pendingMovements;
     private final HashSet<UUID> approvedMovementEventsThisTick = new HashSet<>();
-    private EventBus Bus;
+    private final EventBus bus;
+    private EventSubscriptionReceipt movementProposalSubscription;
 
     public ArrayList<MovementProcessor> movementPipeline;
 
-    public MovementSystem(EventBus Bus) {
+    public MovementSystem(EventBus bus) {
         pendingMovements = new ConcurrentLinkedDeque<>();
         movementPipeline = new ArrayList<>();
-        this.Bus = Bus;
+        this.bus = bus;
+    }
 
+    @Override
+    public void onEnter(World world) {
+        movementProposalSubscription = bus.subscribe(MovementProposalEvent.class, () -> isEnabled,
+            event -> {
+                var movementProposal = (MovementProposalEvent) event;
+                pendingMovements.add(movementProposal);
+            });
+    }
 
-        // Accumulate movement proposals
-        Bus.subscribe(MovementProposalEvent.class, () -> isEnabled,
-        event -> {
-            var movementProposal = (MovementProposalEvent) event;
-            pendingMovements.add(movementProposal);
-        });
+    @Override
+    public void onExit(World world) {
+        if (movementProposalSubscription != null) {
+            movementProposalSubscription.cancel.run();
+            movementProposalSubscription = null;
+        }
+
+        pendingMovements.clear();
+        approvedMovementEventsThisTick.clear();
     }
 
 
@@ -55,7 +69,7 @@ public class MovementSystem extends System {
                 var positionComponent = (PositionComponent) entityStateSnapshot.get(movementProposal.entityID).get(PositionComponent.class);
                 positionComponent.Origin = movementProposal.proposedPosition;
                 approvedMovementEventsThisTick.add(movementProposal.eventID);
-                Bus.publish(new MovementEvent(movementProposal.entityID, movementProposal.currentPosition, movementProposal.proposedPosition));
+                bus.publish(new MovementEvent(movementProposal.entityID, movementProposal.currentPosition, movementProposal.proposedPosition));
             }
         }
 

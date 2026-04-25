@@ -94,7 +94,7 @@ public class Main {
         Logs.log("Main: scenes registered");
 
         // Switch to default scene
-        engine.SceneManager.switchScene("Gameplay");
+        engine.SceneManager.switchScene("MainMenu");
         Logs.log("Main: switched to Gameplay scene");
         Logs.log("Main: entering game loop");
         engine.StartGameLoop();

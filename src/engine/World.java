@@ -34,13 +34,13 @@ public class World extends CoreWorld {
 
     @Override
     protected void onEntityRemoved(EntityID entityId) {
-        Entities.get(entityId).keySet().forEach(componentClass -> ComponentEntitiesIndex.remove(entityId, componentClass));
+        ComponentEntitiesIndex.remove(entityId);
     }
 
     @Override
     protected void onLayerRemoved(LayerID layerId) {
+        ComponentLayersIndex.remove(layerId);
         bus.publish(new LayerRemovedEvent(layerId));
-        Layers.get(layerId).keySet().forEach(componentClass -> ComponentLayersIndex.remove(layerId, componentClass));
     }
 
     @Override

@@ -19,7 +19,6 @@ public final class Logs {
     }
 
     public static void log(String message) {
-        IO.println(message);
         LOGGER.info(message);
     }
 

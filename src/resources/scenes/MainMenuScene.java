@@ -13,6 +13,5 @@ public class MainMenuScene extends Scene {
 
     @Override
     protected void onEnter() {
-        java.lang.System.out.println("Entering Main Menu Scene");
     }
 }

@@ -39,7 +39,6 @@ public class GameplayScene extends Scene {
 
     @Override
     protected void onEnter() {
-        java.lang.System.out.println("Entering Gameplay Scene");
     }
 }
 

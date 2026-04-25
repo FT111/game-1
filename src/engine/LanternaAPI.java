@@ -61,18 +61,19 @@ public class LanternaAPI implements GraphicsAPI {
         terminal.addResizeListener((TerminalResizeListener) (terminal, newSize) -> {
             screen.doResizeIfNecessary();
         });
+
     }
 
+    // TODO: add native windows terminal support
     private Terminal createTerminalWithFallback(DefaultTerminalFactory factory) throws IOException {
         try {
             Logs.log("LanternaAPI: trying native terminal backend");
             return factory.createTerminal();
-        } catch (IOException | RuntimeException nativeInitError) {
-            // Some Windows hosts fail native terminal init (e.g. missing stty.exe).
+        } catch (Exception nativeInitError) {
             Logs.log("LanternaAPI: native backend failed - " + nativeInitError.getClass().getSimpleName() + ": " + nativeInitError.getMessage());
             try {
                 Logs.log("LanternaAPI: trying terminal emulator backend");
-                return factory.createTerminalEmulator();
+                return factory.createHeadlessTerminal();
             } catch (RuntimeException emulatorInitError) {
                 Logs.log("LanternaAPI: terminal emulator backend failed - " + emulatorInitError.getClass().getSimpleName() + ": " + emulatorInitError.getMessage());
                 Logs.log("LanternaAPI: falling back to swing terminal backend");

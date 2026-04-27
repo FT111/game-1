@@ -1,6 +1,7 @@
 package resources;
 
 import engine.World;
+import engine_interfaces.objects.Alignment;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
@@ -20,6 +21,7 @@ public class UiBuilders {
         Positioning positioningStrategy = Positioning.ABSOLUTE;
         LayerID parent;
         int zIndex = 0;
+        Alignment alignment;
 
         protected T object;
 
@@ -41,6 +43,11 @@ public class UiBuilders {
 
         public B withParent(LayerID layerId) {
             this.parent = layerId;
+            return self();
+        }
+
+        public B withAlignment(Alignment alignment) {
+            this.alignment = alignment;
             return self();
         }
 
@@ -70,7 +77,7 @@ public class UiBuilders {
         public LayerID build() {
             LayerID containerLayer = world.createLayer(
                     new VisibilityComponent(false),
-                    new PositionComponent(position, zIndex, positioningStrategy),
+                    new PositionComponent(position, zIndex, positioningStrategy, alignment),
                     new DimensionsComponent(width, height)
             );
             if (parent != null) { world.addComponentToLayer(containerLayer, new ParentComponent(parent));}
@@ -115,7 +122,7 @@ public class UiBuilders {
         public LayerID build() {
             LayerID buttonLayer = world.createLayer(
                     new VisibilityComponent(false),
-                    new PositionComponent(position, zIndex, positioningStrategy),
+                    new PositionComponent(position, zIndex, positioningStrategy, alignment),
                     new UIElementComponent(SelectionStrategies.BOUNDING),
                     new DimensionsComponent(width, height)
             );

@@ -1,5 +1,6 @@
 package resources.menus.states;
 
+import engine_interfaces.objects.Alignment;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import resources.menus.MenuState;
@@ -10,7 +11,8 @@ public class MainMenu extends MenuState {
         String continueText = "Continue";
         var continueButton = stateContext.ui().new ButtonBuilder()
                 .withStaticText(continueText)
-                .withPosition(new Point(20,15), Positioning.FIXED)
+                .withPosition(new Point(50,15), Positioning.FIXED)
+                .withAlignment(Alignment.CENTER)
                 .withDimensions(continueText.length()+2, 1)
                 .build();
 

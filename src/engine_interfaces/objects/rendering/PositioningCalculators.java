@@ -13,15 +13,12 @@ import java.util.Map;
 public class PositioningCalculators {
 
     // Calculates the child's offset relative to its immediate parent's dimensions
-    public static Point calculateAlignmentOffset(World world, LayerID childId, CameraView camera) {
+    public static Point calculateAlignmentOffset(World world, Point position, LayerID childId, CameraView camera) {
         HashMap<Class<? extends Component>, Component> childComps = world.Layers.get(childId);
         if (childComps == null) return new Point(0, 0);
 
         PositionComponent childPos = (PositionComponent) childComps.get(PositionComponent.class);
         DimensionsComponent childDim = (DimensionsComponent) childComps.get(DimensionsComponent.class);
-        if (childPos == null || childPos.alignment == Alignment.TOP_LEFT || childDim == null) {
-            return childPos != null ? childPos.Origin : new Point(0, 0);
-        }
 
         int parentWidth, parentHeight;
 
@@ -53,7 +50,7 @@ public class PositioningCalculators {
         }
 
         // Return the anchored position + the local origin offset (which acts as margin)
-        return new Point(dx + childPos.Origin.x(), dy + childPos.Origin.y());
+        return new Point(dx + position.x(), dy + position.y());
     }
 
     public static Point findRelativeOffset(World world, LayerID id, CameraView camera) {
@@ -64,7 +61,8 @@ public class PositioningCalculators {
 
         while (node.parent != null && node.parent.objectId != null) {
             // Accumulate parent's calculated alignment offsets up the tree
-            offset = offset.add(calculateAlignmentOffset(world, node.parent.objectId, camera));
+            Point parentPosition = ((PositionComponent) world.Layers.get(node.parent.objectId).get(PositionComponent.class)).Origin;
+            offset = offset.add(calculateAlignmentOffset(world, parentPosition, node.parent.objectId, camera));
             node = node.parent;
         }
         return offset;
@@ -77,11 +75,11 @@ public class PositioningCalculators {
 
     public static Map<Positioning, PositioningStrategy> calc = new EnumMap<>(Map.of(
             Positioning.ABSOLUTE, (currentPosition, layerId, world, camera) ->
-                    camera.worldToScreen(calculateAlignmentOffset(world, layerId, camera)),
+                    camera.worldToScreen(calculateAlignmentOffset(world, currentPosition, layerId, camera)),
 
             Positioning.RELATIVE, (currentPosition, layerId, world, camera) ->
-                    camera.worldToScreen(calculateAlignmentOffset(world, layerId, camera).add(findRelativeOffset(world, layerId, camera))),
+                    camera.worldToScreen(calculateAlignmentOffset(world, currentPosition, layerId, camera).add(findRelativeOffset(world, layerId, camera))),
 
             Positioning.FIXED, (currentPosition, layerId, world, camera) ->
-                    calculateAlignmentOffset(world, layerId, camera).add(findRelativeOffset(world, layerId, camera))
+                    calculateAlignmentOffset(world, currentPosition, layerId, camera).add(findRelativeOffset(world, layerId, camera))
     ));}

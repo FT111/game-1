@@ -2,19 +2,35 @@ package engine.systems;
 
 import engine.EventBus;
 import engine.World;
+import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.ParentComponent;
-import engine_interfaces.objects.events.EntityRegisteredEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.scene.SceneNode;
 
 import java.util.NoSuchElementException;
 
 public class SceneGraphSystem extends System {
+    private final EventBus bus;
+    private EventSubscriptionReceipt layerRegisteredSubscription;
 
-    public SceneGraphSystem(World world, EventBus bus) {
-        bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, (event -> handleLayerRegistered((LayerRegisteredEvent) event, world)));
+    public SceneGraphSystem(EventBus bus) {
+        this.bus = bus;
+    }
+
+    @Override
+    public void onEnter(World world) {
+        layerRegisteredSubscription = bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled,
+            event -> handleLayerRegistered((LayerRegisteredEvent) event, world));
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (layerRegisteredSubscription != null) {
+            layerRegisteredSubscription.cancel.run();
+            layerRegisteredSubscription = null;
+        }
     }
 
     private void handleLayerRegistered(LayerRegisteredEvent event, World world) {

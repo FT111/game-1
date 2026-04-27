@@ -3,6 +3,7 @@ package resources;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.EntityID;
+import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.events.MovementEvent;
@@ -16,14 +17,22 @@ import java.util.HashSet;
 public class ChunkSystem extends System {
     private final int chunkSize;
     private HashMap<Point, HashSet<EntityID>> chunkEntities = new HashMap<>();
+    private final EventBus bus;
+    private final World world;
+    private EventSubscriptionReceipt movementSubscription;
 
-    public ChunkSystem(EventBus Bus, World world, int chunkSize, HashMap<Point, HashSet<EntityID>> chunkMap) {
+    public ChunkSystem(EventBus bus, World world, int chunkSize, HashMap<Point, HashSet<EntityID>> chunkMap) {
         this.chunkSize = chunkSize;
         this.chunkEntities = chunkMap;
+        this.bus = bus;
+        this.world = world;
+    }
 
-        Bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
+    @Override
+    public void onEnter(World world) {
+        movementSubscription = bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
             var movementEvent = (MovementEvent) event;
-            var chunkComponent = (ChunkableComponent) world.Entities.get(movementEvent.entityID).get(ChunkableComponent.class);
+            var chunkComponent = (ChunkableComponent) this.world.Entities.get(movementEvent.entityID).get(ChunkableComponent.class);
 
             if (chunkComponent == null) {
                 return;
@@ -45,6 +54,14 @@ public class ChunkSystem extends System {
                 chunkEntities.computeIfAbsent(newChunk, chunk -> new HashSet<>()).add(movementEvent.entityID);
             }
         });
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (movementSubscription != null) {
+            movementSubscription.cancel.run();
+            movementSubscription = null;
+        }
     }
 
     public Point getChunkForPosition(Point position) {

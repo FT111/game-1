@@ -23,8 +23,12 @@ public class EngineFactory {
 
     public Engine build() {
         try {
-            return new Engine(world, renderer, ticksPerSecond);
+            Logs.log("EngineFactory.build: start (customWorld=" + (world != null) + ", customRenderer=" + (renderer != null) + ", ticksPerSecond=" + ticksPerSecond + ")");
+            Engine engine = new Engine(world, renderer, ticksPerSecond);
+            Logs.log("EngineFactory.build: success");
+            return engine;
         } catch (Exception e) {
+            Logs.log("EngineFactory.build: failed with " + e.getClass().getSimpleName() + " - " + e.getMessage());
             throw new RuntimeException("Failed to create Engine instance", e);
         }
     }

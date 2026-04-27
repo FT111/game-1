@@ -4,104 +4,52 @@ import engine_interfaces.objects.Component;
 import engine_interfaces.objects.ComponentIndex;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
+import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.EntityRegisteredEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
-import engine_interfaces.objects.scene.SceneNode;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
-
-/// Contains all entities and layers in the game world.
+/// Contains all entities and layers currently in the game world.
 /// Responsible for world data, but not logic.
-public class World {
+public class World extends CoreWorld {
     private EventBus bus;
 
-    public HashMap<EntityID, HashMap<Class<? extends Component>, Component>> Entities = new HashMap<>();
-    public HashMap<LayerID, HashMap<Class<? extends Component>, Component>> Layers = new HashMap<>();
-
-    public SceneNode<LayerID> layerSceneGraphRoot = new SceneNode<>(null, null);
-    public HashMap<LayerID, SceneNode<LayerID>> layerSceneGraphNodes = new HashMap<>();
+    public ComponentIndex<EntityID> ComponentEntitiesIndex = new ComponentIndex<>();
+    public ComponentIndex<LayerID> ComponentLayersIndex = new ComponentIndex<>();
 
     public World(EventBus bus) {
         this.bus = bus;
     }
 
-    public EntityID createEntity(String Id) {
-        EntityID newId = new EntityID(Id);
-        Entities.put(newId, new HashMap<>());
-        bus.publish(new EntityRegisteredEvent(newId));
-        return newId;
+    @Override
+    protected void onEntityCreated(EntityID entityId) {
+        Entities.get(entityId).forEach((componentClass, component) -> ComponentEntitiesIndex.add(entityId, componentClass));
+        bus.publish(new EntityRegisteredEvent(entityId));
     }
 
-    public EntityID createEntity() {
-        String newId = UUID.randomUUID().toString();
-        return createEntity(newId);
+    @Override
+    protected void onLayerCreated(LayerID layerId) {
+        Layers.get(layerId).forEach((componentClass, component) -> ComponentLayersIndex.add(layerId, componentClass));
+        bus.publish(new LayerRegisteredEvent(layerId));
     }
 
-    public EntityID createEntity(String Id, Component... components) {
-        EntityID newId = createEntity(Id);
-        for (Component component : components) {
-            addComponentToEntity(newId, component);
-        }
-        return newId;
+    @Override
+    protected void onEntityRemoved(EntityID entityId) {
+        ComponentEntitiesIndex.remove(entityId);
     }
 
-    public EntityID createEntity(Component... components) {
-        EntityID newId = createEntity();
-        for (Component component : components) {
-            addComponentToEntity(newId, component);
-        }
-        return newId;
+    @Override
+    protected void onLayerRemoved(LayerID layerId) {
+        ComponentLayersIndex.remove(layerId);
+        bus.publish(new LayerRemovedEvent(layerId));
     }
 
-    public LayerID createLayer(String Id) {
-        LayerID newId = new LayerID(Id);
-        Layers.put(newId, new HashMap<>());
-        bus.publish(new LayerRegisteredEvent(newId));
-        return newId;
-    }
-
-    public LayerID createLayer() {
-        String newId = UUID.randomUUID().toString();
-        return createLayer(newId);
-    }
-
-    public LayerID createLayer(String Id, Component... components) {
-        LayerID newId = createLayer(Id);
-        for (Component component : components) {
-            addComponentToLayer(newId, component);
-        }
-        return newId;
-    }
-
-    public LayerID createLayer(Component... components) {
-        LayerID newId = createLayer();
-        for (Component component : components) {
-            addComponentToLayer(newId, component);
-        }
-        return newId;
-    }
-
-    public void addComponentToEntity(EntityID entityId, Component component) {
-        HashMap<Class<? extends Component>, Component> components = Entities.get(entityId);
-        if (components == null) {
-            throw new IllegalArgumentException("Entity ID does not exist: " + entityId);
-        }
-        components.put(component.getClass(), component);
+    @Override
+    protected void onComponentAddedToEntity(EntityID entityId, Component component) {
         ComponentEntitiesIndex.add(entityId, component.getClass());
     }
 
-    public void addComponentToLayer(LayerID layerId, Component component) {
-        HashMap<Class<? extends Component>,  Component> components = Layers.get(layerId);
-        if (components == null) {
-            throw new IllegalArgumentException("Layer ID does not exist: " + layerId);
-        }
-        components.put(component.getClass(), component);
+    @Override
+    protected void onComponentAddedToLayer(LayerID layerId, Component component) {
         ComponentLayersIndex.add(layerId, component.getClass());
     }
-
-    public ComponentIndex<EntityID> ComponentEntitiesIndex = new ComponentIndex<>();
-    public ComponentIndex<LayerID> ComponentLayersIndex = new ComponentIndex<>();
 }

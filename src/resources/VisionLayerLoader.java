@@ -15,15 +15,8 @@ import java.util.List;
 
 public class VisionLayerLoader implements ResourceLoader {
     private HashMap<String, Object> blankVisionTileMaps = new HashMap<>();
-    private Cell[][] debugFilledTileMap = new Cell[50][50];
 
     public VisionLayerLoader(World world) {
-        for (Cell[] cells : debugFilledTileMap) {
-            for (Cell cell : cells) {
-                if (cell == null) { cell = new Cell('&');}
-            }
-        }
-
         // Get emitting entities
         HashSet<LayerID> visionLayers = (HashSet<LayerID>) world.ComponentLayersIndex.query(new Class[]{VisionLayerComponent.class, TileMapComponent.class, DimensionsComponent.class});
 

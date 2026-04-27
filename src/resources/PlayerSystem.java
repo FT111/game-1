@@ -3,7 +3,7 @@ package resources;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.EntityID;
-import engine_interfaces.objects.MouseEventTypes;
+import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
@@ -12,7 +12,6 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
-import resources.components.VisionEmitterComponent;
 
 import java.util.HashMap;
 
@@ -29,18 +28,23 @@ public class PlayerSystem extends System {
     private PositionComponent cameraPosition;
     private Point cursorWorldPosition;
 
-    private EventBus bus;
+    private final EventBus bus;
+    private EventSubscriptionReceipt mouseInputSubscription;
+    private EventSubscriptionReceipt keyInputSubscription;
 
 
-    public PlayerSystem(EventBus bus, World world, EntityID playerEntity, EntityID cameraEntity) {
+    public PlayerSystem(EventBus bus, EntityID playerEntity, EntityID cameraEntity) {
         this.playerEntity = playerEntity;
         this.cameraEntity = cameraEntity;
         this.bus = bus;
+    }
 
+    @Override
+    public void onEnter(World world) {
         lockCameraToPlayer(world, cameraEntity);
         this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
 
-        bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
+        mouseInputSubscription = bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
             var input = (MouseInputEvent) event;
 //            if (input.eventType != MouseEventTypes.DRAG) {
 //                return;
@@ -51,7 +55,6 @@ public class PlayerSystem extends System {
                 input.screenPosition.x() + cameraPosition.Origin.x(),
                 input.screenPosition.y() + cameraPosition.Origin.y()
             );
-            var playerVision = (VisionEmitterComponent) world.Entities.get(playerEntity).get(VisionEmitterComponent.class);
             var orientation = (OrientationComponent) world.Entities.get(playerEntity).get(OrientationComponent.class);
             var playerPosition = getPlayerWorldPosition(world);
             // get the angle of the mouse cursor relative to the player
@@ -59,7 +62,7 @@ public class PlayerSystem extends System {
             orientation.facingAngle = (int) Math.toDegrees(Math.atan2((cursorWorldPosition.y() - playerPosition.Origin.y())*2, cursorWorldPosition.x() - playerPosition.Origin.x()));
         });
 
-        bus.subscribe(KeyInputEvent.class, () -> isEnabled, event -> {
+        keyInputSubscription = bus.subscribe(KeyInputEvent.class, () -> isEnabled, event -> {
             var input = (KeyInputEvent) event;
 
             if (movementDirections.containsKey(input.key)) {
@@ -79,6 +82,19 @@ public class PlayerSystem extends System {
                         playerMovementProposal.eventID));
             }
         });
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (mouseInputSubscription != null) {
+            mouseInputSubscription.cancel.run();
+            mouseInputSubscription = null;
+        }
+
+        if (keyInputSubscription != null) {
+            keyInputSubscription.cancel.run();
+            keyInputSubscription = null;
+        }
     }
 
     private void moveInDirection(World world, Point direction) {

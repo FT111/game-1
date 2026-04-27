@@ -1,83 +1,102 @@
 import engine.Engine;
 import engine.EngineFactory;
+import engine.Logs;
+import engine.systems.InputHandlerSystem;
+import engine.systems.MovementSystem;
+import engine.systems.SceneGraphSystem;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
-import engine_interfaces.objects.MouseEventTypes;
 import engine_interfaces.objects.Point;
-import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
-import engine_interfaces.objects.components.ui.ButtonComponent;
-import engine_interfaces.objects.components.ui.UIElementComponent;
-import engine_interfaces.objects.events.KeyInputEvent;
-import engine_interfaces.objects.events.MouseInputEvent;
-import engine_interfaces.objects.ui.SelectionStrategies;
 import resources.*;
-import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
 import resources.components.VisionLayerComponent;
+import resources.scenes.GameplayScene;
+import resources.scenes.MainMenuScene;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 
 public class Main {
-    public static void main(String[] args) {
+     public static void main(String[] args) {
+        Logs.log("Main: startup begin");
         EngineFactory factory = new EngineFactory();
+        Logs.log("Main: building engine");
         Engine engine = factory.build();
+        Logs.log("Main: engine built");
 
         engine.Resources.addResourceLoader(new MapAssetLoader());
 
         HashMap<Point, HashSet<EntityID>> chunkMap = new HashMap<>();
 
-        var levelMap = engine.World.createLayer(
-            new TileMapComponent("mapAssets", "level", "tl", false),
-            new PositionComponent(new Point(0,0), -1, Positioning.ABSOLUTE),
-            new DimensionsComponent(100,100),
-            new VisibilityComponent(true),
-            new VisionBlockerComponent(new HashSet<>() {{
-            add('#');
-        }}),
-            new LayerColliderComponent(new HashSet<>() {{
-            add('#');
-        }})
-        );
+
         var camera = engine.World.createEntity(
             new PositionComponent(new Point(0,0), 100),
             new CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true)
         );
+        Logs.log("Main: camera entity created");
 
-        var playerVision = engine.World.createLayer(
-            new PositionComponent(new Point(0,0), 1),
-            new VisibilityComponent(true),
-            new DimensionsComponent(250,250)
-        );
 
-        var player = engine.World.createEntity(
-            new PositionComponent(new Point(3,3), 3),
-            new RenderableComponent('@', null, null, true),
-            new VelocityComponent(1.2, 6,  "exponential"),
-            new VisionEmitterComponent(150, 110, 5, playerVision),
-            new OrientationComponent(90)
-        );
+        TestSystem testSystem = new TestSystem(camera, engine.Renderer.Api, engine.World);
+        VisionSystem visionSystem = new VisionSystem(engine.World, engine.Resources, chunkMap, 1);
+        ChunkSystem chunkSystem = new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap);
 
-        engine.World.addComponentToLayer(playerVision, new VisionLayerComponent(player));
-        engine.World.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
+        engine.Systems.addSystem(testSystem);
+        engine.Systems.addSystem(visionSystem);
 
-        engine.Systems.addSystem(new TestSystem(camera, engine.Renderer.Api, engine.World));
-        engine.Systems.addSystem(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
-        PlayerSystem playerSystem = new PlayerSystem(engine.EventBus, engine.World, player, camera);
-        engine.Renderer.Api.onResize(() -> {
-            playerSystem.lockCameraToPlayer(engine.World, camera);
-        });
-        engine.Systems.addSystem(playerSystem);
-        engine.Systems.addSystem(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
-        engine.Systems.addSystem(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources));
+        engine.Systems.addSystem(chunkSystem);
+        UiInteractionSystem uiSystem = new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources);
+        engine.Systems.addSystem(uiSystem);
         MenuSystem menu = new MenuSystem(engine.EventBus, engine.World);
 
         engine.Systems.addSystem(menu);
+        Logs.log("Main: core gameplay systems wired");
 
         engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
 
+
+        // Create the scenes directly on the engine
+        GameplayScene gameplay = new GameplayScene(visionSystem, chunkSystem);
+        var playerVision = gameplay.world.createLayer(
+                new PositionComponent(new Point(0,0), 1),
+                new VisibilityComponent(true),
+                new DimensionsComponent(250,250)
+        );
+
+        var player = gameplay.world.createEntity(
+                new PositionComponent(new Point(3,3), 3),
+                new RenderableComponent('@', null, null, true),
+                new VelocityComponent(1.2, 6,  "exponential"),
+                new VisionEmitterComponent(150, 110, 5, playerVision),
+                new OrientationComponent(90)
+        );
+
+        gameplay.world.addComponentToLayer(playerVision, new VisionLayerComponent(player));
+        gameplay.world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
+
+        var playerSystem = new PlayerSystem(engine.EventBus, player, camera);
+        gameplay.add(playerSystem);
+        engine.Systems.addSystem(playerSystem);
+
+        engine.SceneManager
+            .addScene("MainMenu", new MainMenuScene(menu, uiSystem)
+                .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                    .add(engine.Systems.getSystem(UiInteractionSystem.class))
+                    .add(menu))
+            .addScene("Gameplay", gameplay
+                .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                .add(engine.Systems.getSystem(MovementSystem.class))
+                .add(engine.Systems.getSystem(SceneGraphSystem.class))
+                .add(engine.Systems.getSystem(VisionSystem.class))
+                    .add(chunkSystem)
+                    .add(uiSystem)
+                    .add(menu));
+        Logs.log("Main: scenes registered");
+
+        // Switch to default scene
+        engine.SceneManager.switchScene("MainMenu");
+        Logs.log("Main: switched to Gameplay scene");
+        Logs.log("Main: entering game loop");
         engine.StartGameLoop();
 
     }

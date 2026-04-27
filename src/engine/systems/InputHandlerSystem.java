@@ -3,19 +3,42 @@ package engine.systems;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.System;
-import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 
 import java.io.IOException;
 
 public class InputHandlerSystem extends System {
-    private GraphicsAPI Api;
+    private final GraphicsAPI api;
+    private final EventBus bus;
+    private Runnable keyInputSubscriptionCancel;
+    private Runnable mouseInputSubscriptionCancel;
 
-    public InputHandlerSystem(GraphicsAPI Api, EventBus Bus) throws IOException {
-        this.Api = Api;
+    public InputHandlerSystem(GraphicsAPI api, EventBus bus) {
+        this.api = api;
+        this.bus = bus;
+    }
 
-        Api.listenForKeyInput(Bus::publish);
-        Api.listenForMouseInput(Bus::publish);
+    @Override
+    public void onEnter(World world) {
+        try {
+            keyInputSubscriptionCancel = api.listenForKeyInput(bus::publish);
+            mouseInputSubscriptionCancel = api.listenForMouseInput(bus::publish);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to register input listeners", e);
+        }
+    }
+
+    @Override
+    public void onExit(World world) {
+        if (keyInputSubscriptionCancel != null) {
+            keyInputSubscriptionCancel.run();
+            keyInputSubscriptionCancel = null;
+        }
+
+        if (mouseInputSubscriptionCancel != null) {
+            mouseInputSubscriptionCancel.run();
+            mouseInputSubscriptionCancel = null;
+        }
     }
 
     @Override

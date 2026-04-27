@@ -1,6 +1,7 @@
 package engine.scenes;
 
 import engine.EventBus;
+import engine.Systems;
 import engine.World;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.events.PopSceneEvent;
@@ -17,9 +18,11 @@ public class SceneManager {
     private final Stack<Scene> sceneStack = new Stack<>();
     private final Map<String, Scene> scenes = new HashMap<>();
     private final World engineWorld;
+    private final Systems systems;
 
-    public SceneManager(EventBus bus, World world) {
+    public SceneManager(EventBus bus, World world, Systems systems) {
         engineWorld = world;
+        this.systems = systems;
 
         bus.subscribe(SwitchSceneEvent.class, ()-> true, event -> {
             var eventData = (SwitchSceneEvent) event;
@@ -71,14 +74,10 @@ public class SceneManager {
         }
     }
 
-    private void notifySceneChange(Set<System> previousActiveSystems, Set<System> targetActiveSystems, Scene fromScene, Scene toScene) {
-        var allTransitionedSystems = new HashSet<System>();
-        allTransitionedSystems.addAll(previousActiveSystems);
-        allTransitionedSystems.addAll(targetActiveSystems);
-
-        for (System system : allTransitionedSystems) {
-            system.onSceneChange(fromScene, toScene, engineWorld);
-        }
+    private void notifyAfterSceneChange(Scene fromScene, Scene toScene) {
+        this.systems.getSystems().forEach(system -> {
+            system.afterSceneChange(fromScene, toScene, engineWorld);
+        });
     }
 
     public void switchScene(String sceneName) {
@@ -108,7 +107,7 @@ public class SceneManager {
         newScene.enter();
 
         activateSystems(previousActiveSystems, targetActiveSystems);
-        notifySceneChange(previousActiveSystems, targetActiveSystems, previousTopScene, newScene);
+        notifyAfterSceneChange(previousTopScene, newScene);
     }
 
     public void pushScene(String sceneName) {
@@ -127,7 +126,7 @@ public class SceneManager {
         scene.enter();
 
         activateSystems(previousActiveSystems, targetActiveSystems);
-        notifySceneChange(previousActiveSystems, targetActiveSystems, previousTopScene, scene);
+        notifyAfterSceneChange(previousTopScene, scene);
     }
 
     public void popScene() {
@@ -146,7 +145,7 @@ public class SceneManager {
         engineWorld.remove(scene.world);
 
         activateSystems(previousActiveSystems, targetActiveSystems);
-        notifySceneChange(previousActiveSystems, targetActiveSystems, scene, newTopScene);
+        notifyAfterSceneChange(scene, newTopScene);
     }
 
     public Stack<Scene> getSceneStack() {

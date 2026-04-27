@@ -119,12 +119,12 @@ public class LanternaAPI implements GraphicsAPI {
 
     @Override
     public void showWindow() throws IOException {
-        screen.stopScreen();
+        screen.startScreen();
     }
 
     @Override
     public void hideWindow() throws IOException {
-        screen.startScreen();
+        screen.stopScreen();
     }
 
     @Override

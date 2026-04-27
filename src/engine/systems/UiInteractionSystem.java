@@ -3,6 +3,7 @@ package engine.systems;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
+import engine.scenes.Scene;
 import engine_interfaces.objects.*;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.*;

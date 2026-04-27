@@ -48,7 +48,7 @@ public class Engine {
         Logs.log("Engine: world ready (custom=" + (world != null) + ")");
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
         Logs.log("Engine: renderer ready (custom=" + (renderer != null) + ", api=" + Renderer.Api.getClass().getSimpleName() + ")");
-        SceneManager = new SceneManager(EventBus, World);
+        SceneManager = new SceneManager(EventBus, World, Systems);
         Logs.log("Engine: scene manager ready");
         TicksPerSecond = ticksPerSecond;
         Logs.log("Engine: tick rate set to " + TicksPerSecond);

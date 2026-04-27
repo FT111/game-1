@@ -2,9 +2,7 @@ package engine;
 
 import engine_interfaces.objects.System;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Systems {
     private final HashMap<Class<? extends System>, System> systems = new HashMap<>();
@@ -36,7 +34,7 @@ public class Systems {
         return systems.get(systemClass);
     }
 
-    protected void update(World world, int tickCount) {
+    void update(World world, int tickCount) {
         systemOrder.forEach(systemClass -> {
             System system = systems.get(systemClass);
             if (!system.isEnabled) {
@@ -45,4 +43,9 @@ public class Systems {
             system.update(world, tickCount);
         });
     }
+
+    public List<System> getSystems() {
+        return systems.values().stream().toList();
+    }
+
 }

@@ -10,7 +10,7 @@ public abstract class System {
 
     public void onExit(World world) {}
 
-    public void onSceneChange(Scene fromScene, Scene toScene, World world) {}
+    public void afterSceneChange(Scene fromScene, Scene toScene, World world) {}
 
-    public abstract void update(World world, int tickCount);
+    public void update(World world, int tickCount) {}
 }

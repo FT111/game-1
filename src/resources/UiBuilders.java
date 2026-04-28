@@ -6,7 +6,8 @@ import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
-import engine_interfaces.objects.components.ui.UIElementComponent;
+import engine_interfaces.objects.components.ui.ClickComponent;
+import engine_interfaces.objects.rendering.Colour;
 import engine_interfaces.objects.ui.SelectionStrategies;
 
 public class UiBuilders {
@@ -22,6 +23,9 @@ public class UiBuilders {
         LayerID parent;
         int zIndex = 0;
         Alignment alignment;
+
+        BackgroundComponent backgroundComponent;
+        BorderComponent borderComponent;
 
         protected T object;
 
@@ -55,6 +59,40 @@ public class UiBuilders {
             this.zIndex = zIndex;
             return self();
         }
+
+        public B withBackground(Colour bgColour) {
+            this.backgroundComponent = new BackgroundComponent(bgColour);
+            return self();
+        }
+
+        public B withBackground(Colour bgColour, Character fillChar) {
+            this.backgroundComponent = new BackgroundComponent(bgColour, fillChar, true);
+            return self();
+        }
+
+        public B withBackground(Colour bgColour, Character fillChar, int zIndex) {
+            this.backgroundComponent = new BackgroundComponent(bgColour, fillChar, true, zIndex);
+            return self();
+        }
+
+        public B withBorder(Character horizontalChar, Character verticalChar, Character cornerChar, Colour fgColour) {
+            this.borderComponent = new BorderComponent(horizontalChar, verticalChar, cornerChar, fgColour);
+            return self();
+        }
+
+        public B withBorder(Character horizontalChar, Character verticalChar, Character cornerChar, Colour fgColour, int thickness) {
+            this.borderComponent = new BorderComponent(horizontalChar, verticalChar, cornerChar, fgColour, true, thickness);
+            return self();
+        }
+
+        protected void applyBlockComponents(LayerID layer) {
+            if (backgroundComponent != null) {
+                world.addComponentToLayer(layer, backgroundComponent);
+            }
+            if (borderComponent != null) {
+                world.addComponentToLayer(layer, borderComponent);
+            }
+        }
     }
 
     public class ContainerBuilder extends Builder<ContainerBuilder, LayerID> {
@@ -81,6 +119,7 @@ public class UiBuilders {
                     new DimensionsComponent(width, height)
             );
             if (parent != null) { world.addComponentToLayer(containerLayer, new ParentComponent(parent));}
+            applyBlockComponents(containerLayer);
 
             return containerLayer;
         }
@@ -123,7 +162,7 @@ public class UiBuilders {
             LayerID buttonLayer = world.createLayer(
                     new VisibilityComponent(false),
                     new PositionComponent(position, zIndex, positioningStrategy, alignment),
-                    new UIElementComponent(SelectionStrategies.BOUNDING),
+                    new ClickComponent(SelectionStrategies.BOUNDING),
                     new DimensionsComponent(width, height)
             );
             if (staticTextString != null) {
@@ -133,6 +172,7 @@ public class UiBuilders {
                 world.addComponentToLayer(buttonLayer, new TextComponent(textResourceId, textAssetId, height, width));
             }
             if (parent != null) { world.addComponentToLayer(buttonLayer, new ParentComponent(parent));}
+            applyBlockComponents(buttonLayer);
 
 
             return buttonLayer;

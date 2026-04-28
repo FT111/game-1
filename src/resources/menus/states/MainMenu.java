@@ -3,24 +3,49 @@ package resources.menus.states;
 import engine_interfaces.objects.Alignment;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
+import engine_interfaces.objects.rendering.Colour;
+import engine_interfaces.objects.components.BackgroundComponent;
 import resources.menus.MenuState;
 import resources.menus.StateContext;
 
 public class MainMenu extends MenuState {
     public MainMenu(StateContext stateContext) {
         String continueText = "Continue";
+
+        var label = stateContext.ui().new LabelBuilder()
+                .withStaticText("Menu")
+                .withPosition(new Point(0, -2), Positioning.FIXED)
+                .withAlignment(Alignment.CENTER)
+                .withDimensions("Menu".length(), 1)
+                .build();
+
         var continueButton = stateContext.ui().new ButtonBuilder()
                 .withStaticText(continueText)
-                .withPosition(new Point(50,15), Positioning.FIXED)
+                .withPosition(new Point(0,2), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withDimensions(continueText.length()+2, 1)
+                .withBackground(new Colour(30, 30, 30), null, -1)
+                .withDimensions(continueText.length(), 1)
                 .build();
 
         show(continueButton);
-        bind(continueButton, () -> {stateContext.switchTo().accept(stateContext.states().gameHud);
+        show(label);
+        bindClick(continueButton, () -> {stateContext.switchTo().accept(stateContext.states().gameHud);
             stateContext.bus().publish(new engine_interfaces.objects.events.SwitchSceneEvent("Gameplay"));
         });
-    }
 
+        bindHoverEnter(continueButton, () -> {
+            var bg = (BackgroundComponent) stateContext.elementComponents().apply(continueButton).get(BackgroundComponent.class);
+            if (bg != null) {
+                bg.bgColour = new Colour(15, 15, 15);
+            }
+        });
+
+        bindHoverExit(continueButton, () -> {
+            var bg = (BackgroundComponent) stateContext.elementComponents().apply(continueButton).get(BackgroundComponent.class);
+            if (bg != null) {
+                bg.bgColour = new Colour(30, 30, 30);
+            }
+        });
+    }
 
 }

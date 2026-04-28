@@ -9,6 +9,8 @@ import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.VisibilityComponent;
 import engine_interfaces.objects.events.ButtonClickEvent;
 import engine_interfaces.objects.events.KeyInputEvent;
+import engine_interfaces.objects.events.LayerHoverEvent;
+import engine_interfaces.objects.events.LayerHoverExitEvent;
 import resources.menus.KeyInputBind;
 import resources.menus.MenuState;
 import resources.menus.MenuStates;
@@ -18,6 +20,8 @@ import java.util.Set;
 
 public class MenuSystem extends System{
     public HashMap<LayerID, Runnable> buttonCallbacks = new HashMap<>();
+    public HashMap<LayerID, Runnable> hoverCallbacks = new HashMap<>();
+    public HashMap<LayerID, Runnable> hoverExitCallbacks = new HashMap<>();
     public HashMap<KeyInputBind, Runnable> keyCallbacks = new HashMap<>();
     private UiBuilders uiBuilders;
     private MenuStates states;
@@ -25,6 +29,8 @@ public class MenuSystem extends System{
     private final World world;
     private final EventBus bus;
     private EventSubscriptionReceipt buttonClickSubscription;
+    private EventSubscriptionReceipt hoverSubscription;
+    private EventSubscriptionReceipt hoverExitSubscription;
     private EventSubscriptionReceipt keyInputSubscription;
 
     public MenuSystem(EventBus bus, World world) {
@@ -36,11 +42,13 @@ public class MenuSystem extends System{
     public void onEnter(World world) {
         if (states == null) {
             uiBuilders = new UiBuilders(this.world);
-            states = new MenuStates(this::switchState, uiBuilders, bus);
+            states = new MenuStates(this::switchState, uiBuilders, bus, layerId -> this.world.Layers.get(layerId));
             currentMenuState = states.mainMenu;
         }
 
         buttonClickSubscription = bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick);
+        hoverSubscription = bus.subscribe(LayerHoverEvent.class, () -> isEnabled, this::handleHover);
+        hoverExitSubscription = bus.subscribe(LayerHoverExitEvent.class, () -> isEnabled, this::handleHoverExit);
         keyInputSubscription = bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress);
         switchState(currentMenuState);
     }
@@ -50,6 +58,16 @@ public class MenuSystem extends System{
         if (buttonClickSubscription != null) {
             buttonClickSubscription.cancel.run();
             buttonClickSubscription = null;
+        }
+
+        if (hoverSubscription != null) {
+            hoverSubscription.cancel.run();
+            hoverSubscription = null;
+        }
+
+        if (hoverExitSubscription != null) {
+            hoverExitSubscription.cancel.run();
+            hoverExitSubscription = null;
         }
 
         if (keyInputSubscription != null) {
@@ -66,6 +84,8 @@ public class MenuSystem extends System{
         }
 
         buttonCallbacks.clear();
+        hoverCallbacks.clear();
+        hoverExitCallbacks.clear();
         keyCallbacks.clear();
     }
 
@@ -89,6 +109,10 @@ public class MenuSystem extends System{
         // Clear then set button callbacks to ones defined in state
         buttonCallbacks.clear();
         buttonCallbacks.putAll(newState.getClickBindings());
+        hoverCallbacks.clear();
+        hoverCallbacks.putAll(newState.getHoverEnterBindings());
+        hoverExitCallbacks.clear();
+        hoverExitCallbacks.putAll(newState.getHoverExitBindings());
         keyCallbacks.clear();
         keyCallbacks.putAll(newState.getKeyPressBindings());
         // Set layers to visible
@@ -103,6 +127,28 @@ public class MenuSystem extends System{
         }
 
         var callback = buttonCallbacks.get(buttonClick.buttonLayerId);
+        if (callback != null) {
+            callback.run();
+        }
+    }
+
+    private void handleHover(Event event) {
+        if (!(event instanceof LayerHoverEvent hoverEvent)) {
+            return;
+        }
+
+        var callback = hoverCallbacks.get(hoverEvent.layerId);
+        if (callback != null) {
+            callback.run();
+        }
+    }
+
+    private void handleHoverExit(Event event) {
+        if (!(event instanceof LayerHoverExitEvent hoverExitEvent)) {
+            return;
+        }
+
+        var callback = hoverExitCallbacks.get(hoverExitEvent.layerId);
         if (callback != null) {
             callback.run();
         }

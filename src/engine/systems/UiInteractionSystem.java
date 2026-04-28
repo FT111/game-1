@@ -3,12 +3,14 @@ package engine.systems;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
-import engine.scenes.Scene;
 import engine_interfaces.objects.*;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.*;
-import engine_interfaces.objects.components.ui.UIElementComponent;
+import engine_interfaces.objects.components.ui.ClickComponent;
+import engine_interfaces.objects.components.ui.HoverComponent;
 import engine_interfaces.objects.events.ButtonClickEvent;
+import engine_interfaces.objects.events.LayerHoverEvent;
+import engine_interfaces.objects.events.LayerHoverExitEvent;
 import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
@@ -21,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class UiInteractionSystem extends System {
     private IndexedInteractable focusedLayer = null;
+    private LayerID lastHoveredLayer = null;
     private final World world;
     private final EventBus bus;
     private final Resources resources;
@@ -45,7 +48,7 @@ public class UiInteractionSystem extends System {
     public void onEnter(World world) {
         mouseInputSubscription = bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
             var input = (MouseInputEvent) event;
-            if (input.eventType != MouseEventTypes.DOWN) {
+            if (input.eventType != MouseEventTypes.DOWN && input.eventType != MouseEventTypes.MOVE) {
                 return;
             }
 
@@ -56,26 +59,51 @@ public class UiInteractionSystem extends System {
             // not elegant but prioritises screen element intersecting clicks over world clicks
             var screenElement = staticUiElementIndex.get().get(input.screenPosition);
             if (screenElement != null) {
-                focusedLayer = screenElement;
-                bus.publish(new ButtonClickEvent(screenElement.layerID()));
+                if (input.eventType == MouseEventTypes.DOWN) {
+                    focusedLayer = screenElement;
+                    bus.publish(new ButtonClickEvent(screenElement.layerID()));
+                } else if (input.eventType == MouseEventTypes.MOVE) {
+                    if (lastHoveredLayer != null && !lastHoveredLayer.equals(screenElement.layerID())) {
+                        bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+                    }
+                    if (lastHoveredLayer == null || !lastHoveredLayer.equals(screenElement.layerID())) {
+                        lastHoveredLayer = screenElement.layerID();
+                        bus.publish(new LayerHoverEvent(screenElement.layerID()));
+                    }
+                }
                 return;
             }
 
             // check if the click intersects with any UI elements
             var worldElement = dynamicUiElementIndex.get().get(clickWorldPosition);
             if (worldElement == null) {
-                focusedLayer = null;
+                if (input.eventType == MouseEventTypes.DOWN) {
+                    focusedLayer = null;
+                } else if (input.eventType == MouseEventTypes.MOVE && lastHoveredLayer != null) {
+                    bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+                    lastHoveredLayer = null;
+                }
                 return;
             }
 
-            focusedLayer = worldElement;
-            bus.publish(new ButtonClickEvent(worldElement.layerID()));
+            if (input.eventType == MouseEventTypes.DOWN) {
+                focusedLayer = worldElement;
+                bus.publish(new ButtonClickEvent(worldElement.layerID()));
+            } else if (input.eventType == MouseEventTypes.MOVE) {
+                if (lastHoveredLayer != null && !lastHoveredLayer.equals(worldElement.layerID())) {
+                    bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+                }
+                if (lastHoveredLayer == null || !lastHoveredLayer.equals(worldElement.layerID())) {
+                    lastHoveredLayer = worldElement.layerID();
+                    bus.publish(new LayerHoverEvent(worldElement.layerID()));
+                }
+            }
         });
 
         layerRegisteredSubscription = bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
             var layerRegisteredEvent = (LayerRegisteredEvent) event;
             var components = world.Layers.get(layerRegisteredEvent.id);
-            if (components != null && components.containsKey(UIElementComponent.class)) {
+            if (components != null && (components.containsKey(ClickComponent.class) || components.containsKey(HoverComponent.class))) {
                 indexUIElement(layerRegisteredEvent.id, world, resources);
             }
         });
@@ -91,8 +119,10 @@ public class UiInteractionSystem extends System {
         layerIndexPositioning.clear();
 
         // Register currently present UI elements.
-        var uiLayers = world.ComponentLayersIndex.query(UIElementComponent.class);
+        var uiLayers = world.ComponentLayersIndex.query(ClickComponent.class);
         uiLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
+        var hoverLayers = world.ComponentLayersIndex.query(HoverComponent.class);
+        hoverLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
     }
 
     @Override
@@ -113,6 +143,7 @@ public class UiInteractionSystem extends System {
         }
 
         focusedLayer = null;
+        lastHoveredLayer = null;
         stagingStaticElementIndex.clear();
         stagingDynamicElementIndex.clear();
         layerIndexPoints.clear();
@@ -134,21 +165,24 @@ public class UiInteractionSystem extends System {
             return;
         }
 
-        var uiElement = (UIElementComponent) components.get(UIElementComponent.class);
+        var clickComp = (ClickComponent) components.get(ClickComponent.class);
+        var hoverComp = (HoverComponent) components.get(HoverComponent.class);
         var position = (PositionComponent) components.get(PositionComponent.class);
         var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
         var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
 
-        if (uiElement == null || position == null || dimensions == null) {
+        if ((clickComp == null && hoverComp == null) || position == null || dimensions == null) {
             return;
         }
+
+        engine_interfaces.objects.ui.SelectionStrategies strategy = clickComp != null ? clickComp.SelectionStrategy : hoverComp.SelectionStrategy;
 
         // Prevent duplicates when re-registering an existing layer.
         removeIndexedUIElement(layerID);
 
         final IndexedInteractable interactable = new IndexedInteractable(layerID, position.zIndex);
         layerIndexPositioning.put(layerID, position.positionStrategy);
-        switch (uiElement.SelectionStrategy) {
+        switch (strategy) {
             case BOUNDING -> {
                 for (int x = 0; x < dimensions.width; x++) {
                     for (int y = 0; y < dimensions.height; y++) {

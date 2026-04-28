@@ -15,6 +15,7 @@ public class PositionComponent extends Component {
         Origin = origin;
         this.zIndex = zIndex;
         this.positionStrategy = positionStrategy;
+        this.alignment = alignment;
     }
 
 

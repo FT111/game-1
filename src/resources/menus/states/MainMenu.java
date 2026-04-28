@@ -23,7 +23,7 @@ public class MainMenu extends MenuState {
                 .withStaticText(continueText)
                 .withPosition(new Point(0,2), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withBackground(new Colour(30, 30, 30), null, -1)
+                .withBackground(new Colour(120, 120, 120), null, -1)
                 .withDimensions(continueText.length(), 1)
                 .build();
 
@@ -43,7 +43,7 @@ public class MainMenu extends MenuState {
         bindHoverExit(continueButton, () -> {
             var bg = (BackgroundComponent) stateContext.elementComponents().apply(continueButton).get(BackgroundComponent.class);
             if (bg != null) {
-                bg.bgColour = new Colour(30, 30, 30);
+                bg.bgColour = new Colour(120, 120, 120);
             }
         });
     }

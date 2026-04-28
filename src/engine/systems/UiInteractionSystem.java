@@ -15,6 +15,7 @@ import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.Cell;
+import engine_interfaces.objects.rendering.PositioningCalculators;
 import engine_interfaces.objects.ui.IndexedInteractable;
 
 import java.util.ArrayList;
@@ -59,18 +60,7 @@ public class UiInteractionSystem extends System {
             // not elegant but prioritises screen element intersecting clicks over world clicks
             var screenElement = staticUiElementIndex.get().get(input.screenPosition);
             if (screenElement != null) {
-                if (input.eventType == MouseEventTypes.DOWN) {
-                    focusedLayer = screenElement;
-                    bus.publish(new ButtonClickEvent(screenElement.layerID()));
-                } else if (input.eventType == MouseEventTypes.MOVE) {
-                    if (lastHoveredLayer != null && !lastHoveredLayer.equals(screenElement.layerID())) {
-                        bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
-                    }
-                    if (lastHoveredLayer == null || !lastHoveredLayer.equals(screenElement.layerID())) {
-                        lastHoveredLayer = screenElement.layerID();
-                        bus.publish(new LayerHoverEvent(screenElement.layerID()));
-                    }
-                }
+                emitEventOnInteraction(input, screenElement);
                 return;
             }
 
@@ -86,18 +76,7 @@ public class UiInteractionSystem extends System {
                 return;
             }
 
-            if (input.eventType == MouseEventTypes.DOWN) {
-                focusedLayer = worldElement;
-                bus.publish(new ButtonClickEvent(worldElement.layerID()));
-            } else if (input.eventType == MouseEventTypes.MOVE) {
-                if (lastHoveredLayer != null && !lastHoveredLayer.equals(worldElement.layerID())) {
-                    bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
-                }
-                if (lastHoveredLayer == null || !lastHoveredLayer.equals(worldElement.layerID())) {
-                    lastHoveredLayer = worldElement.layerID();
-                    bus.publish(new LayerHoverEvent(worldElement.layerID()));
-                }
-            }
+            emitEventOnInteraction(input, worldElement);
         });
 
         layerRegisteredSubscription = bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
@@ -123,6 +102,21 @@ public class UiInteractionSystem extends System {
         uiLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
         var hoverLayers = world.ComponentLayersIndex.query(HoverComponent.class);
         hoverLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
+    }
+
+    private void emitEventOnInteraction(MouseInputEvent input, IndexedInteractable screenElement) {
+        if (input.eventType == MouseEventTypes.DOWN) {
+            focusedLayer = screenElement;
+            bus.publish(new ButtonClickEvent(screenElement.layerID()));
+        } else if (input.eventType == MouseEventTypes.MOVE) {
+            if (lastHoveredLayer != null && !lastHoveredLayer.equals(screenElement.layerID())) {
+                bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+            }
+            if (lastHoveredLayer == null || !lastHoveredLayer.equals(screenElement.layerID())) {
+                lastHoveredLayer = screenElement.layerID();
+                bus.publish(new LayerHoverEvent(screenElement.layerID()));
+            }
+        }
     }
 
     @Override
@@ -170,8 +164,17 @@ public class UiInteractionSystem extends System {
         var position = (PositionComponent) components.get(PositionComponent.class);
         var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
         var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
+        var visibility = (VisibilityComponent) components.get(VisibilityComponent.class);
 
         if ((clickComp == null && hoverComp == null) || position == null || dimensions == null) {
+            return;
+        }
+        if (visibility != null && !visibility.isVisible) {
+            return;
+        }
+
+        var cameraView = getActiveCameraView(world);
+        if (cameraView == null) {
             return;
         }
 
@@ -181,14 +184,13 @@ public class UiInteractionSystem extends System {
         removeIndexedUIElement(layerID);
 
         final IndexedInteractable interactable = new IndexedInteractable(layerID, position.zIndex);
+        final ArrayList<Point> indexedPoints = layerIndexPoints.computeIfAbsent(layerID, k -> new ArrayList<>());
         layerIndexPositioning.put(layerID, position.positionStrategy);
         switch (strategy) {
             case BOUNDING -> {
                 for (int x = 0; x < dimensions.width; x++) {
                     for (int y = 0; y < dimensions.height; y++) {
-                        stageElementCell(position, x, y, interactable);
-                        var pointsArr = layerIndexPoints.computeIfAbsent(layerID, k -> new ArrayList<>());
-                        pointsArr.add(new Point(position.Origin.x() + x, position.Origin.y() + y));
+                        stageElementCell(layerID, position, x, y, interactable, cameraView, indexedPoints);
                     }
                 }
             }
@@ -196,12 +198,16 @@ public class UiInteractionSystem extends System {
                 if (tileMap == null) {throw new IllegalArgumentException("Tilemap selection strategy requires a tilemap component");}
 
                 var tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
-                for (int i = 0; i < tileMapAsset.length; i++) {
-                    Cell[] cells = tileMapAsset[i];
-                    for (int j = 0; j < cells.length; j++) {
-                        Cell cell = cells[j];
+                // Keep iteration order and bounds checks aligned with TileMapRenderPass.
+                for (int y = 0; y < dimensions.width; y++) {
+                    for (int x = 0; x < dimensions.height; x++) {
+                        if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
+                            continue;
+                        }
+
+                        Cell cell = tileMapAsset[y][x];
                         if (cell != null && cell.content != null) {
-                            stageElementCell(position, j, i, interactable);
+                            stageElementCell(layerID, position, x, y, interactable, cameraView, indexedPoints);
                         }
                     }
                 }
@@ -240,15 +246,33 @@ public class UiInteractionSystem extends System {
         layerIndexPositioning.remove(layerId);
     }
 
-    private void stageElementCell(PositionComponent position, int x, int y, IndexedInteractable interactable) {
+    private void stageElementCell(
+        LayerID layerID,
+        PositionComponent position,
+        int x,
+        int y,
+        IndexedInteractable interactable,
+        CameraView cameraView,
+        ArrayList<Point> indexedPoints
+    ) {
         Point cellPoint = new Point(position.Origin.x() + x, position.Origin.y() + y);
+        var screenPoint = PositioningCalculators.calc.get(position.positionStrategy).calculatePosition(cellPoint, layerID, world, cameraView);
+        var indexPoint = position.positionStrategy.equals(Positioning.FIXED)
+            ? screenPoint
+            : screenToWorldPos(screenPoint, cameraView);
+
+        var index = position.positionStrategy.equals(Positioning.FIXED)
+            ? stagingStaticElementIndex
+            : stagingDynamicElementIndex;
 
         // check for overlapping UI elements and only keep the one with the highest z index
-        var existingCellIndex = stagingStaticElementIndex.get(cellPoint);
-        if (existingCellIndex != null && existingCellIndex.zIndex() > position.zIndex) {
+        var existingCellIndex = index.get(indexPoint);
+        if (existingCellIndex != null && existingCellIndex.zIndex() >= interactable.zIndex()) {
             return;
         }
-        stagingStaticElementIndex.put(cellPoint, interactable);
+
+        index.put(indexPoint, interactable);
+        indexedPoints.add(indexPoint);
     }
 
     public Point screenToWorldPos(Point screenPoint, PositionComponent cameraPosition) {
@@ -256,6 +280,31 @@ public class UiInteractionSystem extends System {
             screenPoint.x() + cameraPosition.Origin.x(),
             screenPoint.y() + cameraPosition.Origin.y()
         );
+    }
+
+    private Point screenToWorldPos(Point screenPoint, CameraView cameraView) {
+        return new Point(
+            screenPoint.x() + cameraView.originX,
+            screenPoint.y() + cameraView.originY
+        );
+    }
+
+    private CameraView getActiveCameraView(World world) {
+        var cameraEntities = world.ComponentEntitiesIndex.query(CameraComponent.class);
+
+        for (var entity : cameraEntities) {
+            var camera = (CameraComponent) world.Entities.get(entity).get(CameraComponent.class);
+            if (camera != null && camera.isActive) {
+                var cameraPosition = (PositionComponent) world.Entities.get(entity).get(PositionComponent.class);
+                if (cameraPosition == null) {
+                    return null;
+                }
+
+                return new CameraView(cameraPosition.Origin.x(), cameraPosition.Origin.y(), camera.viewWidth, camera.viewHeight);
+            }
+        }
+
+        return null;
     }
 
     @Override

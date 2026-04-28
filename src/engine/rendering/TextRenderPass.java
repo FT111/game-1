@@ -1,12 +1,13 @@
 package engine.rendering;
 
+import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
-import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TextComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
+import engine_interfaces.objects.components.ui.ButtonComponent;
 import engine_interfaces.objects.rendering.*;
 
 import java.util.ArrayList;
@@ -52,16 +53,18 @@ public class TextRenderPass extends RenderPass {
                     );
                     if (!renderObjects.camera().isScreenPointInView(screenPosition)) {continue;}
 
+                    var cell = new Cell(c, positionComponent.zIndex);
+
                     // handle z index
                     try {
                         var existingCell = buffer.cells[screenPosition.y()][screenPosition.x()];
-                        if (existingCell != null && existingCell.zIndex > positionComponent.zIndex) {
-                            continue;
-                    }}  catch (ArrayIndexOutOfBoundsException e) {
+                        cell = Utils.collateCells(existingCell, cell);
+                    }  catch (ArrayIndexOutOfBoundsException e) {
                         continue;
                     }
 
-                    buffer.cells[screenPosition.y()][screenPosition.x()] = new Cell(c, positionComponent.zIndex);
+
+                    buffer.cells[screenPosition.y()][screenPosition.x()] = cell;
                 }
             }
 

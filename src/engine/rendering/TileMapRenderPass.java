@@ -1,5 +1,6 @@
 package engine.rendering;
 
+import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
@@ -67,7 +68,7 @@ public class TileMapRenderPass extends RenderPass {
                     try {
                         Cell existingCell = buffer.cells[screenPoint.y()][screenPoint.x()];
 
-                        cell = collateCells(existingCell, cell);
+                        cell = Utils.collateCells(existingCell, cell);
                     } catch (ArrayIndexOutOfBoundsException e) {
                         // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
                         continue;
@@ -78,34 +79,7 @@ public class TileMapRenderPass extends RenderPass {
         });
     }
 
-    // merges the properties, prioritising the non null content. If both are non null, prefer the cell with the higher z-index
-    public static Cell collateCells(Cell existing, Cell added) {
-        if (existing == null) {
-            return added;
-        }
-        if (added == null) {
-            return existing;
-        }
-
-        // Always prefer the non null content. If both are non null, prefer the cell with the higher z-index
-        char content = collateCellProperty(existing.content, added.content, existing.zIndex, added.zIndex);
-        Colour bgColour = collateCellProperty(existing.bgColour, added.bgColour, existing.zIndex, added.zIndex);
-        Colour fgColour = collateCellProperty(existing.fgColour, added.fgColour, existing.zIndex, added.zIndex);
-
-        return new Cell(content, fgColour, bgColour, Math.max(existing.zIndex, added.zIndex));
-    }
-
-    private static <T> T collateCellProperty(T existing, T added, int existingZ, int addedZ) {
-        T outputProperty;
-        if (existing != null && added != null) {
-            outputProperty = (existingZ >= addedZ) ? existing : added;
-        } else {
-            outputProperty = (existing != null) ? existing : added;
-        }
-        return (T) outputProperty;
-    }
-
-//    public static void debugPrintTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset) {
+    //    public static void debugPrintTileMap(TileMapComponent tileMapComponent, Cell[][] tileMapAsset) {
 //        // IO.println("Debug: Printing tile map for layer " + tileMapComponent.assetId);
 //        for (int y = 0; y < tileMapComponent.width; y++) {
 //            StringBuilder row = new StringBuilder();

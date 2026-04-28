@@ -6,13 +6,13 @@ import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.CameraComponent;
 import engine_interfaces.objects.rendering.GraphicsAPI;
 
-public class TestSystem extends System {
+public class CameraSystem extends System {
     private final EntityID level;
     private final GraphicsAPI api;
     private Runnable resizeSubscriptionCancel;
     private World activeWorld;
 
-    public TestSystem(EntityID level, GraphicsAPI api, World world) {
+    public CameraSystem(EntityID level, GraphicsAPI api, World world) {
         this.level = level;
         this.api = api;
         this.activeWorld = world;

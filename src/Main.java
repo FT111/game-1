@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 public class Main {
-     public static void main(String[] args) {
+    public static void main(String[] args) {
         Logs.log("Main: startup begin");
         EngineFactory factory = new EngineFactory();
         Logs.log("Main: building engine");
@@ -31,17 +31,17 @@ public class Main {
 
 
         var camera = engine.World.createEntity(
-            new PositionComponent(new Point(0,0), 100),
-            new CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true)
+                new PositionComponent(new Point(0,0), 100),
+                new CameraComponent(engine.Renderer.Api.getWidth(), engine.Renderer.Api.getHeight(), true)
         );
         Logs.log("Main: camera entity created");
 
 
-        TestSystem testSystem = new TestSystem(camera, engine.Renderer.Api, engine.World);
+        CameraSystem cameraSystem = new CameraSystem(camera, engine.Renderer.Api, engine.World);
         VisionSystem visionSystem = new VisionSystem(engine.World, engine.Resources, chunkMap, 1);
         ChunkSystem chunkSystem = new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap);
 
-        engine.Systems.addSystem(testSystem);
+        engine.Systems.addSystem(cameraSystem);
         engine.Systems.addSystem(visionSystem);
 
         engine.Systems.addSystem(chunkSystem);
@@ -79,18 +79,20 @@ public class Main {
         engine.Systems.addSystem(playerSystem);
 
         engine.SceneManager
-            .addScene("MainMenu", new MainMenuScene(menu, uiSystem)
-                .add(engine.Systems.getSystem(InputHandlerSystem.class))
-                    .add(engine.Systems.getSystem(UiInteractionSystem.class))
-                    .add(menu))
-            .addScene("Gameplay", gameplay
-                .add(engine.Systems.getSystem(InputHandlerSystem.class))
-                .add(engine.Systems.getSystem(MovementSystem.class))
-                .add(engine.Systems.getSystem(SceneGraphSystem.class))
-                .add(engine.Systems.getSystem(VisionSystem.class))
-                    .add(chunkSystem)
-                    .add(uiSystem)
-                    .add(menu));
+                .addScene("MainMenu", new MainMenuScene(menu, uiSystem)
+                        .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                        .add(engine.Systems.getSystem(UiInteractionSystem.class))
+                        .add(cameraSystem)
+                        .add(menu))
+                .addScene("Gameplay", gameplay
+                        .add(engine.Systems.getSystem(InputHandlerSystem.class))
+                        .add(engine.Systems.getSystem(MovementSystem.class))
+                        .add(engine.Systems.getSystem(SceneGraphSystem.class))
+                        .add(engine.Systems.getSystem(VisionSystem.class))
+                        .add(chunkSystem)
+                        .add(uiSystem)
+                        .add(cameraSystem)
+                        .add(menu));
         Logs.log("Main: scenes registered");
 
         // Switch to default scene

@@ -3,6 +3,7 @@ package engine;
 import engine.rendering.EntityRenderPass;
 import engine.rendering.TextRenderPass;
 import engine.rendering.TileMapRenderPass;
+import engine.rendering.BlockRenderPass;
 import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
 import engine.systems.SceneGraphSystem;
@@ -35,8 +36,9 @@ public class Engine {
     // Turn these into a config class later
     public int TicksPerSecond = 60;
     public int FrameRateLimit = 120;
-    private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
+        private ArrayList<RenderPass> CoreRenderPasses = new ArrayList<>() {{
         add(new TileMapRenderPass());
+        add(new BlockRenderPass());
         add(new EntityRenderPass());
         add(new TextRenderPass());
     }};

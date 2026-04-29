@@ -1,6 +1,7 @@
 package resources.menus;
 
 import engine.EventBus;
+import engine.World;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import resources.UiBuilders;
@@ -14,13 +15,12 @@ import java.util.function.Function;
 public class MenuStates {
     public final GameHud gameHud;
     public final MainMenu mainMenu;
-    private final StateContext ctx;
 
-    public MenuStates(Consumer<MenuState> switchTo, UiBuilders ui, EventBus bus, Function<LayerID, HashMap<Class<? extends Component>, Component>> elementComponents) {
-        ctx = new StateContext(switchTo, ui, bus, this, elementComponents);
+    public MenuStates(Consumer<MenuState> switchTo, UiBuilders ui, EventBus bus, World world, Function<LayerID, HashMap<Class<? extends Component>, Component>> elementComponents) {
 
-        mainMenu = new MainMenu(ctx);
-        gameHud = new GameHud(ctx);
+        mainMenu = new MainMenu(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
+
+        gameHud = new GameHud(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 
     }
 }

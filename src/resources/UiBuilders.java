@@ -1,20 +1,34 @@
 package resources;
 
 import engine.World;
-import engine_interfaces.objects.Alignment;
-import engine_interfaces.objects.LayerID;
-import engine_interfaces.objects.Point;
-import engine_interfaces.objects.Positioning;
+import engine_interfaces.objects.*;
 import engine_interfaces.objects.components.*;
 import engine_interfaces.objects.components.ui.ClickComponent;
+import engine_interfaces.objects.components.ui.HoverComponent;
 import engine_interfaces.objects.rendering.Colour;
 import engine_interfaces.objects.ui.SelectionStrategies;
+import resources.menus.InteractionHooks;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class UiBuilders {
-    private World world;
+    private InteractionHooks hooks;
+    private final World world;
 
     public UiBuilders(World world) {
         this.world = world;
+    }
+
+    public UiBuilders(World world, InteractionHooks hooks) {
+        this.world = world;
+        this.hooks = hooks;
+    }
+
+    public void setInteractionHooks(InteractionHooks hooks) {
+        this.hooks = hooks;
     }
 
     public abstract class Builder<B extends Builder<B, T>, T> {
@@ -26,12 +40,14 @@ public class UiBuilders {
 
         BackgroundComponent backgroundComponent;
         BorderComponent borderComponent;
+        Consumer<Map<Class<? extends Component>, Component>> hoverEnterCallback;
+        Consumer<Map<Class<? extends Component>, Component>> hoverExitCallback;
 
         protected T object;
 
         protected abstract B self();
 
-        protected abstract T build();
+        public abstract T build();
 
 
         public B withPosition(Point position) {
@@ -85,6 +101,16 @@ public class UiBuilders {
             return self();
         }
 
+        public B onHoverEnter(Consumer<Map<Class<? extends Component>, Component>> callback) {
+            this.hoverEnterCallback = callback;
+            return self();
+        }
+
+        public B onHoverExit(Consumer<Map<Class<? extends Component>, Component>> callback) {
+            this.hoverExitCallback = callback;
+            return self();
+        }
+
         protected void applyBlockComponents(LayerID layer) {
             if (backgroundComponent != null) {
                 world.addComponentToLayer(layer, backgroundComponent);
@@ -93,6 +119,19 @@ public class UiBuilders {
                 world.addComponentToLayer(layer, borderComponent);
             }
         }
+
+        protected void applyHoverComponents(LayerID layer) {
+            if (hoverExitCallback != null) {
+                hooks.bindHoverExit().apply(layer, hoverExitCallback);
+            }
+            if (hoverEnterCallback != null) {
+                hooks.bindHoverEnter().apply(layer, hoverEnterCallback);
+            }
+        }
+    }
+
+    protected void applyTextDimensionalComponents(LayerID layer, boolean autoSizing, int width, int height) {
+
     }
 
     public class ContainerBuilder extends Builder<ContainerBuilder, LayerID> {
@@ -108,7 +147,7 @@ public class UiBuilders {
             this.width = width;
             this.height = height;
 
-            return this;
+            return self();
         }
 
         @Override
@@ -125,36 +164,80 @@ public class UiBuilders {
         }
     }
 
-    public class ButtonBuilder extends Builder<ButtonBuilder, LayerID> {
-        private String staticTextString;
+    public class LabelBuilder<B extends LabelBuilder<B>> extends Builder<B, LayerID> {
+        protected String staticTextString;
 
-        private String textResourceId;
-        private String textAssetId;
+        protected String textResourceId;
+        protected String textAssetId;
 
-        private int height;
-        private int width;
+        protected int height;
+        protected int width;
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public B self() {
+            return (B) this;
+        }
+
+        public B withStaticText(String text) {
+            this.staticTextString = text;
+            return self();
+        }
+
+        public B withDynamicText(String resourceId, String assetId) {
+            this.textResourceId = resourceId;
+            this.textAssetId = assetId;
+            return self();
+        }
+
+        public B withDimensions(int width, int height) {
+            this.width = width;
+            this.height = height;
+
+            return self();
+        }
+
+        public B withAutoSizing() {
+
+            return self();
+        }
+
+        @Override
+        public LayerID build() {
+            LayerID buttonLayer = world.createLayer(
+                    new VisibilityComponent(false),
+                    new PositionComponent(position, zIndex, positioningStrategy, alignment),
+                    new HoverComponent(SelectionStrategies.BOUNDING)
+                    );
+
+
+            if (staticTextString != null) {
+                world.addComponentToLayer(buttonLayer, new TextComponent(staticTextString, width, height));
+            }
+            if (textResourceId != null && textAssetId != null) {
+                world.addComponentToLayer(buttonLayer, new TextComponent(textResourceId, textAssetId, height, width));
+            }
+            if (parent != null) { world.addComponentToLayer(buttonLayer, new ParentComponent(parent));}
+            applyBlockComponents(buttonLayer);
+            applyHoverComponents(buttonLayer);
+
+
+            return buttonLayer;
+        }
+    }
+
+    public class ButtonBuilder extends LabelBuilder<ButtonBuilder> {
+
+        private Consumer<Map<Class<? extends Component>, Component>> clickCallback;
 
         @Override
         public ButtonBuilder self() {
             return this;
         }
 
-        public ButtonBuilder withStaticText(String text) {
-            this.staticTextString = text;
-            return this;
-        }
-
-        public ButtonBuilder withDynamicText(String resourceId, String assetId) {
-            this.textResourceId = resourceId;
-            this.textAssetId = assetId;
-            return this;
-        }
-
-        public ButtonBuilder withDimensions(int width, int height) {
-            this.width = width;
-            this.height = height;
-
-            return this;
+        public ButtonBuilder onClick(Consumer<Map<Class<? extends Component>, Component>> callback) {
+            this.clickCallback = callback;
+            return self();
         }
 
         @Override
@@ -163,6 +246,7 @@ public class UiBuilders {
                     new VisibilityComponent(false),
                     new PositionComponent(position, zIndex, positioningStrategy, alignment),
                     new ClickComponent(SelectionStrategies.BOUNDING),
+                    new HoverComponent(SelectionStrategies.BOUNDING),
                     new DimensionsComponent(width, height)
             );
             if (staticTextString != null) {
@@ -172,13 +256,13 @@ public class UiBuilders {
                 world.addComponentToLayer(buttonLayer, new TextComponent(textResourceId, textAssetId, height, width));
             }
             if (parent != null) { world.addComponentToLayer(buttonLayer, new ParentComponent(parent));}
+            if (clickCallback != null) {
+                hooks.bindClick().apply(buttonLayer, clickCallback);
+            }
             applyBlockComponents(buttonLayer);
-
+            applyHoverComponents(buttonLayer);
 
             return buttonLayer;
         }
     }
-
-    // Separated to show clearer intent
-    public class LabelBuilder extends ButtonBuilder {}
 }

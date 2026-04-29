@@ -7,7 +7,8 @@ import resources.menus.StateContext;
 
 public class GameHud extends MenuState {
     public GameHud(StateContext ctx) {
-        bindClick(new KeyInputBind('p'), () -> {
+        super(ctx);
+        bindKeypress(new KeyInputBind('p'), () -> {
             ctx.switchTo().accept(ctx.states().mainMenu);
                 ctx.bus().publish(new SwitchSceneEvent("MainMenu"));
         });

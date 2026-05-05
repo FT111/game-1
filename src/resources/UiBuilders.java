@@ -159,6 +159,7 @@ public class UiBuilders {
             );
             if (parent != null) { world.addComponentToLayer(containerLayer, new ParentComponent(parent));}
             applyBlockComponents(containerLayer);
+            applyHoverComponents(containerLayer);
 
             return containerLayer;
         }
@@ -207,7 +208,8 @@ public class UiBuilders {
             LayerID buttonLayer = world.createLayer(
                     new VisibilityComponent(false),
                     new PositionComponent(position, zIndex, positioningStrategy, alignment),
-                    new HoverComponent(SelectionStrategies.BOUNDING)
+                    new HoverComponent(SelectionStrategies.BOUNDING),
+                    new DimensionsComponent(width, height)
                     );
 
 

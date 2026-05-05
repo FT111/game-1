@@ -15,6 +15,8 @@ public abstract class MenuState {
     private final Map<LayerID, Consumer<Map<Class<? extends Component>, Component>>> hoverExitBindings = new HashMap<>();
     private final Map<KeyInputBind, Runnable> keyPressBindings = new HashMap<>();
 
+    public Consumer<LayerID> onLayerShown;
+
     protected void configureUiBuilder(UiBuilders ui) {
         ui.setInteractionHooks(new InteractionHooks(
                 this::bindClick,
@@ -29,6 +31,10 @@ public abstract class MenuState {
 
     protected void show(LayerID layer) {
         layers.add(layer);
+
+        if (onLayerShown != null) {
+            onLayerShown.accept(layer);
+        }
     }
 
     protected void bindClick(LayerID layer, Consumer<Map<Class<? extends Component>, Component>> callback) {

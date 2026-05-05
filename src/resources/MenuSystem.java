@@ -27,7 +27,7 @@ public class MenuSystem extends System{
     private MenuState currentMenuState;
     private final World world;
     private final EventBus bus;
-    private List<EventSubscriptionReceipt> subscriptions = new ArrayList<>();
+    private final List<EventSubscriptionReceipt> subscriptions = new ArrayList<>();
 
     public MenuSystem(EventBus bus, World world) {
         this.bus = bus;
@@ -39,7 +39,7 @@ public class MenuSystem extends System{
         if (states == null) {
             UiBuilders uiBuilders = new UiBuilders(this.world);
             states = new MenuStates(this::switchState, uiBuilders, bus, this.world, layerId -> this.world.Layers.get(layerId));
-            currentMenuState = states.mainMenu;
+            currentMenuState = states.menuGate;;
         }
 
         subscriptions.add(bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick));
@@ -83,6 +83,8 @@ public class MenuSystem extends System{
             world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(false));
         }
 
+        currentMenuState.onLayerShown = null;
+
         currentMenuState = newState;
         // Clear then set button callbacks to ones defined in state
         buttonCallbacks.clear();
@@ -93,6 +95,9 @@ public class MenuSystem extends System{
         hoverExitCallbacks.putAll(newState.getHoverExitBindings());
         keyCallbacks.clear();
         keyCallbacks.putAll(newState.getKeyPressBindings());
+
+        newState.onLayerShown = (LayerID layer) ->  world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(true));
+
         // Set layers to visible
         for (var layer : newLayers) {
             world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(true));

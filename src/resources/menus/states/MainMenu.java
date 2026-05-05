@@ -54,6 +54,17 @@ public class MainMenu extends MenuState {
                 .withAlignment(Alignment.CENTER)
                 .withBackground(new Colour(120, 120, 120), null, -1)
                 .withDimensions("Quit".length(), 1)
+                .onClick((btn) -> {
+                    stateContext.bus().publish(new resources.events.QuitGameEvent());
+                })
+                .build();
+
+        var mouseReportingDetectedString = "Mouse reporting detected!";
+        var detectedLabel = stateContext.ui().new LabelBuilder<>()
+                .withStaticText(mouseReportingDetectedString)
+                .withPosition(new Point(0,-2), Positioning.FIXED)
+                .withAlignment(Alignment.BOTTOM_CENTER)
+                .withDimensions(mouseReportingDetectedString.length(), 1)
                 .build();
 
         show(continueButton);
@@ -61,6 +72,7 @@ public class MainMenu extends MenuState {
         show(saveButton);
         show(loadButton);
         show(quitButton);
+        show(detectedLabel);
 
     }
 

@@ -7,6 +7,7 @@ import engine.systems.SceneGraphSystem;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
+import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.*;
 import resources.*;
 import resources.components.VisionEmitterComponent;
@@ -77,12 +78,14 @@ public class Main {
         var playerSystem = new PlayerSystem(engine.EventBus, player, camera);
         gameplay.add(playerSystem);
         engine.Systems.addSystem(playerSystem);
+        var ControlSystem = new ControlSystem(engine.EventBus);
 
         engine.SceneManager
                 .addScene("MainMenu", new MainMenuScene(menu, uiSystem)
                         .add(engine.Systems.getSystem(InputHandlerSystem.class))
                         .add(engine.Systems.getSystem(UiInteractionSystem.class))
                         .add(cameraSystem)
+                        .add(ControlSystem)
                         .add(menu))
                 .addScene("Gameplay", gameplay
                         .add(engine.Systems.getSystem(InputHandlerSystem.class))
@@ -91,6 +94,7 @@ public class Main {
                         .add(engine.Systems.getSystem(VisionSystem.class))
                         .add(chunkSystem)
                         .add(uiSystem)
+                        .add(ControlSystem)
                         .add(cameraSystem)
                         .add(menu));
         Logs.log("Main: scenes registered");

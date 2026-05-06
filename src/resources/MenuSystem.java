@@ -97,6 +97,7 @@ public class MenuSystem extends System{
         keyCallbacks.putAll(newState.getKeyPressBindings());
 
         newState.onLayerShown = (LayerID layer) ->  world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(true));
+        newState.onLayerHidden = (LayerID layer) -> world.Layers.get(layer).put(VisibilityComponent.class, new VisibilityComponent(false));
 
         // Set layers to visible
         for (var layer : newLayers) {

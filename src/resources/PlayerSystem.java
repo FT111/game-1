@@ -97,27 +97,6 @@ public class PlayerSystem extends System {
         }
     }
 
-    private void moveInDirection(World world, Point direction) {
-        var playerPosition = getPlayerWorldPosition(world);
-
-        Point newPosition = playerPosition.Origin.add(direction);
-
-
-        world.Entities.get(playerEntity).put(PositionComponent.class, new PositionComponent(
-                new Point(newPosition.x(), newPosition.y())
-        ));
-//        CameraComponent cameraDetails = (CameraComponent) world.Entities.get(cameraEntity).get(CameraComponent.class);
-//        PositionComponent cameraPosition = getPlayerPosition(world);
-//
-//        // first check if player is with a 4x4 deadzone around the center of the camera, if so, don't move the camera
-//        if (Math.abs(newPosition.x() - (cameraPosition.Origin.x() + cameraDetails.viewWidth / 2)) <= 2 && Math.abs(newPosition.y() - (cameraPosition.Origin.y() + cameraDetails.viewHeight / 2)) <= 2) {
-//            return;
-//        }
-//        // move the camera by the same amount as the player movement
-//        world.Entities.get(cameraEntity).put(PositionComponent.class, new PositionComponent(
-//                new Point(cameraPosition.Origin.x() + direction.x(), cameraPosition.Origin.y() + direction.y())
-//        ));
-    }
 
     public PositionComponent getPlayerWorldPosition(World world) {
         return (PositionComponent) world.Entities.get(playerEntity).get(PositionComponent.class);
@@ -131,11 +110,5 @@ public class PlayerSystem extends System {
         world.Entities.get(cameraEntity).put(PositionComponent.class, new PositionComponent(
                 new Point(newPosition.x() - cameraDetails.viewWidth / 2, newPosition.y() - cameraDetails.viewHeight / 2)
         ));
-    }
-
-
-    @Override
-    public void update(World world, int tickCount) {
-        // IO.println("Player position: " + getPlayerWorldPosition(world).Origin);
     }
 }

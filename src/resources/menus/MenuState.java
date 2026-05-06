@@ -16,6 +16,7 @@ public abstract class MenuState {
     private final Map<KeyInputBind, Runnable> keyPressBindings = new HashMap<>();
 
     public Consumer<LayerID> onLayerShown;
+    public Consumer<LayerID> onLayerHidden;
 
     protected void configureUiBuilder(UiBuilders ui) {
         ui.setInteractionHooks(new InteractionHooks(
@@ -34,6 +35,14 @@ public abstract class MenuState {
 
         if (onLayerShown != null) {
             onLayerShown.accept(layer);
+        }
+    }
+
+    protected void hide(LayerID layer) {
+        layers.remove(layer);
+
+        if (onLayerHidden != null) {
+            onLayerHidden.accept(layer);
         }
     }
 

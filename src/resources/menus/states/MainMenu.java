@@ -13,6 +13,13 @@ public class MainMenu extends MenuState {
     public MainMenu(StateContext stateContext) {
         super(stateContext);
         String continueText = "Continue";
+        var mouseReportingDetectedString = "Mouse reporting detected!";
+        var detectedLabel = stateContext.ui().new LabelBuilder<>()
+                .withStaticText(mouseReportingDetectedString)
+                .withPosition(new Point(0,-2), Positioning.FIXED)
+                .withAlignment(Alignment.BOTTOM_CENTER)
+                .withDimensions(mouseReportingDetectedString.length(), 1)
+                .build();
 
         var label = stateContext.ui().new LabelBuilder<>()
                 .withStaticText("Menu")
@@ -27,6 +34,7 @@ public class MainMenu extends MenuState {
                 .withAlignment(Alignment.CENTER)
                 .withDimensions(continueText.length(), 1)
                 .onClick((btn) -> {
+                    hide(detectedLabel);
                     stateContext.switchTo().accept(stateContext.states().gameHud);
                     stateContext.bus().publish(new engine_interfaces.objects.events.SwitchSceneEvent("Gameplay"));
                 })
@@ -36,7 +44,6 @@ public class MainMenu extends MenuState {
                 .withStaticText("Save")
                 .withPosition(new Point(0,4), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withBackground(new Colour(120, 120, 120), null, -1)
                 .withDimensions("Save".length(), 1)
                 .build();
 
@@ -44,7 +51,6 @@ public class MainMenu extends MenuState {
                 .withStaticText("Load")
                 .withPosition(new Point(0,6), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withBackground(new Colour(120, 120, 120), null, -1)
                 .withDimensions("Load".length(), 1)
                 .build();
 
@@ -52,20 +58,12 @@ public class MainMenu extends MenuState {
                 .withStaticText("Quit")
                 .withPosition(new Point(0,8), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withBackground(new Colour(120, 120, 120), null, -1)
                 .withDimensions("Quit".length(), 1)
                 .onClick((btn) -> {
                     stateContext.bus().publish(new resources.events.QuitGameEvent());
                 })
                 .build();
 
-        var mouseReportingDetectedString = "Mouse reporting detected!";
-        var detectedLabel = stateContext.ui().new LabelBuilder<>()
-                .withStaticText(mouseReportingDetectedString)
-                .withPosition(new Point(0,-2), Positioning.FIXED)
-                .withAlignment(Alignment.BOTTOM_CENTER)
-                .withDimensions(mouseReportingDetectedString.length(), 1)
-                .build();
 
         show(continueButton);
         show(label);

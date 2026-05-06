@@ -6,7 +6,7 @@ import engine_interfaces.objects.rendering.Colour;
 public class StyledUI {
     public static UiBuilders.ButtonBuilder menuButton(UiBuilders ui) {
         return ui.new ButtonBuilder()
-                .withBackground(new Colour(120, 120, 120), null, -1)
+                .withBackground(new Colour(64, 64, 64), null, -1)
                 .onHoverEnter((button) -> {
                     var bg = (BackgroundComponent) button.get(BackgroundComponent.class);
                     if (bg != null) {
@@ -15,7 +15,7 @@ public class StyledUI {
                 .onHoverExit((button) -> {
                     var bg = (BackgroundComponent) button.get(BackgroundComponent.class);
                     if (bg != null) {
-                        bg.bgColour = new Colour(120, 120, 120);
+                        bg.bgColour = new Colour(64, 64, 64);
                     }});
     }
 }

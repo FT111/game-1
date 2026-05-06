@@ -1,6 +1,7 @@
 package engine.systems;
 
 import engine.EventBus;
+import engine.Logs;
 import engine.Resources;
 import engine.World;
 import engine_interfaces.objects.*;
@@ -12,31 +13,27 @@ import engine_interfaces.objects.events.ButtonClickEvent;
 import engine_interfaces.objects.events.LayerHoverEvent;
 import engine_interfaces.objects.events.LayerHoverExitEvent;
 import engine_interfaces.objects.events.LayerRemovedEvent;
-import engine_interfaces.objects.events.LayerRegisteredEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.PositioningCalculators;
 import engine_interfaces.objects.ui.IndexedInteractable;
+import engine_interfaces.objects.ui.InteractionApprovals;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.HashSet;
 
+
+/// Responsible for handling UI interactions, including click and hover events.
+/// Subscribes to mouse events and emits the appropriate UI interaction event
 public class UiInteractionSystem extends System {
     private IndexedInteractable focusedLayer = null;
     private LayerID lastHoveredLayer = null;
     private final World world;
     private final EventBus bus;
     private final Resources resources;
-    private final AtomicReference<HashMap<Point, IndexedInteractable>> staticUiElementIndex = new AtomicReference<>(new HashMap<>()); // Screen points
-    private final AtomicReference<HashMap<Point, IndexedInteractable>> dynamicUiElementIndex = new AtomicReference<>(new HashMap<>()); // World points;
-    private final HashMap<Point, IndexedInteractable> stagingStaticElementIndex = new HashMap<>();
-    private final HashMap<Point, IndexedInteractable> stagingDynamicElementIndex = new HashMap<>();
-    private final HashMap<LayerID, ArrayList<Point>> layerIndexPoints = new HashMap<>();
-    private final HashMap<LayerID, Positioning> layerIndexPositioning = new HashMap<>();
 
     private EventSubscriptionReceipt mouseInputSubscription;
-    private EventSubscriptionReceipt layerRegisteredSubscription;
     private EventSubscriptionReceipt layerRemovedSubscription;
 
     public UiInteractionSystem(World world, EventBus bus, Resources resources) {
@@ -53,20 +50,8 @@ public class UiInteractionSystem extends System {
                 return;
             }
 
-            var camera = world.ComponentEntitiesIndex.query(CameraComponent.class).toArray()[0];
-            var cameraPos = (PositionComponent) world.Entities.get(camera).get(PositionComponent.class);
-            Point clickWorldPosition = screenToWorldPos(input.screenPosition, cameraPos);
-
-            // not elegant but prioritises screen element intersecting clicks over world clicks
-            var screenElement = staticUiElementIndex.get().get(input.screenPosition);
-            if (screenElement != null) {
-                emitEventOnInteraction(input, screenElement);
-                return;
-            }
-
-            // check if the click intersects with any UI elements
-            var worldElement = dynamicUiElementIndex.get().get(clickWorldPosition);
-            if (worldElement == null) {
+            var cameraView = getActiveCameraView(world);
+            if (cameraView == null) {
                 if (input.eventType == MouseEventTypes.DOWN) {
                     focusedLayer = null;
                 } else if (input.eventType == MouseEventTypes.MOVE && lastHoveredLayer != null) {
@@ -76,47 +61,181 @@ public class UiInteractionSystem extends System {
                 return;
             }
 
-            emitEventOnInteraction(input, worldElement);
-        });
-
-        layerRegisteredSubscription = bus.subscribe(LayerRegisteredEvent.class, () -> isEnabled, event -> {
-            var layerRegisteredEvent = (LayerRegisteredEvent) event;
-            var components = world.Layers.get(layerRegisteredEvent.id);
-            if (components != null && (components.containsKey(ClickComponent.class) || components.containsKey(HoverComponent.class))) {
-                indexUIElement(layerRegisteredEvent.id, world, resources);
+            var target = findFirstInteractable(input, cameraView);
+            if (target == null) {
+                if (input.eventType == MouseEventTypes.DOWN) {
+                    focusedLayer = null;
+                } else if (input.eventType == MouseEventTypes.MOVE && lastHoveredLayer != null) {
+                    bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+                    lastHoveredLayer = null;
+                }
+                return;
             }
+
+            emitEventOnInteraction(input, target);
         });
 
         layerRemovedSubscription = bus.subscribe(LayerRemovedEvent.class, () -> isEnabled, event -> {
             var layerRemovedEvent = (LayerRemovedEvent) event;
-            removeIndexedUIElement(layerRemovedEvent.id);
+            if (lastHoveredLayer != null && lastHoveredLayer.equals(layerRemovedEvent.id)) {
+                bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
+                lastHoveredLayer = null;
+            }
+
+            if (focusedLayer != null && focusedLayer.layerID().equals(layerRemovedEvent.id)) {
+                focusedLayer = null;
+            }
         });
 
-        stagingStaticElementIndex.clear();
-        stagingDynamicElementIndex.clear();
-        layerIndexPoints.clear();
-        layerIndexPositioning.clear();
+        focusedLayer = null;
+        lastHoveredLayer = null;
+    }
 
-        // Register currently present UI elements.
-        var uiLayers = world.ComponentLayersIndex.query(ClickComponent.class);
-        uiLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
-        var hoverLayers = world.ComponentLayersIndex.query(HoverComponent.class);
-        hoverLayers.forEach(layerID -> indexUIElement(layerID, world, resources));
+    private static InteractionApprovals checkIfInteractable(World world, IndexedInteractable screenElement) {
+        HashMap<Class<? extends Component>, Component> element = world.Layers.get(screenElement.layerID());
+        if (element == null) {
+            return new InteractionApprovals(false, false);
+        }
+
+        var visibility = (VisibilityComponent) element.get(VisibilityComponent.class);
+        var hover = (HoverComponent) element.get(HoverComponent.class);
+        var click = (ClickComponent) element.get(ClickComponent.class);
+
+        return new InteractionApprovals(
+                click != null && (!click.visibilityDependent || visibility != null && visibility.isVisible),
+                hover != null && (!hover.visibilityDependent || visibility != null && visibility.isVisible)
+        );
+
     }
 
     private void emitEventOnInteraction(MouseInputEvent input, IndexedInteractable screenElement) {
-        if (input.eventType == MouseEventTypes.DOWN) {
+        InteractionApprovals approvals = checkIfInteractable(world, screenElement);
+
+        if (input.eventType == MouseEventTypes.DOWN && approvals.isClickable()) {
             focusedLayer = screenElement;
             bus.publish(new ButtonClickEvent(screenElement.layerID()));
         } else if (input.eventType == MouseEventTypes.MOVE) {
             if (lastHoveredLayer != null && !lastHoveredLayer.equals(screenElement.layerID())) {
                 bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
             }
-            if (lastHoveredLayer == null || !lastHoveredLayer.equals(screenElement.layerID())) {
+            if (lastHoveredLayer == null || !lastHoveredLayer.equals(screenElement.layerID()) && approvals.isHoverable()) {
                 lastHoveredLayer = screenElement.layerID();
                 bus.publish(new LayerHoverEvent(screenElement.layerID()));
             }
         }
+    }
+
+    private IndexedInteractable findFirstInteractable(MouseInputEvent input, CameraView cameraView) {
+        var orderedLayers = getOrderedInteractiveLayers();
+        for (LayerID layerID : orderedLayers) {
+            if (!isLayerHit(layerID, input.screenPosition, cameraView)) {
+                continue;
+            }
+
+            var interactable = new IndexedInteractable(layerID, getLayerZIndex(layerID));
+            var approvals = checkIfInteractable(world, interactable);
+
+            if (input.eventType == MouseEventTypes.DOWN && approvals.isClickable()) {
+                return interactable;
+            }
+
+            if (input.eventType == MouseEventTypes.MOVE && approvals.isHoverable()) {
+                return interactable;
+            }
+        }
+
+        return null;
+    }
+
+    private ArrayList<LayerID> getOrderedInteractiveLayers() {
+        HashSet<LayerID> layerIds = new HashSet<>();
+        layerIds.addAll(world.ComponentLayersIndex.query(ClickComponent.class));
+        layerIds.addAll(world.ComponentLayersIndex.query(HoverComponent.class));
+
+        ArrayList<LayerID> orderedLayers = new ArrayList<>(layerIds);
+        orderedLayers.sort((left, right) -> {
+            int zCompare = Integer.compare(getLayerZIndex(right), getLayerZIndex(left));
+            if (zCompare != 0) {
+                return zCompare;
+            }
+
+            return left.Id().compareTo(right.Id());
+        });
+
+        return orderedLayers;
+    }
+
+    private int getLayerZIndex(LayerID layerID) {
+        HashMap<Class<? extends Component>, Component> components = world.Layers.get(layerID);
+        if (components == null) {
+            return Integer.MIN_VALUE;
+        }
+
+        var position = (PositionComponent) components.get(PositionComponent.class);
+        return position != null ? position.zIndex : Integer.MIN_VALUE;
+    }
+
+    private boolean isLayerHit(LayerID layerID, Point screenPoint, CameraView cameraView) {
+        HashMap<Class<? extends Component>, Component> components = world.Layers.get(layerID);
+        if (components == null) {
+            return false;
+        }
+
+        var clickComp = (ClickComponent) components.get(ClickComponent.class);
+        var hoverComp = (HoverComponent) components.get(HoverComponent.class);
+        var position = (PositionComponent) components.get(PositionComponent.class);
+        var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
+        var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
+
+        if ((clickComp == null && hoverComp == null) || position == null || dimensions == null) {
+            return false;
+        }
+
+        var strategy = clickComp != null ? clickComp.SelectionStrategy : hoverComp.SelectionStrategy;
+        var layerOrigin = PositioningCalculators.calc.get(position.positionStrategy).calculatePosition(position.Origin, layerID, world, cameraView);
+
+        return switch (strategy) {
+            case BOUNDING -> isBoundingHit(screenPoint, layerOrigin, dimensions);
+            case TILEMAP -> isTileMapHit(screenPoint, layerOrigin, dimensions, tileMap);
+        };
+    }
+
+    private boolean isBoundingHit(Point screenPoint, Point layerOrigin, DimensionsComponent dimensions) {
+        return screenPoint.x() >= layerOrigin.x()
+                && screenPoint.x() < layerOrigin.x() + dimensions.width
+                && screenPoint.y() >= layerOrigin.y()
+                && screenPoint.y() < layerOrigin.y() + dimensions.height;
+    }
+
+    private boolean isTileMapHit(Point screenPoint, Point layerOrigin, DimensionsComponent dimensions, TileMapComponent tileMap) {
+        if (tileMap == null) {
+            return false;
+        }
+
+        var tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
+        if (tileMapAsset == null) {
+            return false;
+        }
+
+        // Keep iteration order and bounds checks aligned with TileMapRenderPass.
+        for (int y = 0; y < dimensions.width; y++) {
+            for (int x = 0; x < dimensions.height; x++) {
+                if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
+                    continue;
+                }
+
+                Cell cell = tileMapAsset[y][x];
+                if (cell == null || cell.content == null) {
+                    continue;
+                }
+
+                if (screenPoint.equals(new Point(layerOrigin.x() + x, layerOrigin.y() + y))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -126,11 +245,6 @@ public class UiInteractionSystem extends System {
             mouseInputSubscription = null;
         }
 
-        if (layerRegisteredSubscription != null) {
-            layerRegisteredSubscription.cancel.run();
-            layerRegisteredSubscription = null;
-        }
-
         if (layerRemovedSubscription != null) {
             layerRemovedSubscription.cancel.run();
             layerRemovedSubscription = null;
@@ -138,155 +252,6 @@ public class UiInteractionSystem extends System {
 
         focusedLayer = null;
         lastHoveredLayer = null;
-        stagingStaticElementIndex.clear();
-        stagingDynamicElementIndex.clear();
-        layerIndexPoints.clear();
-        layerIndexPositioning.clear();
-        staticUiElementIndex.set(new HashMap<>());
-        dynamicUiElementIndex.set(new HashMap<>());
-    }
-
-    public void indexUIElement(LayerID layerID,  World world, Resources resources) {
-
-        // index every cell taken up by UI elements, to allow for O(1) click propagation
-        // not ideal for non-grid systems but there's relatively few cells to index here
-
-        // TODO: make a separate index for non static UI elements.
-        // Retrieve/index dynamic elements based on movement and camera position
-
-        HashMap<Class<? extends Component>, Component> components = world.Layers.get(layerID);
-        if (components == null) {
-            return;
-        }
-
-        var clickComp = (ClickComponent) components.get(ClickComponent.class);
-        var hoverComp = (HoverComponent) components.get(HoverComponent.class);
-        var position = (PositionComponent) components.get(PositionComponent.class);
-        var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
-        var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
-        var visibility = (VisibilityComponent) components.get(VisibilityComponent.class);
-
-        if ((clickComp == null && hoverComp == null) || position == null || dimensions == null) {
-            return;
-        }
-        if (visibility != null && !visibility.isVisible) {
-            return;
-        }
-
-        var cameraView = getActiveCameraView(world);
-        if (cameraView == null) {
-            return;
-        }
-
-        engine_interfaces.objects.ui.SelectionStrategies strategy = clickComp != null ? clickComp.SelectionStrategy : hoverComp.SelectionStrategy;
-
-        // Prevent duplicates when re-registering an existing layer.
-        removeIndexedUIElement(layerID);
-
-        final IndexedInteractable interactable = new IndexedInteractable(layerID, position.zIndex);
-        final ArrayList<Point> indexedPoints = layerIndexPoints.computeIfAbsent(layerID, k -> new ArrayList<>());
-        layerIndexPositioning.put(layerID, position.positionStrategy);
-        switch (strategy) {
-            case BOUNDING -> {
-                for (int x = 0; x < dimensions.width; x++) {
-                    for (int y = 0; y < dimensions.height; y++) {
-                        stageElementCell(layerID, position, x, y, interactable, cameraView, indexedPoints);
-                    }
-                }
-            }
-            case TILEMAP -> {
-                if (tileMap == null) {throw new IllegalArgumentException("Tilemap selection strategy requires a tilemap component");}
-
-                var tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
-                // Keep iteration order and bounds checks aligned with TileMapRenderPass.
-                for (int y = 0; y < dimensions.width; y++) {
-                    for (int x = 0; x < dimensions.height; x++) {
-                        if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
-                            continue;
-                        }
-
-                        Cell cell = tileMapAsset[y][x];
-                        if (cell != null && cell.content != null) {
-                            stageElementCell(layerID, position, x, y, interactable, cameraView, indexedPoints);
-                        }
-                    }
-                }
-        }}
-
-        if (position.positionStrategy.equals(Positioning.FIXED)) {
-            staticUiElementIndex.set(stagingStaticElementIndex);
-        } else {
-            dynamicUiElementIndex.set(stagingDynamicElementIndex);
-        }
-    }
-
-    private void removeIndexedUIElement(LayerID layerId) {
-        var points = layerIndexPoints.get(layerId);
-        var positioning = layerIndexPositioning.get(layerId);
-
-        if (points == null || positioning == null) {
-            layerIndexPoints.remove(layerId);
-            layerIndexPositioning.remove(layerId);
-            return;
-        }
-
-        var index = (positioning.equals(Positioning.FIXED)) ? stagingStaticElementIndex : stagingDynamicElementIndex;
-
-        for (Point point : points) {
-            index.remove(point);
-        }
-
-        if (positioning.equals(Positioning.FIXED)) {
-            staticUiElementIndex.set(stagingStaticElementIndex);
-        } else {
-            dynamicUiElementIndex.set(stagingDynamicElementIndex);
-        }
-
-        layerIndexPoints.remove(layerId);
-        layerIndexPositioning.remove(layerId);
-    }
-
-    private void stageElementCell(
-        LayerID layerID,
-        PositionComponent position,
-        int x,
-        int y,
-        IndexedInteractable interactable,
-        CameraView cameraView,
-        ArrayList<Point> indexedPoints
-    ) {
-        Point cellPoint = new Point(position.Origin.x() + x, position.Origin.y() + y);
-        var screenPoint = PositioningCalculators.calc.get(position.positionStrategy).calculatePosition(cellPoint, layerID, world, cameraView);
-        var indexPoint = position.positionStrategy.equals(Positioning.FIXED)
-            ? screenPoint
-            : screenToWorldPos(screenPoint, cameraView);
-
-        var index = position.positionStrategy.equals(Positioning.FIXED)
-            ? stagingStaticElementIndex
-            : stagingDynamicElementIndex;
-
-        // check for overlapping UI elements and only keep the one with the highest z index
-        var existingCellIndex = index.get(indexPoint);
-        if (existingCellIndex != null && existingCellIndex.zIndex() >= interactable.zIndex()) {
-            return;
-        }
-
-        index.put(indexPoint, interactable);
-        indexedPoints.add(indexPoint);
-    }
-
-    public Point screenToWorldPos(Point screenPoint, PositionComponent cameraPosition) {
-        return new Point(
-            screenPoint.x() + cameraPosition.Origin.x(),
-            screenPoint.y() + cameraPosition.Origin.y()
-        );
-    }
-
-    private Point screenToWorldPos(Point screenPoint, CameraView cameraView) {
-        return new Point(
-            screenPoint.x() + cameraView.originX,
-            screenPoint.y() + cameraView.originY
-        );
     }
 
     private CameraView getActiveCameraView(World world) {

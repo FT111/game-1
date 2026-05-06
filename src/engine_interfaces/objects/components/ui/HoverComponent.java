@@ -5,6 +5,7 @@ import engine_interfaces.objects.ui.SelectionStrategies;
 
 public class HoverComponent extends Component {
     public SelectionStrategies SelectionStrategy;
+    public boolean visibilityDependent = true;
 
     public HoverComponent(SelectionStrategies selectionStrategy) {
         SelectionStrategy = selectionStrategy;

@@ -12,6 +12,7 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.events.KeyInputEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
+import resources.components.PlayerComponent;
 
 import java.util.HashMap;
 
@@ -23,8 +24,8 @@ public class PlayerSystem extends System {
         put('d', new Point(1, 0));
     }};
 
-    private final EntityID playerEntity;
-    private final EntityID cameraEntity;
+    private EntityID playerEntity;
+    private EntityID cameraEntity;
     private PositionComponent cameraPosition;
     private Point cursorWorldPosition;
 
@@ -33,14 +34,15 @@ public class PlayerSystem extends System {
     private EventSubscriptionReceipt keyInputSubscription;
 
 
-    public PlayerSystem(EventBus bus, EntityID playerEntity, EntityID cameraEntity) {
-        this.playerEntity = playerEntity;
-        this.cameraEntity = cameraEntity;
+    public PlayerSystem(EventBus bus) {
         this.bus = bus;
     }
 
     @Override
     public void onEnter(World world) {
+        this.cameraEntity = world.ComponentEntitiesIndex.query(CameraComponent.class).stream().findFirst().orElseThrow();
+        this.playerEntity = world.ComponentEntitiesIndex.query(PlayerComponent.class).stream().findFirst().orElseThrow();
+
         lockCameraToPlayer(world, cameraEntity);
         this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
 

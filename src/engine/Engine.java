@@ -63,11 +63,6 @@ public class Engine {
         Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
         Logs.log("Engine: input handler system added");
 
-        MovementSystem movementSys = new MovementSystem(EventBus);
-        movementSys.movementPipeline.add(new CollisionProcessor(EventBus, World, Resources));
-        movementSys.movementPipeline.add(new VelocityProcessor());
-        Systems.addSystem(movementSys);
-        Logs.log("Engine: movement system added (processors=" + movementSys.movementPipeline.size() + ")");
 
         Systems.addSystem(new SceneGraphSystem(EventBus));
         Logs.log("Engine: scene graph system added");

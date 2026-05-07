@@ -6,9 +6,7 @@ import resources.MenuSystem;
 
 public class MainMenuScene extends Scene {
 
-    public MainMenuScene(MenuSystem menuSystem, UiInteractionSystem uiSystem) {
-        add(menuSystem);
-        add(uiSystem);
+    public MainMenuScene() {
     }
 
     @Override

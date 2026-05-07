@@ -57,7 +57,7 @@ public class SceneManager {
             if (targetActiveSystems.contains(system)) {
                 continue;
             }
-
+            systems.removeSystem(system.getClass());
             system.onExit(engineWorld);
             system.isEnabled = false;
         }
@@ -69,6 +69,7 @@ public class SceneManager {
                 continue;
             }
 
+            systems.addSystem(system);
             system.isEnabled = true;
             system.onEnter(engineWorld);
         }

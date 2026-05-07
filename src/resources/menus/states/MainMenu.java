@@ -3,6 +3,7 @@ package resources.menus.states;
 import engine_interfaces.objects.Alignment;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
+import engine_interfaces.objects.events.PopSceneEvent;
 import engine_interfaces.objects.rendering.Colour;
 import engine_interfaces.objects.components.BackgroundComponent;
 import resources.StyledUI;
@@ -21,11 +22,12 @@ public class MainMenu extends MenuState {
                 .withDimensions(mouseReportingDetectedString.length(), 1)
                 .build();
 
+        String menu = "Menu";
         var label = stateContext.ui().new LabelBuilder<>()
-                .withStaticText("Menu")
+                .withStaticText(menu)
                 .withPosition(new Point(0, -2), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withDimensions("Menu".length(), 1)
+                .withDimensions(menu.length(), 1)
                 .build();
 
         var continueButton = StyledUI.menuButton(stateContext.ui())
@@ -36,29 +38,33 @@ public class MainMenu extends MenuState {
                 .onClick((btn) -> {
                     hide(detectedLabel);
                     stateContext.switchTo().accept(stateContext.states().gameHud);
-                    stateContext.bus().publish(new engine_interfaces.objects.events.SwitchSceneEvent("Gameplay"));
+                    stateContext.bus().publish(new PopSceneEvent());
+                    stateContext.bus().publish(new engine_interfaces.objects.events.PushSceneEvent("Gameplay"));
                 })
                 .build();
 
+        String save = "Save";
         var saveButton = StyledUI.menuButton(stateContext.ui())
-                .withStaticText("Save")
+                .withStaticText(save)
                 .withPosition(new Point(0,4), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withDimensions("Save".length(), 1)
+                .withDimensions(save.length(), 1)
                 .build();
 
+        String load = "Load";
         var loadButton = StyledUI.menuButton(stateContext.ui())
-                .withStaticText("Load")
+                .withStaticText(load)
                 .withPosition(new Point(0,6), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withDimensions("Load".length(), 1)
+                .withDimensions(load.length(), 1)
                 .build();
 
+        String quit = "Quit";
         var quitButton = StyledUI.menuButton(stateContext.ui())
-                .withStaticText("Quit")
+                .withStaticText(quit)
                 .withPosition(new Point(0,8), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
-                .withDimensions("Quit".length(), 1)
+                .withDimensions(quit.length(), 1)
                 .onClick((btn) -> {
                     stateContext.bus().publish(new resources.events.QuitGameEvent());
                 })

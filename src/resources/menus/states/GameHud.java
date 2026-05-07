@@ -1,5 +1,7 @@
 package resources.menus.states;
 
+import engine_interfaces.objects.events.PopSceneEvent;
+import engine_interfaces.objects.events.PushSceneEvent;
 import engine_interfaces.objects.events.SwitchSceneEvent;
 import resources.menus.KeyInputBind;
 import resources.menus.MenuState;
@@ -10,7 +12,8 @@ public class GameHud extends MenuState {
         super(ctx);
         bindKeypress(new KeyInputBind('p'), () -> {
             ctx.switchTo().accept(ctx.states().mainMenu);
-                ctx.bus().publish(new SwitchSceneEvent("MainMenu"));
+            ctx.bus().publish(new PopSceneEvent());
+            ctx.bus().publish(new PushSceneEvent("MainMenu"));
         });
     }
 }

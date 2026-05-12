@@ -15,10 +15,7 @@ import resources.PlayerSystem;
 import resources.VisionSystem;
 
 import engine.scenes.Scene;
-import resources.components.PlayerComponent;
-import resources.components.VisionBlockerComponent;
-import resources.components.VisionEmitterComponent;
-import resources.components.VisionLayerComponent;
+import resources.components.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,6 +31,11 @@ public class GameplayScene extends Scene {
                 new VisibilityComponent(true),
                 new DimensionsComponent(250,250)
         );
+        var testGuardVision = world.createLayer(
+                new PositionComponent(new Point(0,0), 2),
+                new VisibilityComponent(true),
+                new DimensionsComponent(250,250)
+        );
 
         var player = world.createEntity(
                 new PositionComponent(new Point(3,3), 3),
@@ -44,6 +46,16 @@ public class GameplayScene extends Scene {
                 new OrientationComponent(90)
         );
 
+        var guard = world.createEntity(
+                new PositionComponent(new Point(5,7), 3),
+                new RenderableComponent('*', null, null, true),
+                new VisionEmitterComponent(150, 110, 5, testGuardVision),
+                new OrientationComponent(12),
+                new GuardComponent()
+        );
+
+        world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));
+        world.addComponentToLayer(testGuardVision, new TileMapComponent("vision-maps", guard.toString(), "tl", false));
         world.addComponentToLayer(playerVision, new VisionLayerComponent(player));
         world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 

@@ -42,12 +42,11 @@ public class BlockRenderPass extends RenderPass {
 				return;
 			}
 
-			var screenOrigin = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
-					new Point(positionComponent.Origin.x(), positionComponent.Origin.y()),
-					layerID,
-					renderObjects.world(),
-					renderObjects.camera()
-			);
+			var screenOrigin = renderObjects.layoutManager().getCalculatedScreenPosition(layerID, renderObjects.camera());
+			if (screenOrigin == null) return;
+
+			var screenX = screenOrigin.x();
+			var screenY = screenOrigin.y();
 
 			// Render background fill if present
 			if (backgroundComponent != null && backgroundComponent.enabled) {

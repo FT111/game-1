@@ -34,21 +34,20 @@ public class TileMapRenderPass extends RenderPass {
 
             Cell[][] tileMap = renderObjects.resources().getAsset(tileMapComponent.resourceId, tileMapComponent.assetId, Cell[][].class);
             Point tileEndPoint = new Point(positionComponent.Origin.x() + tileMap[0].length, positionComponent.Origin.y() + tileMap.length);
-            // Cull tile map if it is not in view of the camera and a world-positioned object
-            if (!positionComponent.positionStrategy.equals(Positioning.FIXED)  && !renderObjects.camera().isWorldPointInView(positionComponent.Origin, tileEndPoint)) {
+            Point worldEndPoint = new Point(positionComponent.Origin.x() + dimensionsComponent.width, positionComponent.Origin.y() + dimensionsComponent.height);
+            if (!positionComponent.positionStrategy.equals(Positioning.FIXED) && !renderObjects.camera().isWorldPointInView(positionComponent.Origin, worldEndPoint)) {
                 return;
             }
 
-            var screenTileMapOrigin = PositioningCalculators.calc.get(positionComponent.positionStrategy).calculatePosition(
-                    new Point(positionComponent.Origin.x(), positionComponent.Origin.y()),
-                    layerID,
-                    renderObjects.world(),
-                    renderObjects.camera()
-            );
+            var screenTileMapOrigin = renderObjects.layoutManager().getCalculatedScreenPosition(layerID, renderObjects.camera());
+            if (screenTileMapOrigin == null) return;
+
+            var startX = screenTileMapOrigin.x();
+            var startY = screenTileMapOrigin.y();
 
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
-            for (int y = 0; y < dimensionsComponent.width; y++) {
-                for (int x = 0; x < dimensionsComponent.height; x++) {
+            for (int y = 0; y < dimensionsComponent.height; y++) {
+                for (int x = 0; x < dimensionsComponent.width; x++) {
                     // Check bounds of tile map asset
                     if (y >= tileMap.length || x >= tileMap[y].length) {
                         continue;

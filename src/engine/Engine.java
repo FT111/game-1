@@ -11,6 +11,10 @@ import engine.systems.UiInteractionSystem;
 import engine.systems.movement.CollisionProcessor;
 import engine.systems.movement.VelocityProcessor;
 import engine.scenes.SceneManager;
+import engine.layout.LayoutManager;
+import engine_interfaces.objects.components.LayerColliderComponent;
+import engine_interfaces.objects.components.ui.ClickComponent;
+import engine_interfaces.objects.components.ui.HoverComponent;
 import engine_interfaces.objects.rendering.RenderPass;
 
 import java.io.IOException;
@@ -24,6 +28,7 @@ public class Engine {
     public Resources Resources = new Resources();
     public EventBus EventBus = new EventBus();
     public SceneManager SceneManager;
+    public LayoutManager LayoutManager;
 
     private long Accumulator = 0;
     public final List<Class<? extends engine_interfaces.objects.System>> CoreSystems = new ArrayList<>() {{
@@ -48,7 +53,21 @@ public class Engine {
         Logs.log("Engine: constructor start");
         World = (world != null) ? world : new World(EventBus);
         Logs.log("Engine: world ready (custom=" + (world != null) + ")");
-        Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI());
+        LayoutManager = new LayoutManager(World, EventBus, Resources);
+
+        LayoutManager.defineMapLayer("collision")
+                .fromTileMap(LayerColliderComponent.class, c -> c.collidableTiles)
+                .register();
+
+        LayoutManager.defineMapLayer("clickable")
+                .fromBoundingBox(ClickComponent.class)
+                .register();
+
+        LayoutManager.defineMapLayer("hoverable")
+                .fromBoundingBox(HoverComponent.class)
+                .register();
+
+        Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI(), LayoutManager);
         Logs.log("Engine: renderer ready (custom=" + (renderer != null) + ", api=" + Renderer.Api.getClass().getSimpleName() + ")");
         SceneManager = new SceneManager(EventBus, World, Systems);
         Logs.log("Engine: scene manager ready");
@@ -90,6 +109,7 @@ public class Engine {
             // Update game state based on fixed tick rate
             while (Accumulator >= 1_000_000_000 / TicksPerSecond) {
                 this.EventBus.flush();
+                LayoutManager.invalidate();
                 Systems.update(World, tick);
 
                 Accumulator -= 1_000_000_000 / TicksPerSecond;
@@ -97,6 +117,7 @@ public class Engine {
 
             // Decoupled rendering from tick updates
             try {
+                LayoutManager.invalidate();
                 Renderer.render(World, Resources);
 
                 // Sleep if we're ahead of the frame rate limit

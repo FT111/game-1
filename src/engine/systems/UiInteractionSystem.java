@@ -15,7 +15,7 @@ import engine_interfaces.objects.events.LayerHoverExitEvent;
 import engine_interfaces.objects.events.LayerRemovedEvent;
 import engine_interfaces.objects.events.MouseInputEvent;
 import engine_interfaces.objects.rendering.Cell;
-import engine_interfaces.objects.rendering.PositioningCalculators;
+import engine.layout.LayoutManager;
 import engine_interfaces.objects.ui.IndexedInteractable;
 import engine_interfaces.objects.ui.InteractionApprovals;
 
@@ -32,14 +32,16 @@ public class UiInteractionSystem extends System {
     private final World world;
     private final EventBus bus;
     private final Resources resources;
+    private final LayoutManager layoutManager;
 
     private EventSubscriptionReceipt mouseInputSubscription;
     private EventSubscriptionReceipt layerRemovedSubscription;
 
-    public UiInteractionSystem(World world, EventBus bus, Resources resources) {
+    public UiInteractionSystem(World world, EventBus bus, Resources resources, LayoutManager layoutManager) {
         this.world = world;
         this.bus = bus;
         this.resources = resources;
+        this.layoutManager = layoutManager;
     }
 
     @Override
@@ -50,7 +52,7 @@ public class UiInteractionSystem extends System {
                 return;
             }
 
-            var cameraView = getActiveCameraView(world);
+            var cameraView = layoutManager.getActiveCameraView();
             if (cameraView == null) {
                 if (input.eventType == MouseEventTypes.DOWN) {
                     focusedLayer = null;
@@ -192,7 +194,10 @@ public class UiInteractionSystem extends System {
         }
 
         var strategy = clickComp != null ? clickComp.SelectionStrategy : hoverComp.SelectionStrategy;
-        var layerOrigin = PositioningCalculators.calc.get(position.positionStrategy).calculatePosition(position.Origin, layerID, world, cameraView);
+        var layerOrigin = layoutManager.getCalculatedScreenPosition(layerID, cameraView);
+        if (layerOrigin == null) {
+            return false;
+        }
 
         return switch (strategy) {
             case BOUNDING -> isBoundingHit(screenPoint, layerOrigin, dimensions);
@@ -254,23 +259,6 @@ public class UiInteractionSystem extends System {
         lastHoveredLayer = null;
     }
 
-    private CameraView getActiveCameraView(World world) {
-        var cameraEntities = world.ComponentEntitiesIndex.query(CameraComponent.class);
-
-        for (var entity : cameraEntities) {
-            var camera = (CameraComponent) world.Entities.get(entity).get(CameraComponent.class);
-            if (camera != null && camera.isActive) {
-                var cameraPosition = (PositionComponent) world.Entities.get(entity).get(PositionComponent.class);
-                if (cameraPosition == null) {
-                    return null;
-                }
-
-                return new CameraView(cameraPosition.Origin.x(), cameraPosition.Origin.y(), camera.viewWidth, camera.viewHeight);
-            }
-        }
-
-        return null;
-    }
 
     @Override
     public void update(World world, int tickCount) {

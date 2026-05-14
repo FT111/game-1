@@ -21,7 +21,7 @@ public class GlobalScene extends Scene {
         );
 
         add(new CameraSystem(camera, engine.Renderer.Api, engine.World));
-        add(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources));
+        add(new UiInteractionSystem(engine.World, engine.EventBus, engine.Resources, engine.LayoutManager));
         add(new SceneGraphSystem(engine.EventBus));
         add(new MenuSystem(engine.EventBus, engine.World));
         add(new ControlSystem(engine.EventBus));

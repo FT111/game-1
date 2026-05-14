@@ -2,12 +2,9 @@ package resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import engine_interfaces.objects.rendering.Cell;
-import engine_interfaces.objects.rendering.Colour;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,14 +21,17 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
             '#', '.', 'D', 'G', 'R', 'd', 'c', 'f', 'x', 'p', 'k', 'b', 'E', 'S', 't', 's', ' ','=',':', '+','*'
     );
 
-    public Cell[][] loadMapFromJsonFile(String filePath) {
-        try {
+    public Cell[][] loadMapFromJsonResource(String resourcePath) {
+        try (InputStream is = MapAssetLoader.class.getClassLoader().getResourceAsStream(resourcePath)) {
+            if (is == null) {
+                throw new IllegalArgumentException("Map resource not found on classpath: " + resourcePath);
+            }
+
             ObjectMapper mapper = new ObjectMapper();
-            String json = Files.readString(Path.of(filePath), StandardCharsets.UTF_8);
-            JsonMapDefinition def = mapper.readValue(json, JsonMapDefinition.class);
+            JsonMapDefinition def = mapper.readValue(is, JsonMapDefinition.class);
 
             if (def.rows == null || def.rows.isEmpty()) {
-                throw new IllegalArgumentException("Map has no rows: " + filePath);
+                throw new IllegalArgumentException("Map has no rows: " + resourcePath);
             }
 
             int height = def.rows.size();
@@ -47,17 +47,13 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
                         tile = '.'; // fallback for unknown chars
                     }
 
-//                    if (tile == '#') {
-//                        map[y][x] = new Cell(' ', new Colour(255, 255, 255), new Colour(255, 255, 255));
-//                        continue;
-//                    }
                     map[y][x] = new Cell(tile, null, null);
                 }
             }
 
             return map;
         } catch (IOException e) {
-            throw new RuntimeException("Failed to load map JSON: " + filePath, e);
+            throw new RuntimeException("Failed to load map JSON from resource: " + resourcePath, e);
         }
     }
 
@@ -68,9 +64,9 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
 
     @Override
     public HashMap<String, Object> Load() {
-        Cell[][] office80s = loadMapFromJsonFile("src/resources/maps/office_level_80s.json");
+        Cell[][] office80s = loadMapFromJsonResource("maps/office_level_80s.json");
         return new HashMap<>() {{
-            put("level", office80s);          // keeps Main.java compatible
+            put("level", office80s);
             put("office_80s", office80s);
         }};
     }

@@ -28,4 +28,12 @@ public class MovementProposalEvent extends Event {
         this.currentPosition = currentPosition;
         this.dependsOnMovement = dependsOnMovement;
     }
+
+    public MovementProposalEvent(EntityID entityID, Point currentPosition, Point proposedPosition, boolean retryOnRejection, UUID dependsOnMovement) {
+        this.entityID = entityID;
+        this.currentPosition = currentPosition;
+        this.proposedPosition = proposedPosition;
+        this.retryOnRejection = retryOnRejection;
+        this.dependsOnMovement = dependsOnMovement;
+    }
 }

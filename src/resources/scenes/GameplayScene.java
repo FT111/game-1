@@ -11,14 +11,18 @@ import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
 import resources.ChunkSystem;
+import resources.GuardAiSystem;
 import resources.PlayerSystem;
 import resources.VisionSystem;
 
 import engine.scenes.Scene;
+import resources.ai.GuardState;
 import resources.components.*;
+import resources.movement.pathfinders.AStarPathfinder;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class GameplayScene extends Scene {
 
@@ -51,7 +55,7 @@ public class GameplayScene extends Scene {
                 new RenderableComponent('*', null, null, true),
                 new VisionEmitterComponent(150, 110, 5, testGuardVision),
                 new OrientationComponent(12),
-                new GuardComponent()
+                new GuardComponent(List.of(new Point(25, 7), new Point(25, 25), new Point(5, 25), new Point(5, 7)), GuardState.PATROLLING)
         );
 
         world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));
@@ -63,6 +67,7 @@ public class GameplayScene extends Scene {
         add(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
         add(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         add(new PlayerSystem(engine.EventBus));
+        add(new GuardAiSystem(engine.LayoutManager, new AStarPathfinder(), engine.EventBus));
         MovementSystem movementSys = new MovementSystem(engine.EventBus);
         movementSys.movementPipeline.add(new CollisionProcessor(engine.EventBus, engine.World, engine.Resources, engine.LayoutManager));
         movementSys.movementPipeline.add(new VelocityProcessor());

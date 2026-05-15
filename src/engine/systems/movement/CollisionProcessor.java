@@ -35,6 +35,12 @@ public class CollisionProcessor implements MovementProcessor {
 
     @Override
     public boolean validateMove(HashMap<EntityID, HashMap<Class<? extends Component>, Component>> entityState, int tickCount, MovementProposalEvent proposal) {
+        // Skip collision checks for the camera
+        HashMap<Class<? extends Component>, Component> components = entityState.get(proposal.entityID);
+        if (components != null && components.containsKey(engine_interfaces.objects.components.CameraComponent.class)) {
+            return true;
+        }
+
         // only validates against static collision map for now
         var collisionMap = layoutManager.getSpatialMap("collision");
 

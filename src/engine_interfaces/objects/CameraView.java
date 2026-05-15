@@ -22,8 +22,9 @@ public class CameraView {
 
     // Overload for checking if a rectangle defined by two points is in view
     public boolean isWorldPointInView(Point pointX, Point pointY) {
-        return pointX.x() >= originX || pointX.x() < originX + width ||
-               pointY.y() >= originY || pointY.y() < originY + height;
+        // return true if the rectangles [pointX, pointY) and [origin, origin+size) overlap
+        return pointX.x() < originX + width && pointY.x() > originX &&
+               pointX.y() < originY + height && pointY.y() > originY;
     }
 
     public boolean isScreenPointInView(Point point) {
@@ -32,8 +33,9 @@ public class CameraView {
     }
 
     public boolean isScreenPointInView(Point pointX, Point pointY) {
-        return pointX.x() >= 0 || pointX.x() < width ||
-               pointY.y() >= 0 || pointY.y() < height;
+        // same overlap logic but against the screen rectangle [0,0,width,height)
+        return pointX.x() < width && pointY.x() > 0 &&
+               pointX.y() < height && pointY.y() > 0;
     }
 
 

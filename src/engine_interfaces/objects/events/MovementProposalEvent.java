@@ -10,6 +10,7 @@ public class MovementProposalEvent extends Event {
     public EntityID entityID;
     public Point currentPosition;
     public Point proposedPosition;
+    public boolean retryOnRejection = false;
 
     public UUID dependsOnMovement;
 

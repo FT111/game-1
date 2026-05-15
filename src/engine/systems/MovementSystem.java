@@ -11,10 +11,7 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.events.MovementEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 public class MovementSystem extends System {
@@ -57,6 +54,7 @@ public class MovementSystem extends System {
         // stores all components so that the state can be atomically updated after processing all movement proposals
         var entityStateSnapshot = (HashMap<EntityID, HashMap<Class<? extends Component>, Component>>) world.Entities.clone();
 
+        List<MovementProposalEvent> toRepropose = new ArrayList<>();
         while (!pendingMovements.isEmpty()) {
             var movementProposal = pendingMovements.poll();
 
@@ -70,8 +68,13 @@ public class MovementSystem extends System {
                 positionComponent.Origin = movementProposal.proposedPosition;
                 approvedMovementEventsThisTick.add(movementProposal.eventID);
                 bus.publish(new MovementEvent(movementProposal.entityID, movementProposal.currentPosition, movementProposal.proposedPosition));
+                continue;
+            }
+            if (movementProposal.retryOnRejection) {
+                toRepropose.add(movementProposal);
             }
         }
+        pendingMovements.addAll(toRepropose);
 
         world.Entities = entityStateSnapshot;
     }

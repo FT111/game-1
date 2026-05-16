@@ -15,7 +15,7 @@ import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.Colour;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
-import resources.events.PlayerSpottedEvent; // added
+import resources.events.PlayerSeenEvent; // added
 import engine.EventBus; // added
 import resources.components.PlayerComponent; // added
 
@@ -233,18 +233,22 @@ public class VisionSystem extends System {
                     // Vision is casted from local emitter relative space
                     Point relativePlayerPos = playerPos.Origin.subtract(position.Origin);
                     if (pointsInSight.contains(relativePlayerPos)) {
-                        eventBus.publish(new PlayerSpottedEvent(entityID, playerId, playerPos.Origin));
+                        // Publish a sighting tick event; guard AI will accumulate awareness
+                        // and decide when to escalate to a full 'spotted' state.
+                        eventBus.publish(new PlayerSeenEvent(entityID, playerId, playerPos.Origin));
                     }
                 }
             }
 
             // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
             Cell[][] visionTileMapAsset = new Cell[visionTileMapDimensions.height][visionTileMapDimensions.width];
+            // Determine tile colour for this emitter (use component colour if present, otherwise fall back to default)
+            Colour tileColour = emitter.visionColour != null ? emitter.visionColour : new Colour(0, 40, 40);
             for (Point point : pointsInSight) {
                 int x = point.x() + visionTileMapDimensions.width / 2;
                 int y = point.y() + visionTileMapDimensions.height /2;
                 if (y >= 0 && y < visionTileMapDimensions.height && x >= 0 && x < visionTileMapDimensions.width) {
-                    visionTileMapAsset[y][x] = new Cell(null, null, new Colour(0, 40, 40));
+                    visionTileMapAsset[y][x] = new Cell(null, null, tileColour);
                 }
             }
 

@@ -9,17 +9,19 @@ import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.events.MovementEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
+import resources.events.PlayerSpottedEvent; // added
+import resources.ai.bt.*;
 import resources.components.GuardComponent;
 import resources.movement.PathfindingStrategy;
 
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class GuardAiSystem extends System {
     private final LayoutManager layoutManager;
     private final PathfindingStrategy pathfinder;
-    private final EventBus bus;
+    public final EventBus bus;
     private final Map<EntityID, MovementProposalEvent> pendingMovements = new HashMap<>();
+    private final Map<EntityID, Point> lastKnownPlayerPos = new HashMap<>(); // added
 
     public GuardAiSystem(LayoutManager layoutManager, PathfindingStrategy pathfinder, EventBus bus) {
         this.layoutManager = layoutManager;
@@ -36,12 +38,38 @@ public class GuardAiSystem extends System {
             var movementEvent = (MovementEvent) event;
             pendingMovements.remove(movementEvent.entityID);
         });
+
+        //
+        bus.subscribe(PlayerSpottedEvent.class, () -> isEnabled, event -> {
+            var spottedEvent = (PlayerSpottedEvent) event;
+            lastKnownPlayerPos.put(spottedEvent.spotterId, spottedEvent.playerPosition);
+        });
     }
 
     /// Uses a routing algorithm to route between two points, taking into account the spatial map of the world and any
     ///  collidable obstacles.
     public List<Point> routeBetween(Point from, Point to) {
         return pathfinder.findPath(from, to, layoutManager.getSpatialMap("collision"));
+    }
+
+    public MovementProposalEvent getPendingMovement(EntityID entityID) {
+        return pendingMovements.get(entityID);
+    }
+
+    public Point getLastKnownPlayerPos(EntityID guardID) {
+        return lastKnownPlayerPos.get(guardID);
+    }
+
+    public void clearLastKnownPlayerPos(EntityID guardID) {
+        lastKnownPlayerPos.remove(guardID);
+    }
+
+    public void proposeMovement(EntityID entityID, Point origin, Point target) {
+        MovementProposalEvent movementProposalEvent = new MovementProposalEvent(entityID, origin, target, true, null);
+        if (pendingMovements.get(entityID) == null || !pendingMovements.get(entityID).equals(movementProposalEvent)) {
+            bus.publish(movementProposalEvent);
+            pendingMovements.put(entityID, movementProposalEvent);
+        }
     }
 
     @Override
@@ -52,31 +80,48 @@ public class GuardAiSystem extends System {
         for (var guardID : guards) {
             GuardComponent guardComp = (GuardComponent)world.Entities.get(guardID).get(GuardComponent.class);
             PositionComponent positionComp = (PositionComponent)world.Entities.get(guardID).get(PositionComponent.class);
-            if (guardComp == null) continue; // shouldn't happen but can't hurt
+            if (guardComp == null) continue;
 
-            if (guardComp.mainPathPoints != null) {
-                if (guardComp.mainPathPoints.peek() != null && guardComp.mainPathPoints.peek().equals(positionComp.Origin)) {
-                    guardComp.mainPathPoints.pop();
-                }
+            if (guardComp.behaviourTree == null) {
+                // base behaviour tree node
+                // runs top to bottom, branching if a node sequence evaluates to a success.
+                guardComp.behaviourTree = new Selector(Arrays.asList(
+                    new Sequence(Arrays.asList(
+                            new IsPlayerCatchable(this),
+                            new CatchPlayerNode(this)
+                    )),
+                    new Sequence(Arrays.asList(
+                        new IsPlayerSpottedNode(this),
+                        new ChasePlayerNode(this)
+                    )),
+                    new PatrolNode(this)
+                ));
+            }
 
-                if (guardComp.interpolatedPathPoints != null && guardComp.interpolatedPathPoints.peek() == null) {
-                    guardComp.interpolatedPathPoints = new Stack<>();
-                    List<Point> nextPathSegment = routeBetween(positionComp.Origin, guardComp.mainPathPoints.peek());
-                    for (int i = nextPathSegment.size() - 1; i >= 0; i--) {
-                        guardComp.interpolatedPathPoints.push(nextPathSegment.get(i));
-                    }
-                }
+            guardComp.behaviourTree.evaluate(world, guardID);
+        }
+    }
 
-                if (guardComp.interpolatedPathPoints != null && guardComp.interpolatedPathPoints.peek() != null) {
-                    var nextPoint = guardComp.interpolatedPathPoints.pop();
-                    MovementProposalEvent movementProposalEvent = new MovementProposalEvent(guardID, nextPoint, positionComp.Origin, true, null);
+    public void routeIfNecessary(GuardComponent guardComp, PositionComponent positionComp) {
+        if (guardComp.interpolatedPathPoints != null) {
+            try {
+                guardComp.mainPathPoints.peek();
+            } catch (EmptyStackException e) {
+                return; // if no more main path points, don't route
+            }
 
-                    if (pendingMovements.get(guardID) == null || !pendingMovements.get(guardID).equals(movementProposalEvent)) {
-                        bus.publish(movementProposalEvent);
-                        pendingMovements.put(guardID, movementProposalEvent);
-                    }
+            // check if empty
+            try {
+                guardComp.interpolatedPathPoints.peek();
+            } catch (EmptyStackException e) {
+                // if empty, give a route
+                guardComp.interpolatedPathPoints = new Stack<>();
+                List<Point> nextPathSegment = routeBetween(positionComp.Origin, guardComp.mainPathPoints.peek());
+                for (int i = nextPathSegment.size() - 1; i >= 0; i--) {
+                    guardComp.interpolatedPathPoints.push(nextPathSegment.get(i));
                 }
             }
+
         }
     }
 }

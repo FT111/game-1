@@ -15,6 +15,9 @@ import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.Colour;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
+import resources.events.PlayerSpottedEvent; // added
+import engine.EventBus; // added
+import resources.components.PlayerComponent; // added
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +34,7 @@ public class VisionSystem extends System {
             {0, 1, 1, 0, 0, -1, -1, 0},
             {1, 0, 0, 1, -1, 0, 0, -1}
     };
+    private EventBus eventBus; // added
 
     public VisionSystem(World world, Resources resources, HashMap<Point, HashSet<EntityID>> chunkMap, int globalTickFrequency) {
         this.world = world;
@@ -38,9 +42,10 @@ public class VisionSystem extends System {
         this.globalTickFrequency = globalTickFrequency;
     }
 
-    public VisionSystem(World world, Resources resources) {
+    public VisionSystem(World world, Resources resources, EventBus eventBus) {
         this.world = world;
         this.resources = resources;
+        this.eventBus = eventBus;
         this.globalTickFrequency = 1;
     }
 
@@ -200,8 +205,6 @@ public class VisionSystem extends System {
     public void update(World world, int tickCount) {
         HashSet<EntityID> trackedVisionEmitters = world.ComponentEntitiesIndex.query(new Class[]{VisionEmitterComponent.class, OrientationComponent.class, PositionComponent.class});
 
-        // Use a shadowcaster to calculate the vision blocking tiles for each emitter
-
         trackedVisionEmitters.forEach(entityID -> {;
 
             var entity = world.Entities.get(entityID);
@@ -220,6 +223,20 @@ public class VisionSystem extends System {
 
             var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.fieldOfViewAngle, emitter.visionRange);
 
+
+            // Added: determine if the player is in this entity's line of sight
+            if (eventBus != null) {
+                var players = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(new Class[]{PlayerComponent.class, PositionComponent.class});
+                for (var playerId : players) {
+                    if (playerId.equals(entityID)) continue;
+                    var playerPos = (PositionComponent) world.Entities.get(playerId).get(PositionComponent.class);
+                    // Vision is casted from local emitter relative space
+                    Point relativePlayerPos = playerPos.Origin.subtract(position.Origin);
+                    if (pointsInSight.contains(relativePlayerPos)) {
+                        eventBus.publish(new PlayerSpottedEvent(entityID, playerId, playerPos.Origin));
+                    }
+                }
+            }
 
             // Create a new tile map asset for the vision layer based on the points in sight, and update the vision layer's tile map asset with it
             Cell[][] visionTileMapAsset = new Cell[visionTileMapDimensions.height][visionTileMapDimensions.width];

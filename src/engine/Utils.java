@@ -42,7 +42,7 @@ public class Utils {
         }
 
         // Always prefer the non null content. If both are non null, prefer the cell with the higher z-index
-        char content = collateCellProperty(existing.content, added.content, existing.zIndex, added.zIndex);
+        var content = collateCellProperty(existing.content, added.content, existing.zIndex, added.zIndex);
         Colour bgColour = collateCellProperty(existing.bgColour, added.bgColour, existing.zIndex, added.zIndex);
         Colour fgColour = collateCellProperty(existing.fgColour, added.fgColour, existing.zIndex, added.zIndex);
 

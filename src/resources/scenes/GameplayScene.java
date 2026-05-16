@@ -55,6 +55,7 @@ public class GameplayScene extends Scene {
                 new RenderableComponent('*', null, null, true),
                 new VisionEmitterComponent(150, 110, 5, testGuardVision),
                 new OrientationComponent(12),
+                new OrientToMovementComponent(),
                 new VelocityComponent(1.2, 10,  "exponential"),
                 new GuardComponent(List.of(new Point(25, 7)), GuardState.PATROLLING)
         );

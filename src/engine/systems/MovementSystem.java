@@ -8,6 +8,8 @@ import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.MovementProcessor;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.components.PositionComponent;
+import engine_interfaces.objects.components.OrientationComponent;
+import engine_interfaces.objects.components.OrientToMovementComponent;
 import engine_interfaces.objects.events.MovementEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
 
@@ -66,6 +68,21 @@ public class MovementSystem extends System {
             if (shouldMove) {
                 var positionComponent = (PositionComponent) entityStateSnapshot.get(movementProposal.entityID).get(PositionComponent.class);
                 positionComponent.Origin = movementProposal.proposedPosition;
+
+                // Update facing based on movement when requested by a marker component.
+                if (entityStateSnapshot.get(movementProposal.entityID).containsKey(OrientToMovementComponent.class)) {
+                    int dx = movementProposal.proposedPosition.x() - movementProposal.currentPosition.x();
+                    int dy = movementProposal.proposedPosition.y() - movementProposal.currentPosition.y();
+                    int facingAngle = (int) Math.toDegrees(Math.atan2(dy * 2.0, dx));
+                    var orientation = (OrientationComponent) entityStateSnapshot.get(movementProposal.entityID).get(OrientationComponent.class);
+                    if (orientation == null) {
+                        orientation = new OrientationComponent(facingAngle);
+                        entityStateSnapshot.get(movementProposal.entityID).put(OrientationComponent.class, orientation);
+                    } else {
+                        orientation.facingAngle = facingAngle;
+                    }
+                }
+
                 approvedMovementEventsThisTick.add(movementProposal.eventID);
                 bus.publish(new MovementEvent(movementProposal.entityID, movementProposal.currentPosition, movementProposal.proposedPosition));
                 continue;

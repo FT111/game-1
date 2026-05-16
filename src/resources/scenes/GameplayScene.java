@@ -55,7 +55,8 @@ public class GameplayScene extends Scene {
                 new RenderableComponent('*', null, null, true),
                 new VisionEmitterComponent(150, 110, 5, testGuardVision),
                 new OrientationComponent(12),
-                new GuardComponent(List.of(new Point(25, 7), new Point(25, 25), new Point(5, 25), new Point(5, 7)), GuardState.PATROLLING)
+                new VelocityComponent(1.2, 10,  "exponential"),
+                new GuardComponent(List.of(new Point(25, 7)), GuardState.PATROLLING)
         );
 
         world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));
@@ -64,7 +65,7 @@ public class GameplayScene extends Scene {
         world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
 
-        add(new VisionSystem(engine.World, engine.Resources, chunkMap, 1));
+        add(new VisionSystem(engine.World, engine.Resources, engine.EventBus));
         add(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         add(new PlayerSystem(engine.EventBus));
         add(new GuardAiSystem(engine.LayoutManager, new AStarPathfinder(), engine.EventBus));
@@ -94,4 +95,3 @@ public class GameplayScene extends Scene {
     protected void onEnter() {
     }
 }
-

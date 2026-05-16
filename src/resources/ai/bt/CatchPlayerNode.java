@@ -1,5 +1,6 @@
 package resources.ai.bt;
 
+import engine.Logs;
 import engine.World;
 import engine_interfaces.objects.EntityID;
 import resources.GuardAiSystem;
@@ -13,6 +14,7 @@ public class CatchPlayerNode extends BtNode {
     }
     @Override
     public NodeState evaluate(World world, EntityID entityID) {
+        Logs.log("Player caught by guard " + entityID);
         this.system.bus.publish(new PlayerCaughtEvent());
         state = NodeState.SUCCESS;
         return state;

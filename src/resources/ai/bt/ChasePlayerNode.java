@@ -36,9 +36,21 @@ public class ChasePlayerNode extends BtNode {
         }
 
         // Re-route towards player if we don't have a path, or if we need to update it
-        if (guardComp.interpolatedPathPoints == null || guardComp.interpolatedPathPoints.isEmpty() || tickNeedsReroute(world)) {
+        boolean needsReroute = guardComp.interpolatedPathPoints == null || guardComp.interpolatedPathPoints.isEmpty();
+        if (!needsReroute) {
+            Point currentDestination = guardComp.interpolatedPathPoints.firstElement();
+            if (!currentDestination.equals(targetPoint)) {
+                needsReroute = true;
+            }
+        }
+
+        if (needsReroute || tickNeedsReroute(world)) {
             List<Point> newRoute = system.routeBetween(positionComp.Origin, targetPoint);
-            guardComp.interpolatedPathPoints = new Stack<>();
+            if (guardComp.interpolatedPathPoints == null) {
+                guardComp.interpolatedPathPoints = new Stack<>();
+            } else {
+                guardComp.interpolatedPathPoints.clear();
+            }
             for (int i = newRoute.size() - 1; i >= 0; i--) {
                 guardComp.interpolatedPathPoints.push(newRoute.get(i));
             }

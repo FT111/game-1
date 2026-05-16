@@ -20,7 +20,7 @@ public class IsPlayerCatchable extends BtNode {
         EntityID player = world.ComponentEntitiesIndex.query(PositionComponent.class).stream().findFirst().orElseThrow();
         PositionComponent playerActualPos = (PositionComponent) world.Entities.get(player).get(PositionComponent.class);
 
-        if (playerActualPos.Origin != playerLastKnownPos) {
+        if (!playerActualPos.Origin.equals(playerLastKnownPos)) {
             return NodeState.FAILURE;
         }
 

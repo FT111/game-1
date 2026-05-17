@@ -5,6 +5,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.PositionComponent;
 import resources.GuardAiSystem;
+import resources.ai.GuardState;
 import resources.components.GuardComponent;
 import java.util.List;
 import java.util.Stack;
@@ -61,6 +62,7 @@ public class ChasePlayerNode extends BtNode {
             system.proposeMovement(entityID, positionComp.Origin, nextPoint);
         }
 
+        guardComp.state = GuardState.CHASING;
         return NodeState.RUNNING;
     }
 

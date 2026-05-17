@@ -4,6 +4,7 @@ import engine.World;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.components.PositionComponent;
 import resources.GuardAiSystem;
+import resources.ai.GuardState;
 import resources.components.GuardComponent;
 import engine_interfaces.objects.Point;
 
@@ -48,6 +49,8 @@ public class PatrolNode extends BtNode {
             Point nextPoint = guardComp.interpolatedPathPoints.pop();
             system.proposeMovement(entityID, positionComp.Origin, nextPoint);
         }
+
+        guardComp.state = GuardState.PATROLLING;
         return NodeState.RUNNING;
     }
 

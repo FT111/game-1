@@ -17,4 +17,8 @@ public record Point(int x, int y) {
     public Point divide(int scalar) {
         return new Point(this.x / scalar, this.y / scalar);
     }
+
+    public double magnitude() {
+        return Math.sqrt(x * x + y * y);
+    }
 }

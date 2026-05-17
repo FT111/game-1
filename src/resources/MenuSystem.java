@@ -39,13 +39,18 @@ public class MenuSystem extends System{
         if (states == null) {
             UiBuilders uiBuilders = new UiBuilders(this.world);
             states = new MenuStates(this::switchState, uiBuilders, bus, this.world, layerId -> this.world.Layers.get(layerId));
-            currentMenuState = states.menuGate;;
+            currentMenuState = states.gameHud;
         }
 
         subscriptions.add(bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick));
         subscriptions.add(bus.subscribe(LayerHoverEvent.class, () -> isEnabled, this::handleHover));
         subscriptions.add(bus.subscribe(LayerHoverExitEvent.class, () -> isEnabled, this::handleHoverExit));
         subscriptions.add(bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress));
+        // Show caught screen when requested
+        subscriptions.add(bus.subscribe(resources.events.ShowCaughtMenuEvent.class, () -> isEnabled, event -> {
+            // switch to caught menu state
+            switchState(states.caughtMenu);
+        }));
         switchState(currentMenuState);
     }
 

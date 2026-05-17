@@ -67,7 +67,7 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
         Cell[][] office80s = loadMapFromJsonResource("maps/office_level_80s.json");
         return new HashMap<>() {{
             put("level", office80s);
-            put("office_80s", office80s);
+            put("progressive-level", new Cell[100][100]);
         }};
     }
 

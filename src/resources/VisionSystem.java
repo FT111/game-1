@@ -127,12 +127,13 @@ public class VisionSystem extends System {
                     break;
                 }
 
+                // check if the current point
                 Point currentPoint = new Point(translatedX, translatedY);
                 int distanceSquared = (translatedX - originX) * (translatedX - originX)
                         + (translatedY - originY) * (translatedY - originY);
 
                 boolean blocksVision = visionBlockMap.contains(currentPoint);
-                if (distanceSquared <= radiusSquared && !blocksVision) {
+                if (distanceSquared <= radiusSquared) {
                     visiblePoints.add(currentPoint);
                 }
 

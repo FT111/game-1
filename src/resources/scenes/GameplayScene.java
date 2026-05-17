@@ -10,6 +10,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
+import engine_interfaces.objects.rendering.Colour;
 import resources.ChunkSystem;
 import resources.GuardAiSystem;
 import resources.PlayerSystem;
@@ -44,8 +45,8 @@ public class GameplayScene extends Scene {
         var player = world.createEntity(
                 new PositionComponent(new Point(3,3), 3),
                 new RenderableComponent('@', null, null, true),
-                new VelocityComponent(1.2, 6,  "exponential"),
-                new VisionEmitterComponent(150, 110, 5, playerVision),
+                new VelocityComponent(1.2, 9,  "exponential"),
+                new VisionEmitterComponent(150, 110, 5, playerVision, new Colour(0, 40, 40)),
                 new PlayerComponent(),
                 new OrientationComponent(90)
         );
@@ -53,11 +54,11 @@ public class GameplayScene extends Scene {
         var guard = world.createEntity(
                 new PositionComponent(new Point(5,7), 3),
                 new RenderableComponent('*', null, null, true),
-                new VisionEmitterComponent(150, 110, 5, testGuardVision),
+                new VisionEmitterComponent(150, 110, 5, testGuardVision, new Colour(0, 30, 30)),
                 new OrientationComponent(12),
                 new OrientToMovementComponent(),
-                new VelocityComponent(1.2, 10,  "exponential"),
-                new GuardComponent(List.of(new Point(25, 7)), GuardState.PATROLLING)
+                new VelocityComponent(1.2, 9,  "exponential"),
+                new GuardComponent(List.of(new Point(25, 7), new Point(45, 40)), GuardState.PATROLLING)
         );
 
         world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));
@@ -66,14 +67,17 @@ public class GameplayScene extends Scene {
         world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
 
-        add(new VisionSystem(engine.World, engine.Resources, engine.EventBus));
         add(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         add(new PlayerSystem(engine.EventBus));
-        add(new GuardAiSystem(engine.LayoutManager, new AStarPathfinder(), engine.EventBus));
+
         MovementSystem movementSys = new MovementSystem(engine.EventBus);
         movementSys.movementPipeline.add(new CollisionProcessor(engine.EventBus, engine.World, engine.Resources, engine.LayoutManager));
         movementSys.movementPipeline.add(new VelocityProcessor());
         add(movementSys);
+
+        add(new VisionSystem(engine.World, engine.Resources, engine.EventBus));
+
+        add(new GuardAiSystem(engine.LayoutManager, new AStarPathfinder(), engine.EventBus));
 
         var levelMap = world.createLayer(
                 new TileMapComponent("mapAssets", "level", "tl", false),

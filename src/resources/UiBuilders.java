@@ -36,7 +36,7 @@ public class UiBuilders {
         Positioning positioningStrategy = Positioning.ABSOLUTE;
         LayerID parent;
         int zIndex = 0;
-        Alignment alignment;
+        Alignment alignment = Alignment.TOP_LEFT;
 
         BackgroundComponent backgroundComponent;
         BorderComponent borderComponent;

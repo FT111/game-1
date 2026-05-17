@@ -16,6 +16,7 @@ import java.util.function.Function;
 public class MenuStates {
     public final GameHud gameHud;
     public final MainMenu mainMenu;
+    public final resources.menus.states.CaughtMenu caughtMenu;
     public final MenuGate menuGate;
 
     public MenuStates(Consumer<MenuState> switchTo, UiBuilders ui, EventBus bus, World world, Function<LayerID, HashMap<Class<? extends Component>, Component>> elementComponents) {
@@ -23,6 +24,8 @@ public class MenuStates {
         mainMenu = new MainMenu(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 
         gameHud = new GameHud(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
+
+        caughtMenu = new resources.menus.states.CaughtMenu(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 
         menuGate = new MenuGate(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 

@@ -7,6 +7,11 @@ import resources.movement.PathfindingStrategy;
 import java.util.*;
 
 public class AStarPathfinder implements PathfindingStrategy {
+    // Small, tunable penalties to make paths look less "robotic".
+    // Keep these small relative to base move cost (1) so guards still take sensible routes.
+    private static final int TURN_PENALTY = 1;
+    private static final int WALL_HUGGING_PENALTY_PER_ADJACENT_WALL = 1;
+
     private static class PathNode implements Comparable<PathNode> {
         Point point;
         Point parent;
@@ -64,6 +69,31 @@ public class AStarPathfinder implements PathfindingStrategy {
         };
     }
 
+    private boolean isBlocked(Point point, SpatialMap collisionMap) {
+        return !collisionMap.getLayersAt(point).isEmpty();
+    }
+
+    private int countAdjacentWalls(Point point, SpatialMap collisionMap) {
+        int count = 0;
+        for (Point n : findNeigbouringPoints(point)) {
+            if (isBlocked(n, collisionMap)) count++;
+        }
+        return count;
+    }
+
+    private int turningPenalty(PathNode currentNode, Point nextPoint) {
+        if (currentNode.parent == null) return 0; // no previous direction
+
+        Point prev = currentNode.parent;
+        int prevDx = currentNode.point.x() - prev.x();
+        int prevDy = currentNode.point.y() - prev.y();
+
+        int nextDx = nextPoint.x() - currentNode.point.x();
+        int nextDy = nextPoint.y() - currentNode.point.y();
+
+        return (prevDx == nextDx && prevDy == nextDy) ? 0 : TURN_PENALTY;
+    }
+
     private List<Point> reconstructPath(PathNode finalNode, HashMap<Point, PathNode> allNodes) {
         LinkedList<Point> path = new LinkedList<>();
         PathNode currentNode = finalNode;
@@ -111,11 +141,17 @@ public class AStarPathfinder implements PathfindingStrategy {
 
             // explore neighbours
             for (Point nPoint : findNeigbouringPoints(currentNode.point)) {
-                if (!collisionMap.getLayersAt(nPoint).isEmpty()) { continue; }
+                if (isBlocked(nPoint, collisionMap)) { continue; }
 
                 if (closedSet.contains(nPoint)) { continue; }
 
-                int gCost = currentNode.gCost + 1;
+                // penalise a cell's cost for being close to a wall, for more natural appearing pathing
+                int wallPenalty = WALL_HUGGING_PENALTY_PER_ADJACENT_WALL * countAdjacentWalls(nPoint, collisionMap);
+
+                int turnPenalty = turningPenalty(currentNode, nPoint);
+                int stepCost = 1 + wallPenalty + turnPenalty;
+
+                int gCost = currentNode.gCost + stepCost;
                 int hCost = findManhattanDistance(nPoint, end);
                 int fCost = gCost + hCost;
 

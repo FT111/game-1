@@ -210,6 +210,22 @@ public class GuardAiSystem extends System {
             }
 
             guardComp.behaviourTree.evaluate(world, guardID);
+
+            engine_interfaces.objects.components.RenderableComponent renderComp = (engine_interfaces.objects.components.RenderableComponent)world.Entities.get(guardID).get(engine_interfaces.objects.components.RenderableComponent.class);
+            engine_interfaces.objects.components.OrientationComponent orientationComp = (engine_interfaces.objects.components.OrientationComponent)world.Entities.get(guardID).get(engine_interfaces.objects.components.OrientationComponent.class);
+
+            if (renderComp != null && orientationComp != null) {
+                int angle = (orientationComp.facingAngle % 360 + 360) % 360;
+                if (angle >= 315 || angle < 45) {
+                    renderComp.Char = '▶';
+                } else if (angle >= 45 && angle < 135) {
+                    renderComp.Char = '▼';
+                } else if (angle >= 135 && angle < 225) {
+                    renderComp.Char = '◀';
+                } else {
+                    renderComp.Char = '▲';
+                }
+            }
         }
     }
 

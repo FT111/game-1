@@ -1,5 +1,6 @@
 package resources;
 
+import engine.Logs;
 import engine.Resources;
 import engine.World;
 import engine_interfaces.objects.LayerID;
@@ -21,7 +22,11 @@ public class FogSystem extends System {
 
     private Cell[][] extractTileMap(World world, LayerID layerId) {
         var tileMapComp = (TileMapComponent) world.Layers.get(layerId).get(TileMapComponent.class);
-        return resources.getAsset(tileMapComp.resourceId, tileMapComp.assetId, Cell[][].class);
+        try {
+            return resources.getAsset(tileMapComp.resourceId, tileMapComp.assetId, Cell[][].class);
+        } catch (IllegalArgumentException ex) {
+            return new Cell[200][200];
+        }
     }
 
     @Override
@@ -44,12 +49,17 @@ public class FogSystem extends System {
                 int worldX = playerVisionPosition.x() + x;
                 int worldY = playerVisionPosition.y() + y;
 
+
                 if (worldX < 0 || worldY < 0 || worldY >= playerVisionTileMap.length || worldX >= playerVisionTileMap[worldY].length) {
                     continue;
                 }
 
                 if (playerVisionTileMap[y][x] != null) {
-                    progressiveTileMap[worldY][worldX] = levelMapTileMap[worldY][worldX];
+                    try {
+                        progressiveTileMap[worldY][worldX] = levelMapTileMap[worldY][worldX];
+                    } catch (ArrayIndexOutOfBoundsException ex) {
+                        continue;
+                    }
                 }
             }
         }

@@ -43,9 +43,6 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
 
                 for (int x = 0; x < width; x++) {
                     char tile = (x < row.length()) ? row.charAt(x) : ' ';
-                    if (!allowedTiles.contains(tile)) {
-                        tile = '.'; // fallback for unknown chars
-                    }
 
                     map[y][x] = new Cell(tile, null, null);
                 }

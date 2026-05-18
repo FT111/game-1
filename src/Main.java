@@ -34,8 +34,6 @@ public class Main {
         engine.Systems.addSystem(menu);
         Logs.log("Main: core gameplay systems wired");
 
-        engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
-
         engine.SceneManager
                 .addScene("Global", new GlobalScene(engine))
                 .addScene("MainMenu", new MainMenuScene())
@@ -45,6 +43,10 @@ public class Main {
         // Switch to default scene
         engine.SceneManager.switchScene("Global");
         engine.SceneManager.pushScene("MainMenu");
+        // Now that the gameplay scene has been merged into the engine world,
+        // register the vision layer resource loader so it can discover vision
+        // layers that were created by the scene and seed blank assets for them.
+        engine.Resources.addResourceLoader(new VisionLayerLoader(engine.World));
         Logs.log("Main: entering game loop");
         engine.StartGameLoop();
 

@@ -7,10 +7,12 @@ import engine.layout.LayoutManager;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.System;
+import engine_interfaces.objects.components.OrientationComponent;
 import engine_interfaces.objects.components.PositionComponent;
+import engine_interfaces.objects.components.RenderableComponent;
 import engine_interfaces.objects.events.MovementEvent;
 import engine_interfaces.objects.events.MovementProposalEvent;
-import resources.ai.GuardState;
+import engine_interfaces.objects.events.NewGameEvent;
 import resources.ai.GuardAlertness;
 import resources.events.PlayerSpottedEvent; // added
 import resources.events.GlobalAlertnessChangedEvent;
@@ -21,7 +23,6 @@ import resources.components.GuardComponent;
 import resources.movement.PathfindingStrategy;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 public class GuardAiSystem extends System {
     private final LayoutManager layoutManager;
@@ -40,6 +41,7 @@ public class GuardAiSystem extends System {
     // how long ALERT persists (in ticks) after a guard fully spots the player
     private final int ALERT_PERSIST_TICKS = 60*90;
     private int alertTimer = 0;
+    private engine_interfaces.objects.EventSubscriptionReceipt newGameSubscription;
 
     public GuardAiSystem(LayoutManager layoutManager, PathfindingStrategy pathfinder, EventBus bus) {
         this.layoutManager = layoutManager;
@@ -50,6 +52,15 @@ public class GuardAiSystem extends System {
     @Override
     public void onEnter(World world) {
         super.onEnter(world);
+
+        newGameSubscription = bus.subscribe(NewGameEvent.class, () -> isEnabled, event -> {
+            pendingMovements.clear();
+            lastKnownPlayerPos.clear();
+            awareness.clear();
+            seenThisTick.clear();
+            globalAlertness = GuardAlertness.RELAXED;
+            alertTimer = 0;
+        });
 
         // checks if a guard moves. if so, removes its pending movment to let it move to the next routed node
         bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
@@ -108,6 +119,15 @@ public class GuardAiSystem extends System {
 
     }
 
+    @Override
+    public void onExit(World world) {
+        super.onExit(world);
+        if (newGameSubscription != null) {
+            newGameSubscription.cancel.run();
+            newGameSubscription = null;
+        }
+    }
+
     /// Uses a routing algorithm to route between two points, taking into account the spatial map of the world and any
     ///  collidable obstacles.
     public List<Point> routeBetween(Point from, Point to) {
@@ -141,11 +161,50 @@ public class GuardAiSystem extends System {
         // Decay awareness for guard/player pairs that were not seen in the most recent bus flush.
         // this runs at the start of the system update and ensures the meter falls when the
         // player is not being observed.
+        updatePlayerAwarenessPerGuard();
+
+        // Clear seenThisTick now so new sighting events (published during this
+        // update) will be recorded into it on the next flush.
+        seenThisTick.clear();
+
+        updateGlobalPlayerAwareness();
+
+        var guards = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(new Class[] {GuardComponent.class, PositionComponent.class});
+        for (var guardID : guards) {
+            GuardComponent guardComp = (GuardComponent)world.Entities.get(guardID).get(GuardComponent.class);
+            PositionComponent positionComp = (PositionComponent)world.Entities.get(guardID).get(PositionComponent.class);
+            if (guardComp == null) continue;
+
+            updateGuardRouting(world, guardID, guardComp);
+            updateGuardSymbol(world, guardID);
+        }
+    }
+
+    private void updateGlobalPlayerAwareness() {
+        // determine overall max awareness across all guards so we can compute a global level
+        if (alertTimer > 0) {
+            alertTimer = Math.max(0, alertTimer - 1);
+            if (globalAlertness != GuardAlertness.ALERT) {
+                globalAlertness = GuardAlertness.ALERT;
+                bus.publish(new GlobalAlertnessChangedEvent(globalAlertness));
+            }
+            // while alertTimer > 0 don't compute lower levels
+        } else {
+            GuardAlertness computedLevel = getGuardAlertness();
+
+            if (computedLevel != globalAlertness) {
+                globalAlertness = computedLevel;
+                bus.publish(new GlobalAlertnessChangedEvent(globalAlertness));
+            }
+        }
+    }
+
+    private void updatePlayerAwarenessPerGuard() {
         if (!awareness.isEmpty()) {
-            var guardIds = new java.util.ArrayList<>(awareness.keySet());
+            var guardIds = new ArrayList<>(awareness.keySet());
             for (var guardId : guardIds) {
                 var perPlayer = awareness.get(guardId);
-                var playerIds = new java.util.ArrayList<>(perPlayer.keySet());
+                var playerIds = new ArrayList<>(perPlayer.keySet());
                 for (var playerId : playerIds) {
                     boolean seen = seenThisTick.containsKey(guardId) && seenThisTick.get(guardId).contains(playerId);
                     if (!seen) {
@@ -165,66 +224,42 @@ public class GuardAiSystem extends System {
                 }
             }
         }
+    }
 
-        // Clear seenThisTick now so new sighting events (published during this
-        // update) will be recorded into it on the next flush.
-        seenThisTick.clear();
-
-        // determine overall max awareness across all guards so we can compute a global level
-        if (alertTimer > 0) {
-            alertTimer = Math.max(0, alertTimer - 1);
-            if (globalAlertness != GuardAlertness.ALERT) {
-                globalAlertness = GuardAlertness.ALERT;
-                bus.publish(new GlobalAlertnessChangedEvent(globalAlertness));
-            }
-            // while alertTimer > 0 don't compute lower levels
-        } else {
-            GuardAlertness computedLevel = getGuardAlertness();
-
-            if (computedLevel != globalAlertness) {
-                globalAlertness = computedLevel;
-                bus.publish(new GlobalAlertnessChangedEvent(globalAlertness));
-            }
+    private void updateGuardRouting(World world, EntityID guardID, GuardComponent guardComp) {
+        if (guardComp.behaviourTree == null) {
+            // base behaviour tree node
+            // runs top to bottom, branching if a node sequence evaluates to a success.
+            guardComp.behaviourTree = new Selector(Arrays.asList(
+                new Sequence(Arrays.asList(
+                        new IsPlayerCatchable(this),
+                        new CatchPlayerNode(this)
+                )),
+                new Sequence(Arrays.asList(
+                    new IsPlayerSpottedNode(this),
+                    new ChasePlayerNode(this)
+                )),
+                new PatrolNode(this)
+            ));
         }
 
-        var guards = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(new Class[] {GuardComponent.class, PositionComponent.class});
-        for (var guardID : guards) {
-            GuardComponent guardComp = (GuardComponent)world.Entities.get(guardID).get(GuardComponent.class);
-            PositionComponent positionComp = (PositionComponent)world.Entities.get(guardID).get(PositionComponent.class);
-            if (guardComp == null) continue;
+        guardComp.behaviourTree.evaluate(world, guardID);
+    }
 
-            if (guardComp.behaviourTree == null) {
-                // base behaviour tree node
-                // runs top to bottom, branching if a node sequence evaluates to a success.
-                guardComp.behaviourTree = new Selector(Arrays.asList(
-                    new Sequence(Arrays.asList(
-                            new IsPlayerCatchable(this),
-                            new CatchPlayerNode(this)
-                    )),
-                    new Sequence(Arrays.asList(
-                        new IsPlayerSpottedNode(this),
-                        new ChasePlayerNode(this)
-                    )),
-                    new PatrolNode(this)
-                ));
-            }
+    private static void updateGuardSymbol(World world, EntityID guardID) {
+        RenderableComponent renderComp = (RenderableComponent) world.Entities.get(guardID).get(RenderableComponent.class);
+        OrientationComponent orientationComp = (OrientationComponent) world.Entities.get(guardID).get(OrientationComponent.class);
 
-            guardComp.behaviourTree.evaluate(world, guardID);
-
-            engine_interfaces.objects.components.RenderableComponent renderComp = (engine_interfaces.objects.components.RenderableComponent)world.Entities.get(guardID).get(engine_interfaces.objects.components.RenderableComponent.class);
-            engine_interfaces.objects.components.OrientationComponent orientationComp = (engine_interfaces.objects.components.OrientationComponent)world.Entities.get(guardID).get(engine_interfaces.objects.components.OrientationComponent.class);
-
-            if (renderComp != null && orientationComp != null) {
-                int angle = (orientationComp.facingAngle % 360 + 360) % 360;
-                if (angle >= 315 || angle < 45) {
-                    renderComp.Char = '▶';
-                } else if (angle >= 45 && angle < 135) {
-                    renderComp.Char = '▼';
-                } else if (angle >= 135 && angle < 225) {
-                    renderComp.Char = '◀';
-                } else {
-                    renderComp.Char = '▲';
-                }
+        if (renderComp != null && orientationComp != null) {
+            int angle = (orientationComp.facingAngle % 360 + 360) % 360;
+            if (angle >= 315 || angle < 45) {
+                renderComp.Char = '▶';
+            } else if (angle >= 45 && angle < 135) {
+                renderComp.Char = '▼';
+            } else if (angle >= 135 && angle < 225) {
+                renderComp.Char = '◀';
+            } else {
+                renderComp.Char = '▲';
             }
         }
     }

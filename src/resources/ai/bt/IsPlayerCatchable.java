@@ -17,12 +17,12 @@ public class IsPlayerCatchable extends BtNode {
     public NodeState evaluate(World world, EntityID entityID) {
         PositionComponent guardPos = (PositionComponent) world.Entities.get(entityID).get(PositionComponent.class);
         Point playerLastKnownPos = system.getLastKnownPlayerPos(entityID);
-        EntityID player = world.ComponentEntitiesIndex.query(PositionComponent.class).stream().findFirst().orElseThrow();
-        PositionComponent playerActualPos = (PositionComponent) world.Entities.get(player).get(PositionComponent.class);
+        var players = world.ComponentEntitiesIndex.query(new Class[]{resources.components.PlayerComponent.class, PositionComponent.class});
 
-//        if (!playerActualPos.Origin.equals(playerLastKnownPos)) {
-//            return NodeState.FAILURE;
-//        }
+        // prevents erroneous catches before loading in
+        if (players.isEmpty()) return NodeState.FAILURE;
+        EntityID player = (EntityID) players.stream().findFirst().orElseThrow();
+        PositionComponent playerActualPos = (PositionComponent) world.Entities.get(player).get(PositionComponent.class);
 
         // check if within 1 cell radius
         if (Math.abs(guardPos.Origin.x() - playerActualPos.Origin.x()) <= 1 && Math.abs(guardPos.Origin.y() - playerActualPos.Origin.y()) <= 1) {

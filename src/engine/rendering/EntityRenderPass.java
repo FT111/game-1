@@ -2,7 +2,9 @@ package engine.rendering;
 
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.RenderableComponent;
+import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
+import resources.components.MaskToTileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.RenderBuffer;
 import engine_interfaces.objects.rendering.RenderPass;
@@ -25,6 +27,13 @@ public class EntityRenderPass extends RenderPass {
             }
 
             if (!renderObjects.camera().isWorldPointInView(positionDetails.Origin)) {
+                return;
+            }
+
+            // If this entity has a vision-mask component, only render if the entity's world position
+            // is visible in the referenced vision layer
+            MaskToTileMapComponent visionMask = (MaskToTileMapComponent) renderObjects.world().Entities.get(entity).get(MaskToTileMapComponent.class);
+            if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, positionDetails.Origin.x(), positionDetails.Origin.y())) {
                 return;
             }
 

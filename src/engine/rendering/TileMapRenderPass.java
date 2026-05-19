@@ -9,6 +9,7 @@ import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
+import resources.components.MaskToTileMapComponent;
 import engine_interfaces.objects.rendering.*;
 
 import java.util.HashMap;
@@ -34,8 +35,8 @@ public class TileMapRenderPass extends RenderPass {
 
             Cell[][] tileMap = renderObjects.resources().getAsset(tileMapComponent.resourceId, tileMapComponent.assetId, Cell[][].class);
             Point tileEndPoint = new Point(positionComponent.Origin.x() + tileMap[0].length, positionComponent.Origin.y() + tileMap.length);
-            Point worldEndPoint = new Point(positionComponent.Origin.x() + dimensionsComponent.width, positionComponent.Origin.y() + dimensionsComponent.height);
-            if (!positionComponent.positionStrategy.equals(Positioning.FIXED) && !renderObjects.camera().isWorldPointInView(positionComponent.Origin, worldEndPoint)) {
+            // Cull using the world's coordinates for non-fixed layers
+            if (!RenderPassUtils.isLayerInView(renderObjects, positionComponent, dimensionsComponent)) {
                 return;
             }
 
@@ -58,21 +59,22 @@ public class TileMapRenderPass extends RenderPass {
                         continue;
                     }
 
+                    // If this layer is masked by a vision layer, only render cells that are marked visible
+                    MaskToTileMapComponent visionMask = (MaskToTileMapComponent) components.get(MaskToTileMapComponent.class);
+                    int worldX = positionComponent.Origin.x() + x;
+                    int worldY = positionComponent.Origin.y() + y;
+                    if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, worldX, worldY)) {
+                        continue;
+                    }
+
                     cell.zIndex = positionComponent.zIndex;
                     var screenPoint = new Point(screenTileMapOrigin.x() + x, screenTileMapOrigin.y() + y);
                     if (!renderObjects.camera().isScreenPointInView(screenPoint)) {
                         continue;
                     }
 
-                    try {
-                        Cell existingCell = buffer.cells[screenPoint.y()][screenPoint.x()];
-
-                        cell = Utils.collateCells(existingCell, cell);
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        // IO.println("Error:  Cell at " + relativePoint + " is out of bounds for the render buffer. Skipping this cell.");
-                        continue;
-                    }
-                    buffer.cells[screenPoint.y()][screenPoint.x()] = cell;
+                    // safe write to buffer (handles collation + bounds)
+                    RenderPassUtils.trySetCell(buffer, screenPoint.x(), screenPoint.y(), cell);
                 }
             }
         });

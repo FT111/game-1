@@ -6,9 +6,11 @@ import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TextComponent;
+import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
-import engine_interfaces.objects.components.ui.ButtonComponent;
+import resources.components.MaskToTileMapComponent;
 import engine_interfaces.objects.rendering.*;
+import engine.rendering.RenderPassUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -51,20 +53,18 @@ public class TextRenderPass extends RenderPass {
                             renderObjects.world(),
                             renderObjects.camera()
                     );
+                    // If this text layer is masked by a vision layer, ensure the world position is visible there
+                    MaskToTileMapComponent visionMask = (MaskToTileMapComponent) textLayerComps.get(MaskToTileMapComponent.class);
+                    if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, worldPosition.x(), worldPosition.y())) {
+                        continue;
+                    }
+
                     if (!renderObjects.camera().isScreenPointInView(screenPosition)) {continue;}
 
                     var cell = new Cell(c, positionComponent.zIndex);
 
-                    // handle z index
-                    try {
-                        var existingCell = buffer.cells[screenPosition.y()][screenPosition.x()];
-                        cell = Utils.collateCells(existingCell, cell);
-                    }  catch (ArrayIndexOutOfBoundsException e) {
-                        continue;
-                    }
-
-
-                    buffer.cells[screenPosition.y()][screenPosition.x()] = cell;
+                    // safe write / z-index collation
+                    RenderPassUtils.trySetCell(buffer, screenPosition.x(), screenPosition.y(), cell);
                 }
             }
 

@@ -11,6 +11,7 @@ import engine_interfaces.objects.rendering.Colour;
 import resources.events.AwarenessChangedEvent;
 import resources.events.GlobalAlertnessChangedEvent;
 import resources.ai.GuardAlertness;
+import engine_interfaces.objects.events.NewGameEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,13 +39,22 @@ public class AwarenessHudSystem extends System {
         // Build a simple HUD label in the top-left of the screen
         UiBuilders ui = new UiBuilders(world);
         var labelBuilder = ui.new LabelBuilder<>();
-        labelBuilder.withPosition(new Point(1, 1), Positioning.FIXED).withDimensions(80, 8).withStaticText("Awareness:\n");
+        labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
+                .withDimensions(40, 6)
+                .withZIndex(100)
+                .withBorder('-', '|', '+', new Colour(255, 255, 255))
+                .withStaticText("Awareness:\n");
         hudLayer = labelBuilder.build();
         // make visible
         world.Layers.get(hudLayer).put(VisibilityComponent.class, new VisibilityComponent(true));
 
         subscriptions.add(bus.subscribe(AwarenessChangedEvent.class, () -> isEnabled, this::handleAwarenessChanged));
         subscriptions.add(bus.subscribe(GlobalAlertnessChangedEvent.class, () -> isEnabled, this::handleGlobalAlertnessChanged));
+        subscriptions.add(bus.subscribe(NewGameEvent.class, () -> isEnabled, e -> {
+            awarenessMap.clear();
+            globalAlertness = GuardAlertness.RELAXED;
+            updateHudText(1);
+        }));
     }
 
     @Override
@@ -110,5 +120,3 @@ public class AwarenessHudSystem extends System {
         super.update(world, tickCount);
     }
 }
-
-

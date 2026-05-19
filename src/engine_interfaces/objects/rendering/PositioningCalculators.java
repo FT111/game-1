@@ -22,10 +22,10 @@ public class PositioningCalculators {
 
         int parentWidth, parentHeight;
 
-        var node = world.layerSceneGraphNodes.get(childId);
-        if (node != null && node.parent != null && node.parent.objectId != null) {
+        ParentComponent parentComponent = (ParentComponent) childComps.get(ParentComponent.class);
+        if (parentComponent != null && parentComponent.parentLayerId != null) {
             // Has a parent, align to container
-            DimensionsComponent parentDim = (DimensionsComponent) world.Layers.get(node.parent.objectId).get(DimensionsComponent.class);
+            DimensionsComponent parentDim = (DimensionsComponent) world.Layers.get(parentComponent.parentLayerId).get(DimensionsComponent.class);
             parentWidth = parentDim != null ? parentDim.width : 0;
             parentHeight = parentDim != null ? parentDim.height : 0;
         } else {
@@ -53,19 +53,21 @@ public class PositioningCalculators {
         return new Point(dx + position.x(), dy + position.y());
     }
 
-    public static Point findRelativeOffset(World world, LayerID id, CameraView camera) {
-        var node = world.layerSceneGraphNodes.get(id);
-        if (node == null) return new Point(0, 0);
-
-        Point offset = new Point(0, 0);
-
-        while (node.parent != null && node.parent.objectId != null) {
-            // Accumulate parent's calculated alignment offsets up the tree
-            Point parentPosition = ((PositionComponent) world.Layers.get(node.parent.objectId).get(PositionComponent.class)).Origin;
-            offset = offset.add(calculateAlignmentOffset(world, parentPosition, node.parent.objectId, camera));
-            node = node.parent;
+    public static Point getPositionFromHierarchy(World world, LayerID id, CameraView camera) {
+        var comps = world.Layers.get(id);
+        if (comps != null) {
+            ParentComponent pComp = (ParentComponent) comps.get(ParentComponent.class);
+            if (pComp != null && pComp.parentLayerId != null) {
+                var parentComps = world.Layers.get(pComp.parentLayerId);
+                if (parentComps != null) {
+                    PositionComponent parentPos = (PositionComponent) parentComps.get(PositionComponent.class);
+                    if (parentPos != null) {
+                        return calc.get(parentPos.positionStrategy).calculatePosition(parentPos.Origin, pComp.parentLayerId, world, camera);
+                    }
+                }
+            }
         }
-        return offset;
+        return new Point(0, 0);
     }
 
     @FunctionalInterface
@@ -77,9 +79,21 @@ public class PositioningCalculators {
             Positioning.ABSOLUTE, (currentPosition, layerId, world, camera) ->
                     camera.worldToScreen(calculateAlignmentOffset(world, currentPosition, layerId, camera)),
 
-            Positioning.RELATIVE, (currentPosition, layerId, world, camera) ->
-                    camera.worldToScreen(calculateAlignmentOffset(world, currentPosition, layerId, camera).add(findRelativeOffset(world, layerId, camera))),
+            Positioning.RELATIVE, (currentPosition, layerId, world, camera) -> {
+                Point localOffset = calculateAlignmentOffset(world, currentPosition, layerId, camera);
+                var comps = world.Layers.get(layerId);
+                if (comps != null && comps.containsKey(ParentComponent.class)) {
+                    return getPositionFromHierarchy(world, layerId, camera).add(localOffset);
+                }
+                return camera.worldToScreen(localOffset);
+            },
 
-            Positioning.FIXED, (currentPosition, layerId, world, camera) ->
-                    calculateAlignmentOffset(world, currentPosition, layerId, camera).add(findRelativeOffset(world, layerId, camera))
+            Positioning.FIXED, (currentPosition, layerId, world, camera) -> {
+                Point localOffset = calculateAlignmentOffset(world, currentPosition, layerId, camera);
+                var comps = world.Layers.get(layerId);
+                if (comps != null && comps.containsKey(ParentComponent.class)) {
+                    return getPositionFromHierarchy(world, layerId, camera).add(localOffset);
+                }
+                return localOffset;
+            }
     ));}

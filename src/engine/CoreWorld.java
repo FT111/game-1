@@ -3,7 +3,6 @@ package engine;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
-import engine_interfaces.objects.scene.SceneNode;
 
 import java.util.HashMap;
 import java.util.UUID;
@@ -11,9 +10,6 @@ import java.util.UUID;
 public abstract class CoreWorld {
     public HashMap<EntityID, HashMap<Class<? extends Component>, Component>> Entities = new HashMap<>();
     public HashMap<LayerID, HashMap<Class<? extends Component>, Component>> Layers = new HashMap<>();
-
-    public SceneNode<LayerID> layerSceneGraphRoot = new SceneNode<>(null, null);
-    public HashMap<LayerID, SceneNode<LayerID>> layerSceneGraphNodes = new HashMap<>();
 
     public EntityID createEntity(String Id) {
         EntityID newId = new EntityID(Id);
@@ -143,4 +139,3 @@ public abstract class CoreWorld {
     protected abstract void onComponentAddedToEntity(EntityID entityId, Component component);
     protected abstract void onComponentAddedToLayer(LayerID layerId, Component component);
 }
-

@@ -13,8 +13,8 @@ public class Utils {
     public static HashSet<Point> extractTilePointsFromTileMap(TileMapComponent tileMapComponent, DimensionsComponent dimensionsComponent, Cell[][] tileMapAsset, HashSet<Character> extractedTiles, PositionComponent positionDetails) {
         HashSet<Point> extractedPoints = new HashSet<>();
 
-        for (int y = 0; y < dimensionsComponent.width; y++) {
-            for (int x = 0; x < dimensionsComponent.height; x++) {
+        for (int y = 0; y < dimensionsComponent.height; y++) {
+            for (int x = 0; x < dimensionsComponent.width; x++) {
                 if (y >= tileMapAsset.length || x >= tileMapAsset[y].length) {
                     continue;
                 }

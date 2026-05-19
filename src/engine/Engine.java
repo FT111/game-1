@@ -6,10 +6,7 @@ import engine.rendering.TileMapRenderPass;
 import engine.rendering.BlockRenderPass;
 import engine.systems.MovementSystem;
 import engine.systems.InputHandlerSystem;
-import engine.systems.SceneGraphSystem;
 import engine.systems.UiInteractionSystem;
-import engine.systems.movement.CollisionProcessor;
-import engine.systems.movement.VelocityProcessor;
 import engine.scenes.SceneManager;
 import engine.layout.LayoutManager;
 import engine_interfaces.objects.components.LayerColliderComponent;
@@ -34,7 +31,6 @@ public class Engine {
     public final List<Class<? extends engine_interfaces.objects.System>> CoreSystems = new ArrayList<>() {{
         add(InputHandlerSystem.class);
         add(MovementSystem.class);
-        add(SceneGraphSystem.class);
         add(UiInteractionSystem.class);
     }};
 
@@ -82,9 +78,6 @@ public class Engine {
         Systems.addSystem(new InputHandlerSystem(Renderer.Api, EventBus));
         Logs.log("Engine: input handler system added");
 
-
-        Systems.addSystem(new SceneGraphSystem(EventBus));
-        Logs.log("Engine: scene graph system added");
         Logs.log("Engine: constructor complete");
     }
 

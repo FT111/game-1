@@ -6,6 +6,7 @@ import engine_interfaces.objects.EventSubscription;
 import engine_interfaces.objects.EventSubscriptionReceipt;
 import engine_interfaces.objects.System;
 import engine_interfaces.objects.events.ButtonClickEvent;
+import resources.events.PlayerCaughtEvent;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedDeque;

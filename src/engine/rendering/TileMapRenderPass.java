@@ -43,9 +43,6 @@ public class TileMapRenderPass extends RenderPass {
             var screenTileMapOrigin = renderObjects.layoutManager().getCalculatedScreenPosition(layerID, renderObjects.camera());
             if (screenTileMapOrigin == null) return;
 
-            var startX = screenTileMapOrigin.x();
-            var startY = screenTileMapOrigin.y();
-
             // Render the tile map to the buffer, culling individual cells that are not in view of the camera
             for (int y = 0; y < dimensionsComponent.height; y++) {
                 for (int x = 0; x < dimensionsComponent.width; x++) {

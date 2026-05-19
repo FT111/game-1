@@ -13,6 +13,7 @@ import resources.events.AwarenessChangedEvent;
 import resources.events.GlobalAlertnessChangedEvent;
 import resources.ai.GuardAlertness;
 import engine_interfaces.objects.components.TextComponent;
+import engine_interfaces.objects.rendering.Colour;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,7 +32,11 @@ public class GameHud extends MenuState {
         var ui = ctx.ui();
         var labelBuilder = ui.new LabelBuilder<>();
         // position at top-left (0,0) and raise z-index so HUD renders above other layers
-        labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED).withZIndex(100).withDimensions(40, 6).withStaticText("Awareness:\n");
+        labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
+                .withZIndex(100)
+                .withDimensions(40, 6)
+                .withBorder('-', '|', '+', new Colour(255, 255, 255))
+                .withStaticText("Awareness:\n");
         hudLayer = labelBuilder.build();
         show(hudLayer);
 

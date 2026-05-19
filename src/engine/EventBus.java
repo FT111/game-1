@@ -45,7 +45,7 @@ public class EventBus {
         return event;
     }
 
-    protected final void flush() {
+    public final void flush() {
         if (pendingEvents.isEmpty()) return;
 
         currentEvents = pendingEvents;

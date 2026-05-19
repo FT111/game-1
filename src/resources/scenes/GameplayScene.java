@@ -43,7 +43,7 @@ public class GameplayScene extends Scene {
         var levelMap = world.createLayer(
                 new TileMapComponent("mapAssets", "level", "tl", false),
                 new PositionComponent(new Point(0,0), -1, Positioning.ABSOLUTE, Alignment.TOP_LEFT),
-                new DimensionsComponent(200,200),
+                new DimensionsComponent(300,300),
                 new VisibilityComponent(true),
                 new VisionBlockerComponent(new HashSet<>() {{
                     add('#');
@@ -57,7 +57,7 @@ public class GameplayScene extends Scene {
         var progressiveLevelMap = world.createLayer(
                 new TileMapComponent("mapAssets", "progressive-level", "tl", false),
                 new PositionComponent(new Point(0,0), -1, Positioning.ABSOLUTE, Alignment.TOP_LEFT),
-                new DimensionsComponent(100,100),
+                new DimensionsComponent(300,300),
                 new VisibilityComponent(true),
                 new ProgressiveLevelMapComponent()
         );
@@ -70,7 +70,7 @@ public class GameplayScene extends Scene {
         );
 
         var player = world.createEntity(
-                new PositionComponent(new Point(3,3), 3),
+                new PositionComponent(new Point(32,22), 3),
                 new RenderableComponent('@', null, null, true),
                 new VelocityComponent(1.2, 9,  "exponential"),
                 new VisionEmitterComponent(150, 110, 5, playerVision, new Colour(0, 40, 40)),

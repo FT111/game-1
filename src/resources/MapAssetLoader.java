@@ -5,21 +5,15 @@ import engine_interfaces.objects.rendering.Cell;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 
 public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader {
     public static class JsonMapDefinition {
         public String name;
         public Map<String, String> legend;
-        public List<String> rows;
+        public List<Object> rows;
     }
-
-    private static final Set<Character> allowedTiles = Set.of(
-            '#', '.', 'D', 'G', 'R', 'd', 'c', 'f', 'x', 'p', 'k', 'b', 'E', 'S', 't', 's', ' ','=',':', '+','*'
-    );
 
     public Cell[][] loadMapFromJsonResource(String resourcePath) {
         try (InputStream is = MapAssetLoader.class.getClassLoader().getResourceAsStream(resourcePath)) {
@@ -34,12 +28,26 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
                 throw new IllegalArgumentException("Map has no rows: " + resourcePath);
             }
 
-            int height = def.rows.size();
-            int width = def.rows.stream().mapToInt(String::length).max().orElse(0);
+            // check if flat or nested
+            List<String> flatRows = new ArrayList<>();
+            if (def.rows.get(0) instanceof List) {
+                // Nested structure: rows[0] is a list of strings
+                for (Object rowArray : def.rows) {
+                    if (rowArray instanceof List) {
+                        flatRows.addAll((List<String>) rowArray);
+                    }
+                }
+            } else {
+                // Flat structure: rows is already a list of strings
+                flatRows = (List<String>) (List<?>) def.rows;
+            }
+
+            int height = flatRows.size();
+            int width = flatRows.stream().mapToInt(String::length).max().orElse(0);
             Cell[][] map = new Cell[height][width];
 
             for (int y = 0; y < height; y++) {
-                String row = def.rows.get(y);
+                String row = flatRows.get(y);
 
                 for (int x = 0; x < width; x++) {
                     char tile = (x < row.length()) ? row.charAt(x) : ' ';
@@ -61,9 +69,9 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
 
     @Override
     public HashMap<String, Object> Load() {
-        Cell[][] office80s = loadMapFromJsonResource("maps/office_level_80s.json");
+        Cell[][] level1 = loadMapFromJsonResource("maps/level_1.json");
         return new HashMap<>() {{
-            put("level", office80s);
+            put("level", level1);
             put("progressive-level", new Cell[100][100]);
         }};
     }

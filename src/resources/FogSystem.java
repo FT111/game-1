@@ -49,17 +49,19 @@ public class FogSystem extends System {
                 int worldX = playerVisionPosition.x() + x;
                 int worldY = playerVisionPosition.y() + y;
 
-
-                if (worldX < 0 || worldY < 0 || worldY >= playerVisionTileMap.length || worldX >= playerVisionTileMap[worldY].length) {
+                // validate bounds against levelMapTileMap instead of playerVisionTileMap
+                if (worldX < 0 || worldY < 0 || worldY >= levelMapTileMap.length || worldX >= levelMapTileMap[worldY].length) {
                     continue;
                 }
 
-                if (playerVisionTileMap[y][x] != null) {
-                    try {
-                        progressiveTileMap[worldY][worldX] = levelMapTileMap[worldY][worldX];
-                    } catch (ArrayIndexOutOfBoundsException ex) {
-                        continue;
-                    }
+                // also validate bounds for progressiveTileMap
+                if (worldY >= progressiveTileMap.length || worldX >= progressiveTileMap[worldY].length) {
+                    continue;
+                }
+
+                // if it's not null, place the level tile on the progressive map
+                if (playerVisionTileMap[y][x] != null && levelMapTileMap[worldY][worldX] != null) {
+                    progressiveTileMap[worldY][worldX] = levelMapTileMap[worldY][worldX];
                 }
             }
         }

@@ -45,6 +45,10 @@ public class ChasePlayerNode extends BtNode {
             }
         }
 
+        if (system.getPendingMovement(entityID) != null) {
+            needsReroute = false;
+        }
+
         if (needsReroute || tickNeedsReroute(world)) {
             List<Point> newRoute = system.routeBetween(positionComp.Origin, targetPoint);
             if (guardComp.interpolatedPathPoints == null) {
@@ -52,7 +56,7 @@ public class ChasePlayerNode extends BtNode {
             } else {
                 guardComp.interpolatedPathPoints.clear();
             }
-            for (int i = newRoute.size() - 1; i >= 0; i--) {
+            for (int i = newRoute.size() - 1; i > 0; i--) {
                 guardComp.interpolatedPathPoints.push(newRoute.get(i));
             }
         }

@@ -286,7 +286,7 @@ public class GuardAiSystem extends System {
         if (guardComp.interpolatedPathPoints == null || guardComp.interpolatedPathPoints.isEmpty()) {
             guardComp.interpolatedPathPoints = new Stack<>();
             List<Point> nextPathSegment = routeBetween(positionComp.Origin, targetPoint);
-            for (int i = nextPathSegment.size() - 1; i >= 0; i--) {
+            for (int i = nextPathSegment.size() - 1; i > 0; i--) {
                 guardComp.interpolatedPathPoints.push(nextPathSegment.get(i));
             }
         }

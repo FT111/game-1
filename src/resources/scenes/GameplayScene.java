@@ -16,6 +16,12 @@ import engine.scenes.Scene;
 import resources.ai.GuardState;
 import resources.components.*;
 import resources.movement.pathfinders.AStarPathfinder;
+import resources.objectives.Objective;
+import resources.objectives.ObjectiveManager;
+import resources.objectives.ObjectiveSystem;
+import resources.objectives.rules.AndRule;
+import resources.objectives.rules.HasItemRule;
+import resources.objectives.rules.ReachLocationRule;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,7 +43,7 @@ public class GameplayScene extends Scene {
         var levelMap = world.createLayer(
                 new TileMapComponent("mapAssets", "level", "tl", false),
                 new PositionComponent(new Point(0,0), -1, Positioning.ABSOLUTE, Alignment.TOP_LEFT),
-                new DimensionsComponent(100,100),
+                new DimensionsComponent(200,200),
                 new VisibilityComponent(true),
                 new VisionBlockerComponent(new HashSet<>() {{
                     add('#');
@@ -69,18 +75,19 @@ public class GameplayScene extends Scene {
                 new VelocityComponent(1.2, 9,  "exponential"),
                 new VisionEmitterComponent(150, 110, 5, playerVision, new Colour(0, 40, 40)),
                 new PlayerComponent(),
-                new OrientationComponent(90)
+                new OrientationComponent(90),
+                new InventoryComponent()
         );
 
         var guard = world.createEntity(
-                new PositionComponent(new Point(5,7), 3),
-                new RenderableComponent('*', null, null, true),
+                new PositionComponent(new Point(15,10), 3),
+                new RenderableComponent('▶', null, null, true),
                 new VisionEmitterComponent(150, 110, 5, testGuardVision, new Colour(0, 30, 30)),
                 new OrientationComponent(12),
                 new OrientToMovementComponent(),
                 new MaskToTileMapComponent(playerVision),
                 new VelocityComponent(1.2, 9,  "exponential"),
-                new GuardComponent(List.of(new Point(25, 7), new Point(45, 40)), GuardState.PATROLLING)
+                new GuardComponent(List.of(new Point(30, 20), new Point(1,7), new Point(30, 7)), GuardState.PATROLLING)
         );
 
         world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));
@@ -89,9 +96,17 @@ public class GameplayScene extends Scene {
         world.addComponentToLayer(playerVision, new TileMapComponent("vision-maps", player.toString(), "tl", false));
 
 
+        world.createEntity(
+                new PositionComponent(new Point(5, 4), 2),
+                new RenderableComponent('k', new Colour(255, 215, 0), null, true),
+                new ItemComponent("Staff Keycard", "A basic keycard used by employees - Someone seems to have dropped it?"),
+                new MaskToTileMapComponent(playerVision)
+        );
+
         add(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         add(new PlayerSystem(engine.EventBus));
         add(new FogSystem(engine.Resources));
+        add(new CaughtSystem(engine));
 
         MovementSystem movementSys = new MovementSystem(engine.EventBus);
         movementSys.movementPipeline.add(new CollisionProcessor(engine.EventBus, engine.World, engine.Resources, engine.LayoutManager));
@@ -102,8 +117,16 @@ public class GameplayScene extends Scene {
 
         add(new GuardAiSystem(engine.LayoutManager, new AStarPathfinder(), engine.EventBus));
 
+        add(new InventorySystem(engine.EventBus, engine.Resources));
 
+        ObjectiveManager objectiveManager = new ObjectiveManager();
+        HasItemRule hasItem = new HasItemRule("Artifact", "Find the ancient artifact (stub)");
+        ReachLocationRule escape = new ReachLocationRule(new Point(10, 10), 5, "Reach the exit zone at (10,10)");
+        Objective escapeObjective = new Objective("Escape the Dungeon", new AndRule(hasItem, escape, "Find artifact & Escape"));
 
+        objectiveManager.addObjective(escapeObjective);
+
+        add(new ObjectiveSystem(objectiveManager, engine.EventBus));
     }
 
     @Override

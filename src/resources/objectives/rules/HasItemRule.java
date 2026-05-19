@@ -3,13 +3,14 @@ package resources.objectives.rules;
 import engine.EventBus;
 import engine.World;
 import resources.objectives.ObjectiveRule;
+import resources.components.InventoryComponent;
+import resources.components.PlayerComponent;
+import engine_interfaces.objects.EntityID;
+import java.util.HashSet;
 
 public class HasItemRule implements ObjectiveRule {
     private final String itemName;
     private final String description;
-
-    // For now we simulate finding the item
-    private boolean itemFoundDummy = false;
 
     public HasItemRule(String itemName, String description) {
         this.itemName = itemName;
@@ -18,12 +19,22 @@ public class HasItemRule implements ObjectiveRule {
 
     @Override
     public boolean isMet(World world, EventBus eventBus) {
-        // TODO: implement actual inventory check once InventorySystem is built
-        return itemFoundDummy;
-    }
+        HashSet<EntityID> players = world.ComponentEntitiesIndex.query(PlayerComponent.class);
+        if (players == null || players.isEmpty()) return false;
 
-    public void setItemFound(boolean found) {
-        this.itemFoundDummy = found;
+        for (EntityID player : players) {
+            if (world.Entities.get(player) != null && world.Entities.get(player).containsKey(InventoryComponent.class)) {
+                InventoryComponent inv = (InventoryComponent) world.Entities.get(player).get(InventoryComponent.class);
+                if (inv != null) {
+                    for (InventoryComponent.Item item : inv.items) {
+                        if (item.itemName.equals(itemName)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     @Override

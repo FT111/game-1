@@ -34,7 +34,7 @@ public class GuardAiSystem extends System {
     private final Map<EntityID, Map<EntityID, Integer>> awareness = new HashMap<>();
     // track players seen during the current tick (set by PlayerSeenEvent handler)
     private final Map<EntityID, java.util.HashSet<EntityID>> seenThisTick = new HashMap<>();
-    private final int AWARENESS_THRESHOLD = 40; // configurable number of sight ticks to fully spot
+    private final int AWARENESS_THRESHOLD = 100; // configurable number of sight ticks to fully spot
     private final int AWARENESS_DECAY_PER_TICK = 1; // how many awareness points to decay per tick when not seen
     // global alertness level shared across all guards
     public GuardAlertness globalAlertness = GuardAlertness.RELAXED;
@@ -79,7 +79,6 @@ public class GuardAiSystem extends System {
             }
             Logs.log("Player seen by guard " + seen.spotterId + " at " + seen.playerPosition);
             PositionComponent guardPosition = world.getEntityComponent(seen.spotterId, PositionComponent.class);
-            GuardComponent guardComponent = world.getEntityComponent(seen.spotterId, GuardComponent.class);
 
             awareness.putIfAbsent(seen.spotterId, new HashMap<>());
             var perPlayer = awareness.get(seen.spotterId);
@@ -87,16 +86,15 @@ public class GuardAiSystem extends System {
 
             // adjust awareness relavtive to distance
             double distance = guardPosition.Origin.subtract(seen.playerPosition).magnitude();
-            double distanceFactor = Math.max(0.1, 1 - distance / 100);
+            double distanceFactor = Math.max(0.1, 1 - (distance*3) / 100);
 
             // global alertness makes all guards gain awareness faster when the
             // world is on higher alert (e.g. someone has spotted the player).
             double globalFactor = 1.0;
-            if (globalAlertness == GuardAlertness.SUSPICIOUS) globalFactor = 1.5;
+            if (globalAlertness == GuardAlertness.SUSPICIOUS) globalFactor = 1.1;
             if (globalAlertness == GuardAlertness.ALERT) globalFactor = 3.0;
 
             // increase the awareness to 1 * the determined multipliers. cannot go > threshold
-            // NOTE: awareness gain is now independent of the guard's behaviour state.
             current = (int) Math.min(AWARENESS_THRESHOLD, current + (int)Math.ceil(1 * distanceFactor * globalFactor));
             perPlayer.put(seen.playerEntityId, current);
 
@@ -279,7 +277,7 @@ public class GuardAiSystem extends System {
             }
         }
         GuardAlertness computedLevel;
-        if (maxAcrossAll == 0) computedLevel = GuardAlertness.RELAXED;
+        if (maxAcrossAll <= 20) computedLevel = GuardAlertness.RELAXED;
         else if (maxAcrossAll < AWARENESS_THRESHOLD) computedLevel = GuardAlertness.SUSPICIOUS;
         else computedLevel = GuardAlertness.ALERT;
         return computedLevel;

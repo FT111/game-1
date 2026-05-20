@@ -130,7 +130,6 @@ public abstract class CoreWorld {
             }
             Entities.put(entityId, components);
             onEntityCreated(entityId);
-//            components.forEach((componentClass, component) -> onComponentAddedToEntity(entityId, component));
         });
 
         other.Layers.forEach((layerId, components) -> {
@@ -139,7 +138,6 @@ public abstract class CoreWorld {
             }
             Layers.put(layerId, components);
             onLayerCreated(layerId);
-//            components.forEach((componentClass, component) -> onComponentAddedToLayer(layerId, component));
         });
     }
 

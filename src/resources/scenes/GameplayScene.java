@@ -47,12 +47,13 @@ public class GameplayScene extends Scene {
                 new DimensionsComponent(300,300),
                 new VisibilityComponent(true),
                 new VisionBlockerComponent(new HashSet<>() {{
-                    add('#');
+                    addAll(List.of('#', '_', '[', ']', '▁', '▎', '┴','|', 'U'));
                 }}),
                 new LevelMapComponent(),
                 new MaskToTileMapComponent(playerVision),
                 new LayerColliderComponent(new HashSet<>() {{
-                    addAll(List.of('#', '│', '└', '┴', '┬', '┌', '=', '─', '[', ']', 'O', '/', '%'));
+                    addAll(List.of('#', '│', '└', '┴', '┬', '┌', '=', '─','_', '[', ']', 'O', '/', '%', '▁',
+                            '▎','┴', '|', 'U'));
                 }}));
 
         var progressiveLevelMap = world.createLayer(
@@ -98,7 +99,7 @@ public class GameplayScene extends Scene {
 
 
         world.createEntity(
-                new PositionComponent(new Point(5, 4), 2),
+                new PositionComponent(new Point(26, 17), 2),
                 new RenderableComponent('k', new Colour(255, 215, 0), null, true),
                 new ItemComponent("Staff Keycard", "A basic keycard used by employees - Someone seems to have dropped it?"),
                 new MaskToTileMapComponent(playerVision)

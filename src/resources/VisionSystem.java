@@ -126,10 +126,10 @@ public class VisionSystem extends System {
                 double leftSlope = (dx - 0.5) / (dy + 0.5);
                 double rightSlope = (dx + 0.5) / (dy - 0.5);
 
-                if (startSlope < rightSlope) {
+                if (startSlope <= rightSlope) {
                     continue;
                 }
-                if (endSlope > leftSlope) {
+                if (endSlope >= leftSlope) {
                     break;
                 }
 

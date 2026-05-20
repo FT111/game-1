@@ -44,20 +44,22 @@ public class PlayerSystem extends System {
         this.playerEntity = world.ComponentEntitiesIndex.query(PlayerComponent.class).stream().findFirst().orElseThrow();
 
         lockCameraToPlayer(world, cameraEntity);
-        this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
+        this.cameraPosition = world.getEntityComponent(cameraEntity, PositionComponent.class);
 
         mouseInputSubscription = bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
-            var input = (MouseInputEvent) event;
+            if (!(event instanceof MouseInputEvent input)) {
+                return;
+            }
 //            if (input.eventType != MouseEventTypes.DRAG) {
 //                return;
 //            }
 
-            this.cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
+            this.cameraPosition = world.getEntityComponent(cameraEntity, PositionComponent.class);
             this.cursorWorldPosition = new Point(
                 input.screenPosition.x() + cameraPosition.Origin.x(),
                 input.screenPosition.y() + cameraPosition.Origin.y()
             );
-            var orientation = (OrientationComponent) world.Entities.get(playerEntity).get(OrientationComponent.class);
+            var orientation = world.getEntityComponent(playerEntity, OrientationComponent.class);
             var playerPosition = getPlayerWorldPosition(world);
             // get the angle of the mouse cursor relative to the player
             // the y-axis is multiplied by two to account for grid cells being ~2x taller than they are wide
@@ -65,12 +67,14 @@ public class PlayerSystem extends System {
         });
 
         keyInputSubscription = bus.subscribe(KeyInputEvent.class, () -> isEnabled, event -> {
-            var input = (KeyInputEvent) event;
+            if (!(event instanceof KeyInputEvent input)) {
+                return;
+            }
 
             if (movementDirections.containsKey(input.key)) {
                 Point direction = movementDirections.get(input.key);
-                CameraComponent cameraDetails = (CameraComponent) world.Entities.get(cameraEntity).get(CameraComponent.class);
-                PositionComponent cameraPosition = (PositionComponent) world.Entities.get(cameraEntity).get(PositionComponent.class);
+                CameraComponent cameraDetails = world.getEntityComponent(cameraEntity, CameraComponent.class);
+                PositionComponent cameraPosition = world.getEntityComponent(cameraEntity, PositionComponent.class);
                 var proposedPlayerPosition = getPlayerWorldPosition(world).Origin.add(direction);
 
                 // propose player movement
@@ -101,12 +105,12 @@ public class PlayerSystem extends System {
 
 
     public PositionComponent getPlayerWorldPosition(World world) {
-        return (PositionComponent) world.Entities.get(playerEntity).get(PositionComponent.class);
+        return world.getEntityComponent(playerEntity, PositionComponent.class);
     }
 
     public void lockCameraToPlayer(World world, EntityID cameraEntity) {
         var newPosition = getPlayerWorldPosition(world).Origin;
-        CameraComponent cameraDetails = (CameraComponent) world.Entities.get(cameraEntity).get(CameraComponent.class);
+        CameraComponent cameraDetails = world.getEntityComponent(cameraEntity, CameraComponent.class);
 
 
         world.Entities.get(cameraEntity).put(PositionComponent.class, new PositionComponent(

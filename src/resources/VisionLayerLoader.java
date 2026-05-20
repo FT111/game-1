@@ -18,13 +18,16 @@ public class VisionLayerLoader implements ResourceLoader {
 
     public VisionLayerLoader(World world) {
         // Get emitting entities
-        HashSet<LayerID> visionLayers = (HashSet<LayerID>) world.ComponentLayersIndex.query(new Class[]{VisionLayerComponent.class, TileMapComponent.class, DimensionsComponent.class});
+        HashSet<LayerID> visionLayers = world.ComponentLayersIndex.query(
+                VisionLayerComponent.class,
+                TileMapComponent.class,
+                DimensionsComponent.class
+        );
 
         visionLayers.forEach(layerId -> {
-            var layer = world.Layers.get(layerId);
-            var emitterId =((VisionLayerComponent) layer.get(VisionLayerComponent.class)).emitter;
-            var tileMap = (TileMapComponent) layer.get(TileMapComponent.class);
-            var dimensions = (DimensionsComponent) layer.get(DimensionsComponent.class);
+            var emitterId = world.getLayerComponent(layerId, VisionLayerComponent.class).emitter;
+            var tileMap = world.getLayerComponent(layerId, TileMapComponent.class);
+            var dimensions = world.getLayerComponent(layerId, DimensionsComponent.class);
 
             blankVisionTileMaps.put(emitterId.toString(), new Cell[dimensions.height][dimensions.width]);
         });

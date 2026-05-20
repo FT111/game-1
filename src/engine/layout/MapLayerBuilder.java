@@ -1,5 +1,6 @@
 package engine.layout;
 
+import engine.CoreWorld;
 import engine.Resources;
 import engine.Utils;
 import engine_interfaces.objects.Component;
@@ -39,10 +40,10 @@ public class MapLayerBuilder {
     public <T extends Component> MapLayerBuilder fromTileMap(Class<T> markerComponent, Function<T, HashSet<Character>> tilesExtractor) {
         this.condition = components -> components.containsKey(markerComponent) && components.containsKey(PositionComponent.class) && components.containsKey(TileMapComponent.class) && components.containsKey(DimensionsComponent.class);
         this.extractor = (components, resources) -> {
-            var marker = (T) components.get(markerComponent);
-            var positionDetails = (PositionComponent) components.get(PositionComponent.class);
-            var tileMapDetails = (TileMapComponent) components.get(TileMapComponent.class);
-            var dimensionsComponent = (DimensionsComponent) components.get(DimensionsComponent.class);
+            var marker = markerComponent.cast(components.get(markerComponent));
+            var positionDetails = CoreWorld.getComponent(components, PositionComponent.class);
+            var tileMapDetails = CoreWorld.getComponent(components, TileMapComponent.class);
+            var dimensionsComponent = CoreWorld.getComponent(components, DimensionsComponent.class);
 
             var tileMapAsset = resources.getAsset(tileMapDetails.resourceId, tileMapDetails.assetId, Cell[][].class);
             var targetTiles = tilesExtractor.apply(marker);
@@ -69,8 +70,8 @@ public class MapLayerBuilder {
     public <T extends Component> MapLayerBuilder fromBoundingBox(Class<T> markerComponent) {
         this.condition = components -> components.containsKey(markerComponent) && components.containsKey(PositionComponent.class) && components.containsKey(DimensionsComponent.class);
         this.extractor = (components, resources) -> {
-            var position = (PositionComponent) components.get(PositionComponent.class);
-            var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
+            var position = CoreWorld.getComponent(components, PositionComponent.class);
+            var dimensions = CoreWorld.getComponent(components, DimensionsComponent.class);
             HashSet<Point> points = new HashSet<>();
             for(int x = 0; x < dimensions.width; x++) {
                 for(int y = 0; y < dimensions.height; y++) {

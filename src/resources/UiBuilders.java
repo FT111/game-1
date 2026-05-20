@@ -165,7 +165,7 @@ public class UiBuilders {
         }
     }
 
-    public class LabelBuilder<B extends LabelBuilder<B>> extends Builder<B, LayerID> {
+    public abstract class AbstractLabelBuilder<B extends AbstractLabelBuilder<B>> extends Builder<B, LayerID> {
         protected String staticTextString;
 
         protected String textResourceId;
@@ -175,10 +175,7 @@ public class UiBuilders {
         protected int width;
 
         @Override
-        @SuppressWarnings("unchecked")
-        public B self() {
-            return (B) this;
-        }
+        public abstract B self();
 
         public B withStaticText(String text) {
             this.staticTextString = text;
@@ -228,7 +225,15 @@ public class UiBuilders {
         }
     }
 
-    public class ButtonBuilder extends LabelBuilder<ButtonBuilder> {
+    public class LabelBuilder extends AbstractLabelBuilder<LabelBuilder> {
+
+        @Override
+        public LabelBuilder self() {
+            return this;
+        }
+    }
+
+    public class ButtonBuilder extends AbstractLabelBuilder<ButtonBuilder> {
 
         private Consumer<Map<Class<? extends Component>, Component>> clickCallback;
 

@@ -25,7 +25,7 @@ public class ReachLocationRule implements ObjectiveRule {
         if (players.isEmpty()) return false;
 
         EntityID player = players.stream().findFirst().get();
-        PositionComponent pos = (PositionComponent) world.Entities.get(player).get(PositionComponent.class);
+        PositionComponent pos = world.getEntityComponent(player, PositionComponent.class);
         if (pos == null) return false;
 
         double distance = pos.Origin.subtract(targetLocation).magnitude();

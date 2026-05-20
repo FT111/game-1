@@ -1,5 +1,6 @@
 package engine.rendering;
 
+import engine.CoreWorld;
 import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
@@ -17,16 +18,19 @@ public class BlockRenderPass extends RenderPass {
 	@Override
 	public void render(renderObjects renderObjects, RenderBuffer buffer, RenderBuffer previousBuffer) {
 		// Find all layers that have a position and dimensions (candidates for backgrounds/borders)
-		HashSet<LayerID> layers = (HashSet<LayerID>) renderObjects.world().ComponentLayersIndex.query(new Class[]{PositionComponent.class, DimensionsComponent.class});
+		HashSet<LayerID> layers = renderObjects.world().ComponentLayersIndex.query(
+				PositionComponent.class,
+				DimensionsComponent.class
+		);
 
 		layers.forEach(layerID -> {
 			HashMap<Class<? extends Component>, Component> components = renderObjects.world().Layers.get(layerID);
-			PositionComponent positionComponent = (PositionComponent) components.get(PositionComponent.class);
-			DimensionsComponent dimensionsComponent = (DimensionsComponent) components.get(DimensionsComponent.class);
-			VisibilityComponent visibilityComponent = (VisibilityComponent) components.get(VisibilityComponent.class);
+			PositionComponent positionComponent = CoreWorld.getComponent(components, PositionComponent.class);
+			DimensionsComponent dimensionsComponent = CoreWorld.getComponent(components, DimensionsComponent.class);
+			VisibilityComponent visibilityComponent = CoreWorld.getComponent(components, VisibilityComponent.class);
 
-			BackgroundComponent backgroundComponent = (BackgroundComponent) components.get(BackgroundComponent.class);
-			BorderComponent borderComponent = (BorderComponent) components.get(BorderComponent.class);
+			BackgroundComponent backgroundComponent = CoreWorld.getComponent(components, BackgroundComponent.class);
+			BorderComponent borderComponent = CoreWorld.getComponent(components, BorderComponent.class);
 
 			// If neither background nor border present, nothing for this pass to do
 			if (backgroundComponent == null && borderComponent == null) { return; }
@@ -46,7 +50,7 @@ public class BlockRenderPass extends RenderPass {
 			var screenY = screenOrigin.y();
 
 			// Determine if this layer is vision-masked
-			MaskToTileMapComponent visionMask = (MaskToTileMapComponent) components.get(MaskToTileMapComponent.class);
+			MaskToTileMapComponent visionMask = CoreWorld.getComponent(components, MaskToTileMapComponent.class);
 
 			// Render background fill if present
 			if (backgroundComponent != null && backgroundComponent.enabled) {
@@ -61,9 +65,9 @@ public class BlockRenderPass extends RenderPass {
 						if (visionMask != null) {
 							var visionLayerComps = renderObjects.world().Layers.get(visionMask.visionLayer);
 							if (visionLayerComps != null) {
-								var visionTileMapComp = (TileMapComponent) visionLayerComps.get(TileMapComponent.class);
-								var visionPosComp = (PositionComponent) visionLayerComps.get(PositionComponent.class);
-								var visionDimsComp = (DimensionsComponent) visionLayerComps.get(DimensionsComponent.class);
+								var visionTileMapComp = CoreWorld.getComponent(visionLayerComps, TileMapComponent.class);
+								var visionPosComp = CoreWorld.getComponent(visionLayerComps, PositionComponent.class);
+								var visionDimsComp = CoreWorld.getComponent(visionLayerComps, DimensionsComponent.class);
 								if (visionTileMapComp != null && visionPosComp != null && visionDimsComp != null) {
 									try {
 										Cell[][] visionAsset = renderObjects.resources().getAsset(visionTileMapComp.resourceId, visionTileMapComp.assetId, Cell[][].class);
@@ -120,8 +124,8 @@ public class BlockRenderPass extends RenderPass {
 						if (visionMask != null) {
 							var visionLayerComps = renderObjects.world().Layers.get(visionMask.visionLayer);
 							if (visionLayerComps != null) {
-								var visionTileMapComp = (TileMapComponent) visionLayerComps.get(TileMapComponent.class);
-								var visionPosComp = (PositionComponent) visionLayerComps.get(PositionComponent.class);
+								var visionTileMapComp = CoreWorld.getComponent(visionLayerComps, TileMapComponent.class);
+								var visionPosComp = CoreWorld.getComponent(visionLayerComps, PositionComponent.class);
 								if (visionTileMapComp != null && visionPosComp != null) {
 									try {
 										Cell[][] visionAsset = renderObjects.resources().getAsset(visionTileMapComp.resourceId, visionTileMapComp.assetId, Cell[][].class);
@@ -155,8 +159,8 @@ public class BlockRenderPass extends RenderPass {
 						if (visionMask != null) {
 							var visionLayerComps = renderObjects.world().Layers.get(visionMask.visionLayer);
 							if (visionLayerComps != null) {
-								var visionTileMapComp = (TileMapComponent) visionLayerComps.get(TileMapComponent.class);
-								var visionPosComp = (PositionComponent) visionLayerComps.get(PositionComponent.class);
+								var visionTileMapComp = CoreWorld.getComponent(visionLayerComps, TileMapComponent.class);
+								var visionPosComp = CoreWorld.getComponent(visionLayerComps, PositionComponent.class);
 								if (visionTileMapComp != null && visionPosComp != null) {
 									try {
 										Cell[][] visionAsset = renderObjects.resources().getAsset(visionTileMapComp.resourceId, visionTileMapComp.assetId, Cell[][].class);
@@ -194,8 +198,8 @@ public class BlockRenderPass extends RenderPass {
 					if (visionMask != null) {
 						var visionLayerComps = renderObjects.world().Layers.get(visionMask.visionLayer);
 						if (visionLayerComps != null) {
-							var visionTileMapComp = (TileMapComponent) visionLayerComps.get(TileMapComponent.class);
-							var visionPosComp = (PositionComponent) visionLayerComps.get(PositionComponent.class);
+							var visionTileMapComp = CoreWorld.getComponent(visionLayerComps, TileMapComponent.class);
+							var visionPosComp = CoreWorld.getComponent(visionLayerComps, PositionComponent.class);
 							if (visionTileMapComp != null && visionPosComp != null) {
 								try {
 									Cell[][] visionAsset = renderObjects.resources().getAsset(visionTileMapComp.resourceId, visionTileMapComp.assetId, Cell[][].class);
@@ -245,4 +249,3 @@ public class BlockRenderPass extends RenderPass {
 		}
 	}
 }
-

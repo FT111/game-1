@@ -1,5 +1,6 @@
 package resources;
 
+import engine.CoreWorld;
 import engine.Resources;
 import engine.Utils;
 import engine.World;
@@ -61,11 +62,16 @@ public class VisionSystem extends System {
     }
 
     private void bakeStaticVisionMap(World world, Resources resources) {
-        world.ComponentLayersIndex.query(new Class[]{VisionBlockerComponent.class, TileMapComponent.class, PositionComponent.class, DimensionsComponent.class}).forEach(layerID -> {
-            var visionBlocker = (VisionBlockerComponent) world.Layers.get(layerID).get(VisionBlockerComponent.class);
-            var tileMap = (TileMapComponent) world.Layers.get(layerID).get(TileMapComponent.class);
-            var position = (PositionComponent) world.Layers.get(layerID).get(PositionComponent.class);
-            var dimensions = (DimensionsComponent) world.Layers.get(layerID).get(DimensionsComponent.class);
+        world.ComponentLayersIndex.query(
+                VisionBlockerComponent.class,
+                TileMapComponent.class,
+                PositionComponent.class,
+                DimensionsComponent.class
+        ).forEach(layerID -> {
+            var visionBlocker = world.getLayerComponent(layerID, VisionBlockerComponent.class);
+            var tileMap = world.getLayerComponent(layerID, TileMapComponent.class);
+            var position = world.getLayerComponent(layerID, PositionComponent.class);
+            var dimensions = world.getLayerComponent(layerID, DimensionsComponent.class);
 
             Cell[][] tileMapAsset = resources.getAsset(tileMap.resourceId, tileMap.assetId, Cell[][].class);
             staticVisionBlockMap.addAll(Utils.extractTilePointsFromTileMap(tileMap, dimensions, tileMapAsset, visionBlocker.blockingTiles, position));
@@ -204,33 +210,40 @@ public class VisionSystem extends System {
 
     @Override
     public void update(World world, int tickCount) {
-        HashSet<EntityID> trackedVisionEmitters = world.ComponentEntitiesIndex.query(new Class[]{VisionEmitterComponent.class, OrientationComponent.class, PositionComponent.class});
+        HashSet<EntityID> trackedVisionEmitters = world.ComponentEntitiesIndex.query(
+                VisionEmitterComponent.class,
+                OrientationComponent.class,
+                PositionComponent.class
+        );
 
         trackedVisionEmitters.forEach(entityID -> {;
 
             var entity = world.Entities.get(entityID);
-            var emitter = (VisionEmitterComponent) entity.get(VisionEmitterComponent.class);
-            var outputLayerID = (LayerID) ((VisionEmitterComponent) entity.get(VisionEmitterComponent.class)).visionLayer;
-            var visionTileMap = (TileMapComponent) world.Layers.get(outputLayerID).get(TileMapComponent.class);
-            var visionTileMapDimensions = (DimensionsComponent) world.Layers.get(outputLayerID).get(DimensionsComponent.class);
+            var emitter = CoreWorld.getComponent(entity, VisionEmitterComponent.class);
+            var outputLayerID = emitter.visionLayer;
+            var visionTileMap = world.getLayerComponent(outputLayerID, TileMapComponent.class);
+            var visionTileMapDimensions = world.getLayerComponent(outputLayerID, DimensionsComponent.class);
 
 //            // only update vision for this emitter every visionTickFrequency ticks - for optimisation
 //            if (tickCount % emitter.visionTickFrequency != 0) {
 //                return;
 //            }
 
-            var orientation = (OrientationComponent) entity.get(OrientationComponent.class);
-            var position = (PositionComponent) entity.get(PositionComponent.class);
+            var orientation = CoreWorld.getComponent(entity, OrientationComponent.class);
+            var position = CoreWorld.getComponent(entity, PositionComponent.class);
 
             var pointsInSight = calculatePointsInLineOfSight(position.Origin, orientation, emitter.fieldOfViewAngle, emitter.visionRange);
 
 
             // Added: determine if the player is in this entity's line of sight
             if (eventBus != null) {
-                var players = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(new Class[]{PlayerComponent.class, PositionComponent.class});
+                var players = world.ComponentEntitiesIndex.query(
+                        PlayerComponent.class,
+                        PositionComponent.class
+                );
                 for (var playerId : players) {
                     if (playerId.equals(entityID)) continue;
-                    var playerPos = (PositionComponent) world.Entities.get(playerId).get(PositionComponent.class);
+                    var playerPos = world.getEntityComponent(playerId, PositionComponent.class);
                     // Vision is casted from local emitter relative space
                     Point relativePlayerPos = playerPos.Origin.subtract(position.Origin);
                     if (pointsInSight.contains(relativePlayerPos)) {
@@ -261,7 +274,7 @@ public class VisionSystem extends System {
                     position.Origin.y() - visionTileMapDimensions.height /2));
             world.Layers.get(outputLayerID).put(PositionComponent.class, newVisionOutputLayerPosition);
 
-            // IO.println("Updated vision layer position to " + ((PositionComponent) world.Layers.get(outputLayerID).get(PositionComponent.class)).Origin);
+            // IO.println("Updated vision layer position to " + world.getLayerComponent(outputLayerID, PositionComponent.class).Origin);
             });
     }
 }

@@ -23,6 +23,7 @@ import resources.objectives.rules.AndRule;
 import resources.objectives.rules.HasItemRule;
 import resources.objectives.rules.ReachLocationRule;
 
+import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -51,7 +52,7 @@ public class GameplayScene extends Scene {
                 new LevelMapComponent(),
                 new MaskToTileMapComponent(playerVision),
                 new LayerColliderComponent(new HashSet<>() {{
-                    add('#');
+                    addAll(List.of('#', '│', '└', '┴', '┬', '┌', '=', '─', '[', ']', 'O', '/', '%'));
                 }}));
 
         var progressiveLevelMap = world.createLayer(
@@ -72,7 +73,7 @@ public class GameplayScene extends Scene {
         var player = world.createEntity(
                 new PositionComponent(new Point(32,22), 3),
                 new RenderableComponent('@', null, null, true),
-                new VelocityComponent(1.2, 9,  "exponential"),
+                new VelocityComponent(1.2, 8,  "exponential"),
                 new VisionEmitterComponent(150, 110, 5, playerVision, new Colour(0, 40, 40)),
                 new PlayerComponent(),
                 new OrientationComponent(90),
@@ -86,8 +87,8 @@ public class GameplayScene extends Scene {
                 new OrientationComponent(12),
                 new OrientToMovementComponent(),
                 new MaskToTileMapComponent(playerVision),
-                new VelocityComponent(1.2, 9,  "exponential"),
-                new GuardComponent(List.of(new Point(30, 20), new Point(1,7), new Point(30, 7)), GuardState.PATROLLING)
+                new VelocityComponent(1.2, 10,  "exponential"),
+                new GuardComponent(List.of(new Point(17, 20), new Point(40,20), new Point(30, 8)), GuardState.PATROLLING)
         );
 
         world.addComponentToLayer(testGuardVision, new VisionLayerComponent(guard));

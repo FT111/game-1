@@ -5,6 +5,7 @@ import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 public abstract class CoreWorld {
@@ -74,6 +75,14 @@ public abstract class CoreWorld {
         onComponentAddedToEntity(entityId, component);
     }
 
+    public <T extends Component> T getEntityComponent(EntityID entityId, Class<T> componentClass) {
+        HashMap<Class<? extends Component>, Component> components = Entities.get(entityId);
+        if (components == null) {
+            throw new IllegalArgumentException("Entity ID does not exist: " + entityId);
+        }
+        return getComponent(components, componentClass);
+    }
+
     public void addComponentToLayer(LayerID layerId, Component component) {
         HashMap<Class<? extends Component>,  Component> components = Layers.get(layerId);
         if (components == null) {
@@ -81,6 +90,14 @@ public abstract class CoreWorld {
         }
         components.put(component.getClass(), component);
         onComponentAddedToLayer(layerId, component);
+    }
+
+    public <T extends Component> T getLayerComponent(LayerID layerId, Class<T> componentClass) {
+        HashMap<Class<? extends Component>, Component> components = Layers.get(layerId);
+        if (components == null) {
+            throw new IllegalArgumentException("Layer ID does not exist: " + layerId);
+        }
+        return getComponent(components, componentClass);
     }
 
     public void removeEntity(EntityID entityId) {
@@ -97,6 +114,13 @@ public abstract class CoreWorld {
         }
         onLayerRemoved(layerId);
         Layers.remove(layerId);
+    }
+
+    public static <T extends Component> T getComponent(Map<Class<? extends Component>, Component> components, Class<T> componentClass) {
+        if (components == null) {
+            return null;
+        }
+        return componentClass.cast(components.get(componentClass));
     }
 
     public void merge(CoreWorld other) {

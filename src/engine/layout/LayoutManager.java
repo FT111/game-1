@@ -1,5 +1,6 @@
 package engine.layout;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
@@ -33,7 +34,9 @@ public class LayoutManager {
         this.resources = resources;
 
         bus.subscribe(LayerRegisteredEvent.class, () -> true, event -> {
-            var e = (LayerRegisteredEvent) event;
+            if (!(event instanceof LayerRegisteredEvent e)) {
+                return;
+            }
             var components = world.Layers.get(e.id);
             if (components == null) return;
 
@@ -46,7 +49,9 @@ public class LayoutManager {
         });
 
         bus.subscribe(LayerRemovedEvent.class, () -> true, event -> {
-            var e = (LayerRemovedEvent) event;
+            if (!(event instanceof LayerRemovedEvent e)) {
+                return;
+            }
             for (SpatialMap spatialMap : spatialMaps.values()) {
                 spatialMap.removeLayer(e.id);
             }
@@ -80,13 +85,13 @@ public class LayoutManager {
         PositionComponent activeCameraPosition = null;
 
         for (EntityID entity : cameraEntities) {
-            CameraComponent camera = (CameraComponent) world.Entities.get(entity).get(CameraComponent.class);
+            CameraComponent camera = world.getEntityComponent(entity, CameraComponent.class);
             if (camera != null && camera.isActive) {
                 if (activeCameraDetails != null) {
                     throw new RuntimeException("Multiple active cameras found in world");
                 }
                 activeCameraDetails = camera;
-                activeCameraPosition = (PositionComponent) world.Entities.get(entity).get(PositionComponent.class);
+                activeCameraPosition = world.getEntityComponent(entity, PositionComponent.class);
             }
         }
 
@@ -109,7 +114,7 @@ public class LayoutManager {
             return null;
         }
 
-        var positionComponent = (PositionComponent) components.get(PositionComponent.class);
+        var positionComponent = CoreWorld.getComponent(components, PositionComponent.class);
         if (positionComponent == null) {
             return null;
         }

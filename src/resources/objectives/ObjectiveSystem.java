@@ -1,5 +1,6 @@
 package resources.objectives;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.*;
@@ -24,7 +25,7 @@ public class ObjectiveSystem extends System {
     public void onEnter(World world) {
         super.onEnter(world);
         UiBuilders ui = new UiBuilders(world);
-        var labelBuilder = ui.new LabelBuilder<>();
+        var labelBuilder = ui.new LabelBuilder();
         // Position it on top right (or dynamically near right edge)
         labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
                 .withZIndex(100)
@@ -46,7 +47,7 @@ public class ObjectiveSystem extends System {
         // update ui Text
         if (hudLayer != null) {
             var comps = world.Layers.get(hudLayer);
-            var textComp = (TextComponent) comps.get(TextComponent.class);
+            var textComp = CoreWorld.getComponent(comps, TextComponent.class);
             if (textComp != null) {
                 StringBuilder sb = new StringBuilder();
                 for (Objective obj : manager.getObjectives()) {

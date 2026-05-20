@@ -1,5 +1,6 @@
 package engine.systems;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.Logs;
 import engine.Resources;
@@ -47,7 +48,9 @@ public class UiInteractionSystem extends System {
     @Override
     public void onEnter(World world) {
         mouseInputSubscription = bus.subscribe(MouseInputEvent.class, () -> isEnabled, event -> {
-            var input = (MouseInputEvent) event;
+            if (!(event instanceof MouseInputEvent input)) {
+                return;
+            }
             if (input.eventType != MouseEventTypes.DOWN && input.eventType != MouseEventTypes.MOVE) {
                 return;
             }
@@ -78,7 +81,9 @@ public class UiInteractionSystem extends System {
         });
 
         layerRemovedSubscription = bus.subscribe(LayerRemovedEvent.class, () -> isEnabled, event -> {
-            var layerRemovedEvent = (LayerRemovedEvent) event;
+            if (!(event instanceof LayerRemovedEvent layerRemovedEvent)) {
+                return;
+            }
             if (lastHoveredLayer != null && lastHoveredLayer.equals(layerRemovedEvent.id)) {
                 bus.publish(new LayerHoverExitEvent(lastHoveredLayer));
                 lastHoveredLayer = null;
@@ -99,9 +104,9 @@ public class UiInteractionSystem extends System {
             return new InteractionApprovals(false, false);
         }
 
-        var visibility = (VisibilityComponent) element.get(VisibilityComponent.class);
-        var hover = (HoverComponent) element.get(HoverComponent.class);
-        var click = (ClickComponent) element.get(ClickComponent.class);
+        var visibility = CoreWorld.getComponent(element, VisibilityComponent.class);
+        var hover = CoreWorld.getComponent(element, HoverComponent.class);
+        var click = CoreWorld.getComponent(element, ClickComponent.class);
 
         return new InteractionApprovals(
                 click != null && (!click.visibilityDependent || visibility != null && visibility.isVisible),
@@ -173,7 +178,7 @@ public class UiInteractionSystem extends System {
             return Integer.MIN_VALUE;
         }
 
-        var position = (PositionComponent) components.get(PositionComponent.class);
+        var position = CoreWorld.getComponent(components, PositionComponent.class);
         return position != null ? position.zIndex : Integer.MIN_VALUE;
     }
 
@@ -183,11 +188,11 @@ public class UiInteractionSystem extends System {
             return false;
         }
 
-        var clickComp = (ClickComponent) components.get(ClickComponent.class);
-        var hoverComp = (HoverComponent) components.get(HoverComponent.class);
-        var position = (PositionComponent) components.get(PositionComponent.class);
-        var dimensions = (DimensionsComponent) components.get(DimensionsComponent.class);
-        var tileMap = (TileMapComponent) components.get(TileMapComponent.class);
+        var clickComp = CoreWorld.getComponent(components, ClickComponent.class);
+        var hoverComp = CoreWorld.getComponent(components, HoverComponent.class);
+        var position = CoreWorld.getComponent(components, PositionComponent.class);
+        var dimensions = CoreWorld.getComponent(components, DimensionsComponent.class);
+        var tileMap = CoreWorld.getComponent(components, TileMapComponent.class);
 
         if ((clickComp == null && hoverComp == null) || position == null || dimensions == null) {
             return false;

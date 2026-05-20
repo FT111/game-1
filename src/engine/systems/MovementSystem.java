@@ -1,5 +1,6 @@
 package engine.systems;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.Component;
@@ -34,7 +35,9 @@ public class MovementSystem extends System {
     public void onEnter(World world) {
         movementProposalSubscription = bus.subscribe(MovementProposalEvent.class, () -> isEnabled,
             event -> {
-                var movementProposal = (MovementProposalEvent) event;
+                if (!(event instanceof MovementProposalEvent movementProposal)) {
+                    return;
+                }
                 pendingMovements.add(movementProposal);
             });
     }
@@ -54,7 +57,7 @@ public class MovementSystem extends System {
     @Override
     public void update(World world, int tickCount) {
         // stores all components so that the state can be atomically updated after processing all movement proposals
-        var entityStateSnapshot = (HashMap<EntityID, HashMap<Class<? extends Component>, Component>>) world.Entities.clone();
+        var entityStateSnapshot = new HashMap<>(world.Entities);
 
         List<MovementProposalEvent> toRepropose = new ArrayList<>();
         while (!pendingMovements.isEmpty()) {
@@ -66,7 +69,7 @@ public class MovementSystem extends System {
             }
 
             if (shouldMove) {
-                var positionComponent = (PositionComponent) entityStateSnapshot.get(movementProposal.entityID).get(PositionComponent.class);
+                var positionComponent = CoreWorld.getComponent(entityStateSnapshot.get(movementProposal.entityID), PositionComponent.class);
                 positionComponent.Origin = movementProposal.proposedPosition;
 
                 // Update facing based on movement when requested by a marker component.
@@ -74,7 +77,7 @@ public class MovementSystem extends System {
                     int dx = movementProposal.proposedPosition.x() - movementProposal.currentPosition.x();
                     int dy = movementProposal.proposedPosition.y() - movementProposal.currentPosition.y();
                     int facingAngle = (int) Math.toDegrees(Math.atan2(dy * 2.0, dx));
-                    var orientation = (OrientationComponent) entityStateSnapshot.get(movementProposal.entityID).get(OrientationComponent.class);
+                    var orientation = CoreWorld.getComponent(entityStateSnapshot.get(movementProposal.entityID), OrientationComponent.class);
                     if (orientation == null) {
                         orientation = new OrientationComponent(facingAngle);
                         entityStateSnapshot.get(movementProposal.entityID).put(OrientationComponent.class, orientation);

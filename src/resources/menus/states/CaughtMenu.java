@@ -15,7 +15,7 @@ public class CaughtMenu extends MenuState {
         super(ctx);
 
         String caughtText = "You were caught!";
-        var label = ctx.ui().new LabelBuilder<>()
+        var label = ctx.ui().new LabelBuilder()
                 .withStaticText(caughtText)
                 .withPosition(new Point(0, -1), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)
@@ -40,4 +40,3 @@ public class CaughtMenu extends MenuState {
         show(quitButton);
     }
 }
-

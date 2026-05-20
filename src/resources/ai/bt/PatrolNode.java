@@ -19,8 +19,8 @@ public class PatrolNode extends BtNode {
 
     @Override
     public NodeState evaluate(World world, EntityID entityID) {
-        GuardComponent guardComp = (GuardComponent) world.Entities.get(entityID).get(GuardComponent.class);
-        PositionComponent positionComp = (PositionComponent) world.Entities.get(entityID).get(PositionComponent.class);
+        GuardComponent guardComp = world.getEntityComponent(entityID, GuardComponent.class);
+        PositionComponent positionComp = world.getEntityComponent(entityID, PositionComponent.class);
 
         if (guardComp == null || positionComp == null) {
             return NodeState.FAILURE;

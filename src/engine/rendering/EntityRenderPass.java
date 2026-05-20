@@ -18,9 +18,9 @@ public class EntityRenderPass extends RenderPass {
 
         // Switch this to a chunk-based culling approach in the future
         entities.forEach(entity -> {
-            var renderDetails = (RenderableComponent) renderObjects.world().Entities.get(entity).get(RenderableComponent.class);
-            var positionDetails = (PositionComponent) renderObjects.world().Entities.get(entity).get(PositionComponent.class);
-            var visibilityDetails = (VisibilityComponent) renderObjects.world().Entities.get(entity).get(engine_interfaces.objects.components.VisibilityComponent.class);
+            var renderDetails = renderObjects.world().getEntityComponent(entity, RenderableComponent.class);
+            var positionDetails = renderObjects.world().getEntityComponent(entity, PositionComponent.class);
+            var visibilityDetails = renderObjects.world().getEntityComponent(entity, VisibilityComponent.class);
 
             if (visibilityDetails != null && !visibilityDetails.isVisible) {
                 return;
@@ -32,7 +32,7 @@ public class EntityRenderPass extends RenderPass {
 
             // If this entity has a vision-mask component, only render if the entity's world position
             // is visible in the referenced vision layer
-            MaskToTileMapComponent visionMask = (MaskToTileMapComponent) renderObjects.world().Entities.get(entity).get(MaskToTileMapComponent.class);
+            MaskToTileMapComponent visionMask = renderObjects.world().getEntityComponent(entity, MaskToTileMapComponent.class);
             if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, positionDetails.Origin.x(), positionDetails.Origin.y())) {
                 return;
             }

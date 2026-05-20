@@ -3,7 +3,6 @@ import engine.EngineFactory;
 import engine.Logs;
 import engine.systems.InputHandlerSystem;
 import engine.systems.MovementSystem;
-import engine.systems.SceneGraphSystem;
 import engine.systems.UiInteractionSystem;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.Point;
@@ -42,7 +41,7 @@ public class Main {
 
         // Switch to default scene
         engine.SceneManager.switchScene("Global");
-        engine.SceneManager.pushScene("MainMenu");
+        engine.SceneManager.pushScene("Gameplay");
         // Now that the gameplay scene has been merged into the engine world,
         // register the vision layer resource loader so it can discover vision
         // layers that were created by the scene and seed blank assets for them.

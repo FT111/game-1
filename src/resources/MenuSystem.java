@@ -39,7 +39,7 @@ public class MenuSystem extends System{
         if (states == null) {
             UiBuilders uiBuilders = new UiBuilders(this.world);
             states = new MenuStates(this::switchState, uiBuilders, bus, this.world, layerId -> this.world.Layers.get(layerId));
-            currentMenuState = states.menuGate;
+            currentMenuState = states.gameHud;
         }
 
         subscriptions.add(bus.subscribe(ButtonClickEvent.class, () -> isEnabled, this::handleButtonClick));

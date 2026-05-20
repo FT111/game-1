@@ -22,7 +22,7 @@ public class CameraSystem extends System {
     public void onEnter(World world) {
         activeWorld = world;
         resizeSubscriptionCancel = api.onResize(() -> {
-            CameraComponent camera = (CameraComponent) activeWorld.Entities.get(level).get(CameraComponent.class);
+            CameraComponent camera = activeWorld.getEntityComponent(level, CameraComponent.class);
             camera.viewWidth = api.getWidth();
             camera.viewHeight = api.getHeight();
             // IO.println("Resized to: " + api.getWidth() + "x" + api.getHeight());

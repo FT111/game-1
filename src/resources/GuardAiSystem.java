@@ -64,7 +64,9 @@ public class GuardAiSystem extends System {
 
         // checks if a guard moves. if so, removes its pending movment to let it move to the next routed node
         bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
-            var movementEvent = (MovementEvent) event;
+            if (!(event instanceof MovementEvent movementEvent)) {
+                return;
+            }
             pendingMovements.remove(movementEvent.entityID);
         });
 
@@ -72,10 +74,12 @@ public class GuardAiSystem extends System {
         // player during this tick. We increment the guard's awareness meter and
         // only escalate to a full PlayerSpottedEvent when threshold is reached.
         bus.subscribe(PlayerSeenEvent.class, () -> isEnabled, event -> {
-            var seen = (PlayerSeenEvent) event;
+            if (!(event instanceof PlayerSeenEvent seen)) {
+                return;
+            }
             Logs.log("Player seen by guard " + seen.spotterId + " at " + seen.playerPosition);
-            PositionComponent guardPosition = (PositionComponent) world.Entities.get(seen.spotterId).get(PositionComponent.class);
-            GuardComponent guardComponent = (GuardComponent) world.Entities.get(seen.spotterId).get(GuardComponent.class);
+            PositionComponent guardPosition = world.getEntityComponent(seen.spotterId, PositionComponent.class);
+            GuardComponent guardComponent = world.getEntityComponent(seen.spotterId, GuardComponent.class);
 
             awareness.putIfAbsent(seen.spotterId, new HashMap<>());
             var perPlayer = awareness.get(seen.spotterId);
@@ -169,10 +173,13 @@ public class GuardAiSystem extends System {
 
         updateGlobalPlayerAwareness();
 
-        var guards = (HashSet<EntityID>) world.ComponentEntitiesIndex.query(new Class[] {GuardComponent.class, PositionComponent.class});
+        var guards = world.ComponentEntitiesIndex.query(
+                GuardComponent.class,
+                PositionComponent.class
+        );
         for (var guardID : guards) {
-            GuardComponent guardComp = (GuardComponent)world.Entities.get(guardID).get(GuardComponent.class);
-            PositionComponent positionComp = (PositionComponent)world.Entities.get(guardID).get(PositionComponent.class);
+            GuardComponent guardComp = world.getEntityComponent(guardID, GuardComponent.class);
+            PositionComponent positionComp = world.getEntityComponent(guardID, PositionComponent.class);
             if (guardComp == null) continue;
 
             updateGuardRouting(world, guardID, guardComp);
@@ -247,8 +254,8 @@ public class GuardAiSystem extends System {
     }
 
     private static void updateGuardSymbol(World world, EntityID guardID) {
-        RenderableComponent renderComp = (RenderableComponent) world.Entities.get(guardID).get(RenderableComponent.class);
-        OrientationComponent orientationComp = (OrientationComponent) world.Entities.get(guardID).get(OrientationComponent.class);
+        RenderableComponent renderComp = world.getEntityComponent(guardID, RenderableComponent.class);
+        OrientationComponent orientationComp = world.getEntityComponent(guardID, OrientationComponent.class);
 
         if (renderComp != null && orientationComp != null) {
             int angle = (orientationComp.facingAngle % 360 + 360) % 360;

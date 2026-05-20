@@ -19,7 +19,7 @@ public class ComponentIndexTest {
         index.add("one", TestComponentB.class);
         index.add("two", TestComponentA.class);
 
-        HashSet<String> result = index.query(new Class[]{TestComponentA.class, TestComponentB.class});
+        HashSet<String> result = index.query(TestComponentA.class, TestComponentB.class);
 
         assertEquals(1, result.size());
         assertTrue(result.contains("one"));

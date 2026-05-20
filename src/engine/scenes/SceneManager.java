@@ -25,12 +25,16 @@ public class SceneManager {
         this.systems = systems;
 
         bus.subscribe(SwitchSceneEvent.class, ()-> true, event -> {
-            var eventData = (SwitchSceneEvent) event;
+            if (!(event instanceof SwitchSceneEvent eventData)) {
+                return;
+            }
             switchScene(eventData.sceneName);
         });
 
         bus.subscribe(PushSceneEvent.class, ()-> true, event -> {
-            var eventData = (PushSceneEvent) event;
+            if (!(event instanceof PushSceneEvent eventData)) {
+                return;
+            }
             pushScene(eventData.sceneName);
         });
 

@@ -56,6 +56,6 @@ public class Utils {
         } else {
             outputProperty = (existing != null) ? existing : added;
         }
-        return (T) outputProperty;
+        return outputProperty;
     }
 }

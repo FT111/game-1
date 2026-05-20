@@ -32,21 +32,21 @@ public class MenuGate extends MenuState {
         var mainString = "This game requires terminal mouse support to play";
         var unixString = "It is recommend to use a UNIX-based operating system for best compatibility";
         var helpString = "Some terminals may require you to enable mouse reporting or press SHIFT before reporting begins";
-        var mainLabel = ctx.ui().new LabelBuilder<>()
+        var mainLabel = ctx.ui().new LabelBuilder()
                 .withStaticText(mainString)
                 .withPosition(new Point(0,-2), Positioning.FIXED)
                 .withAlignment(engine_interfaces.objects.Alignment.CENTER)
                 .withDimensions(mainString.length(), 1)
                 .build();
 
-        var unixLabel = ctx.ui().new LabelBuilder<>()
+        var unixLabel = ctx.ui().new LabelBuilder()
                 .withStaticText(unixString)
                 .withPosition(new Point(0,2), Positioning.FIXED)
                 .withAlignment(engine_interfaces.objects.Alignment.CENTER)
                 .withDimensions(unixString.length(), 1)
                 .build();
 
-        var helpLabel = ctx.ui().new LabelBuilder<>()
+        var helpLabel = ctx.ui().new LabelBuilder()
                 .withStaticText(helpString)
                 .withPosition(new Point(0,-2), Positioning.FIXED)
                 .withAlignment(Alignment.BOTTOM_CENTER)

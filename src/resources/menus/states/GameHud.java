@@ -1,5 +1,6 @@
 package resources.menus.states;
 
+import engine.CoreWorld;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
@@ -30,7 +31,7 @@ public class GameHud extends MenuState {
         // build HUD label (but don't make it visible here; MenuState.show will be
         // used by the MenuSystem to show/hide when the state becomes active)
         var ui = ctx.ui();
-        var labelBuilder = ui.new LabelBuilder<>();
+        var labelBuilder = ui.new LabelBuilder();
         // position at top-left (0,0) and raise z-index so HUD renders above other layers
         labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
                 .withZIndex(100)
@@ -65,7 +66,7 @@ public class GameHud extends MenuState {
 
     private void updateHudText(StateContext ctx, LayerID hudLayer) {
         var comps = ctx.elementComponents().apply(hudLayer);
-        var textComp = (TextComponent) comps.get(TextComponent.class);
+        var textComp = CoreWorld.getComponent(comps, TextComponent.class);
         if (textComp == null) return;
 
         // compute max awareness

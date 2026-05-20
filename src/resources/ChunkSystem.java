@@ -31,8 +31,10 @@ public class ChunkSystem extends System {
     @Override
     public void onEnter(World world) {
         movementSubscription = bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
-            var movementEvent = (MovementEvent) event;
-            var chunkComponent = (ChunkableComponent) this.world.Entities.get(movementEvent.entityID).get(ChunkableComponent.class);
+            if (!(event instanceof MovementEvent movementEvent)) {
+                return;
+            }
+            var chunkComponent = this.world.getEntityComponent(movementEvent.entityID, ChunkableComponent.class);
 
             if (chunkComponent == null) {
                 return;

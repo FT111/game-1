@@ -41,8 +41,7 @@ public class AStarPathfinder implements PathfindingStrategy {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            PathNode pathNode = (PathNode) o;
+            if (!(o instanceof PathNode pathNode)) return false;
             return Objects.equals(point, pathNode.point);
         }
     }

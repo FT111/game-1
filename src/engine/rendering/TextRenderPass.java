@@ -1,5 +1,6 @@
 package engine.rendering;
 
+import engine.CoreWorld;
 import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
@@ -21,13 +22,16 @@ public class TextRenderPass extends RenderPass {
 
     @Override
     public void render(renderObjects renderObjects, RenderBuffer buffer, RenderBuffer previousBuffer) {
-        var textLayers = (HashSet<LayerID>) renderObjects.world().ComponentLayersIndex.query(new Class[] {TextComponent.class, PositionComponent.class});
+        var textLayers = renderObjects.world().ComponentLayersIndex.query(
+                TextComponent.class,
+                PositionComponent.class
+        );
 
         textLayers.forEach(textLayer -> {
             HashMap<Class<? extends Component>, Component> textLayerComps = renderObjects.world().Layers.get(textLayer);
-            TextComponent textComponent = (TextComponent) textLayerComps.get(TextComponent.class);
-            PositionComponent positionComponent = (PositionComponent) textLayerComps.get(PositionComponent.class);
-            VisibilityComponent visibilityComponent = (VisibilityComponent) textLayerComps.get(VisibilityComponent.class);
+            TextComponent textComponent = CoreWorld.getComponent(textLayerComps, TextComponent.class);
+            PositionComponent positionComponent = CoreWorld.getComponent(textLayerComps, PositionComponent.class);
+            VisibilityComponent visibilityComponent = CoreWorld.getComponent(textLayerComps, VisibilityComponent.class);
 
             if (visibilityComponent != null && !visibilityComponent.isVisible) { return; }
 
@@ -54,7 +58,7 @@ public class TextRenderPass extends RenderPass {
                             renderObjects.camera()
                     );
                     // If this text layer is masked by a vision layer, ensure the world position is visible there
-                    MaskToTileMapComponent visionMask = (MaskToTileMapComponent) textLayerComps.get(MaskToTileMapComponent.class);
+                    MaskToTileMapComponent visionMask = CoreWorld.getComponent(textLayerComps, MaskToTileMapComponent.class);
                     if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, worldPosition.x(), worldPosition.y())) {
                         continue;
                     }

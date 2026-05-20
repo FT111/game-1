@@ -24,8 +24,8 @@ public class ChasePlayerNode extends BtNode {
             return NodeState.FAILURE;
         }
 
-        PositionComponent positionComp = (PositionComponent) world.Entities.get(entityID).get(PositionComponent.class);
-        GuardComponent guardComp = (GuardComponent) world.Entities.get(entityID).get(GuardComponent.class);
+        PositionComponent positionComp = world.getEntityComponent(entityID, PositionComponent.class);
+        GuardComponent guardComp = world.getEntityComponent(entityID, GuardComponent.class);
 
         if (positionComp == null || guardComp == null) return NodeState.FAILURE;
 

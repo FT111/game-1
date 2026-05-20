@@ -1,5 +1,6 @@
 package engine.rendering;
 
+import engine.CoreWorld;
 import engine.Utils;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
@@ -34,8 +35,8 @@ public final class RenderPassUtils {
         var visionLayerComps = renderObjects.world().Layers.get(mask.visionLayer);
         if (visionLayerComps == null) return true;
 
-        var visionTileMapComp = (TileMapComponent) visionLayerComps.get(TileMapComponent.class);
-        var visionPosComp = (PositionComponent) visionLayerComps.get(PositionComponent.class);
+        var visionTileMapComp = CoreWorld.getComponent(visionLayerComps, TileMapComponent.class);
+        var visionPosComp = CoreWorld.getComponent(visionLayerComps, PositionComponent.class);
         if (visionTileMapComp == null || visionPosComp == null) return true;
 
         try {
@@ -67,4 +68,3 @@ public final class RenderPassUtils {
         }
     }
 }
-

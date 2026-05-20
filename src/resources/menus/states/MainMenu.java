@@ -15,7 +15,7 @@ public class MainMenu extends MenuState {
         super(stateContext);
         String continueText = "Continue";
         var mouseReportingDetectedString = "Mouse reporting detected!";
-        var detectedLabel = stateContext.ui().new LabelBuilder<>()
+        var detectedLabel = stateContext.ui().new LabelBuilder()
                 .withStaticText(mouseReportingDetectedString)
                 .withPosition(new Point(0,-2), Positioning.FIXED)
                 .withAlignment(Alignment.BOTTOM_CENTER)
@@ -23,7 +23,7 @@ public class MainMenu extends MenuState {
                 .build();
 
         String menu = "Menu";
-        var label = stateContext.ui().new LabelBuilder<>()
+        var label = stateContext.ui().new LabelBuilder()
                 .withStaticText(menu)
                 .withPosition(new Point(0, -2), Positioning.FIXED)
                 .withAlignment(Alignment.CENTER)

@@ -1,5 +1,6 @@
 package resources;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
@@ -73,7 +74,7 @@ public class GameplayIntegrationTest {
         movementSystem.update(world, 1);
         bus.flush();
 
-        InventoryComponent inventory = (InventoryComponent) world.Entities.get(player).get(InventoryComponent.class);
+        InventoryComponent inventory = world.getEntityComponent(player, InventoryComponent.class);
         assertEquals(1, inventory.items.size());
         assertEquals("Artifact", inventory.items.get(0).itemName);
         assertFalse(world.Entities.containsKey(item));
@@ -88,7 +89,7 @@ public class GameplayIntegrationTest {
         assertTrue(objective.isCompleted());
 
         TextComponent hudText = world.Layers.values().stream()
-                .map(components -> (TextComponent) components.get(TextComponent.class))
+                .map(components -> CoreWorld.getComponent(components, TextComponent.class))
                 .filter(Objects::nonNull)
                 .filter(component -> component.text != null && component.text.contains("Escape"))
                 .findFirst()
@@ -121,7 +122,7 @@ public class GameplayIntegrationTest {
                 new PositionComponent(new Point(0, 0))
         );
         EntityID item = world.createEntity(
-                new ItemComponent("Artifact", "A rare relic"),
+                new ItemComponent("Keycard", "An access keycard"),
                 new PositionComponent(new Point(1, 1))
         );
 
@@ -140,8 +141,8 @@ public class GameplayIntegrationTest {
         movementSystem.update(world, 1);
         bus.flush();
 
-        PositionComponent position = (PositionComponent) world.Entities.get(player).get(PositionComponent.class);
-        InventoryComponent inventory = (InventoryComponent) world.Entities.get(player).get(InventoryComponent.class);
+        PositionComponent position = world.getEntityComponent(player, PositionComponent.class);
+        InventoryComponent inventory = world.getEntityComponent(player, InventoryComponent.class);
         assertEquals(new Point(0, 0), position.Origin);
         assertEquals(0, inventory.items.size());
         assertTrue(world.Entities.containsKey(item));

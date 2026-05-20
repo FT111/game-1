@@ -61,7 +61,7 @@ public class InventorySystem extends System {
         int maxWidth = containerWidth -2;
 
         UiBuilders ui = new UiBuilders(world);
-        var labelBuilder = ui.new LabelBuilder<>();
+        var labelBuilder = ui.new LabelBuilder();
         labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
                 .withZIndex(20)
                 .withDimensions(containerWidth, 8)
@@ -70,7 +70,7 @@ public class InventorySystem extends System {
                 .withStaticText("Inventory \n");
         uiLayerID = labelBuilder.build();
 
-        var descUiBuilder = ui.new LabelBuilder<>();
+        var descUiBuilder = ui.new LabelBuilder();
         descUiBuilder.withPosition(new Point(2, 0), Positioning.RELATIVE)
                 .withZIndex(30)
                 .withAlignment(Alignment.BOTTOM_LEFT)
@@ -79,15 +79,17 @@ public class InventorySystem extends System {
                 .withParent(uiLayerID);
 
         descriptionLabelID = descUiBuilder.build();
-        ((TextComponent)world.Layers.get(descriptionLabelID).get(TextComponent.class)).maxWidth = maxWidth;
-        ((TextComponent)world.Layers.get(descriptionLabelID).get(TextComponent.class)).maxWidth = maxWidth;
+        world.getLayerComponent(descriptionLabelID, TextComponent.class).maxWidth = maxWidth;
+        world.getLayerComponent(descriptionLabelID, TextComponent.class).maxWidth = maxWidth;
 
 
         world.Layers.get(uiLayerID).put(VisibilityComponent.class, new VisibilityComponent(true));
         world.Layers.get(descriptionLabelID).put(VisibilityComponent.class, new VisibilityComponent(true));
 
         movementSubscription = bus.subscribe(MovementEvent.class, () -> isEnabled, event -> {
-            MovementEvent moveEvent = (MovementEvent) event;
+            if (!(event instanceof MovementEvent moveEvent)) {
+                return;
+            }
 
             if (world.Entities.get(moveEvent.entityID) == null || !world.Entities.get(moveEvent.entityID).containsKey(PlayerComponent.class)) {
                 return;
@@ -95,7 +97,7 @@ public class InventorySystem extends System {
             if (!world.Entities.get(moveEvent.entityID).containsKey(InventoryComponent.class)) {
                 return;
             }
-            InventoryComponent inventory = (InventoryComponent) world.Entities.get(moveEvent.entityID).get(InventoryComponent.class);
+            InventoryComponent inventory = world.getEntityComponent(moveEvent.entityID, InventoryComponent.class);
 
             HashSet<EntityID> items = world.ComponentEntitiesIndex.query(ItemComponent.class);
             if (items == null || items.isEmpty()) return;
@@ -103,9 +105,9 @@ public class InventorySystem extends System {
             EntityID pickedItem = null;
             for (EntityID entityID : items) {
                 if (entityID.equals(moveEvent.entityID)) continue;
-                PositionComponent pos = (PositionComponent) world.Entities.get(entityID).get(PositionComponent.class);
+                PositionComponent pos = world.getEntityComponent(entityID, PositionComponent.class);
                 if (pos.Origin.equals(moveEvent.newOrigin)) {
-                    ItemComponent item = (ItemComponent) world.Entities.get(entityID).get(ItemComponent.class);
+                    ItemComponent item = world.getEntityComponent(entityID, ItemComponent.class);
                     inventory.items.add(new InventoryComponent.Item(item.itemName, item.description));
                     Logs.log("Picked up item: " + item.itemName);
                     pickedItem = entityID;
@@ -123,7 +125,7 @@ public class InventorySystem extends System {
             HashSet<EntityID> players = world.ComponentEntitiesIndex.query(PlayerComponent.class);
             if (players != null) {
                 for (EntityID player : players) {
-                    InventoryComponent inv = (InventoryComponent) world.Entities.get(player).get(InventoryComponent.class);
+                    InventoryComponent inv = world.getEntityComponent(player, InventoryComponent.class);
                     if (inv != null) {
                         inv.items.clear();
                         updateInventoryUI(world, inv.items);
@@ -133,11 +135,13 @@ public class InventorySystem extends System {
         });
 
         clickSubscription = bus.subscribe(ButtonClickEvent.class, () -> isEnabled, event -> {
-            ButtonClickEvent btnEvent = (ButtonClickEvent) event;
+            if (!(event instanceof ButtonClickEvent btnEvent)) {
+                return;
+            }
             InventoryComponent.Item clickedItem = layerToItemMap.get(btnEvent.buttonLayerId);
             if (clickedItem != null) {
                 resources.setAsset("gameState", "selectedItem", clickedItem.itemName);
-                TextComponent descText = (TextComponent) world.Layers.get(descriptionLabelID).get(TextComponent.class);
+                TextComponent descText = world.getLayerComponent(descriptionLabelID, TextComponent.class);
                 if (descText != null) {
                     descText.text = "§ "+ clickedItem.itemName + " - " + clickedItem.description;
                     world.Layers.get(descriptionLabelID).put(TextComponent.class, descText);

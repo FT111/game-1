@@ -1,5 +1,6 @@
 package engine.systems.movement;
 
+import engine.CoreWorld;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.MovementProcessor;
@@ -18,8 +19,8 @@ public class VelocityProcessor implements MovementProcessor {
         }
 
 
-        var positionComponent = (PositionComponent) entityState.get(proposal.entityID).get(PositionComponent.class);
-        var velocityComponent = (VelocityComponent) entityState.get(proposal.entityID).get(VelocityComponent.class);
+        var positionComponent = CoreWorld.getComponent(entityState.get(proposal.entityID), PositionComponent.class);
+        var velocityComponent = CoreWorld.getComponent(entityState.get(proposal.entityID), VelocityComponent.class);
 
         if (velocityComponent.lastMovementTick == 0) {
             velocityComponent.lastMovementTick = tickCount; // Initialize last movement tick

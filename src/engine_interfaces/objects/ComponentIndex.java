@@ -24,8 +24,8 @@ public class ComponentIndex<ID> {
         }
     }
 
-    public HashSet<ID> query(Class<? extends Component>[] required) {
-        if (required.length == 0) return new HashSet<>();
+    public HashSet<ID> query(Class<? extends Component>... required) {
+        if (required == null || required.length == 0) return new HashSet<>();
 
         HashSet<ID> result = null;
         for (Class<? extends Component> c : required) {

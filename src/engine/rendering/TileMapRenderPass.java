@@ -1,5 +1,6 @@
 package engine.rendering;
 
+import engine.CoreWorld;
 import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
@@ -19,15 +20,20 @@ public class TileMapRenderPass extends RenderPass {
 
     @Override
     public void render(renderObjects renderObjects, RenderBuffer buffer, RenderBuffer previousBuffer) {
-        HashSet<LayerID> tileMapEntities = (HashSet<LayerID>) renderObjects.world().ComponentLayersIndex.query(new Class[]{TileMapComponent.class, PositionComponent.class, DimensionsComponent.class, VisibilityComponent.class});
+        HashSet<LayerID> tileMapEntities = renderObjects.world().ComponentLayersIndex.query(
+                TileMapComponent.class,
+                PositionComponent.class,
+                DimensionsComponent.class,
+                VisibilityComponent.class
+        );
 
         tileMapEntities.forEach(layerID -> {
             // Get the tile map and position components for this layer
             HashMap<Class<? extends Component>, Component> components = renderObjects.world().Layers.get(layerID);
-            TileMapComponent tileMapComponent = (TileMapComponent) components.get(TileMapComponent.class);
-            PositionComponent positionComponent = (PositionComponent) components.get(PositionComponent.class);
-            DimensionsComponent dimensionsComponent = (DimensionsComponent) components.get(DimensionsComponent.class);
-            VisibilityComponent visibilityComponent = (VisibilityComponent) components.get(VisibilityComponent.class);
+            TileMapComponent tileMapComponent = CoreWorld.getComponent(components, TileMapComponent.class);
+            PositionComponent positionComponent = CoreWorld.getComponent(components, PositionComponent.class);
+            DimensionsComponent dimensionsComponent = CoreWorld.getComponent(components, DimensionsComponent.class);
+            VisibilityComponent visibilityComponent = CoreWorld.getComponent(components, VisibilityComponent.class);
 
             if (!visibilityComponent.isVisible) {
                 return;
@@ -57,7 +63,7 @@ public class TileMapRenderPass extends RenderPass {
                     }
 
                     // If this layer is masked by a vision layer, only render cells that are marked visible
-                    MaskToTileMapComponent visionMask = (MaskToTileMapComponent) components.get(MaskToTileMapComponent.class);
+                    MaskToTileMapComponent visionMask = CoreWorld.getComponent(components, MaskToTileMapComponent.class);
                     int worldX = positionComponent.Origin.x() + x;
                     int worldY = positionComponent.Origin.y() + y;
                     if (!RenderPassUtils.isPointVisibleInVisionMask(renderObjects, visionMask, worldX, worldY)) {

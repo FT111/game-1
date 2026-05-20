@@ -1,5 +1,6 @@
 package engine_interfaces.objects.rendering;
 
+import engine.CoreWorld;
 import engine.World;
 import engine_interfaces.objects.*;
 import engine_interfaces.objects.components.DimensionsComponent;
@@ -17,15 +18,15 @@ public class PositioningCalculators {
         HashMap<Class<? extends Component>, Component> childComps = world.Layers.get(childId);
         if (childComps == null) return new Point(0, 0);
 
-        PositionComponent childPos = (PositionComponent) childComps.get(PositionComponent.class);
-        DimensionsComponent childDim = (DimensionsComponent) childComps.get(DimensionsComponent.class);
+        PositionComponent childPos = CoreWorld.getComponent(childComps, PositionComponent.class);
+        DimensionsComponent childDim = CoreWorld.getComponent(childComps, DimensionsComponent.class);
 
         int parentWidth, parentHeight;
 
-        ParentComponent parentComponent = (ParentComponent) childComps.get(ParentComponent.class);
+        ParentComponent parentComponent = CoreWorld.getComponent(childComps, ParentComponent.class);
         if (parentComponent != null && parentComponent.parentLayerId != null) {
             // Has a parent, align to container
-            DimensionsComponent parentDim = (DimensionsComponent) world.Layers.get(parentComponent.parentLayerId).get(DimensionsComponent.class);
+            DimensionsComponent parentDim = world.getLayerComponent(parentComponent.parentLayerId, DimensionsComponent.class);
             parentWidth = parentDim != null ? parentDim.width : 0;
             parentHeight = parentDim != null ? parentDim.height : 0;
         } else {
@@ -56,11 +57,11 @@ public class PositioningCalculators {
     public static Point getPositionFromHierarchy(World world, LayerID id, CameraView camera) {
         var comps = world.Layers.get(id);
         if (comps != null) {
-            ParentComponent pComp = (ParentComponent) comps.get(ParentComponent.class);
+            ParentComponent pComp = CoreWorld.getComponent(comps, ParentComponent.class);
             if (pComp != null && pComp.parentLayerId != null) {
                 var parentComps = world.Layers.get(pComp.parentLayerId);
                 if (parentComps != null) {
-                    PositionComponent parentPos = (PositionComponent) parentComps.get(PositionComponent.class);
+                    PositionComponent parentPos = CoreWorld.getComponent(parentComps, PositionComponent.class);
                     if (parentPos != null) {
                         return calc.get(parentPos.positionStrategy).calculatePosition(parentPos.Origin, pComp.parentLayerId, world, camera);
                     }

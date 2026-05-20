@@ -21,7 +21,7 @@ public class FogSystem extends System {
     }
 
     private Cell[][] extractTileMap(World world, LayerID layerId) {
-        var tileMapComp = (TileMapComponent) world.Layers.get(layerId).get(TileMapComponent.class);
+        var tileMapComp = world.getLayerComponent(layerId, TileMapComponent.class);
         try {
             return resources.getAsset(tileMapComp.resourceId, tileMapComp.assetId, Cell[][].class);
         } catch (IllegalArgumentException ex) {
@@ -39,7 +39,7 @@ public class FogSystem extends System {
 
         if (playerVision.isEmpty() || progressiveTileMapLayer.isEmpty() || levelMap.isEmpty()) {return;}
 
-        var playerVisionPosition = ((PositionComponent)world.Layers.get(playerVision.get()).get(PositionComponent.class)).Origin;
+        var playerVisionPosition = world.getLayerComponent(playerVision.get(), PositionComponent.class).Origin;
         var playerVisionTileMap = extractTileMap(world, playerVision.get());
         var progressiveTileMap = extractTileMap(world, progressiveTileMapLayer.get());
         var levelMapTileMap = extractTileMap(world, levelMap.get());

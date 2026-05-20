@@ -33,13 +33,21 @@ public class MapAssetLoader implements engine_interfaces.objects.ResourceLoader 
             if (def.rows.get(0) instanceof List) {
                 // Nested structure: rows[0] is a list of strings
                 for (Object rowArray : def.rows) {
-                    if (rowArray instanceof List) {
-                        flatRows.addAll((List<String>) rowArray);
+                    if (rowArray instanceof List<?> rowList) {
+                        for (Object row : rowList) {
+                            if (row instanceof String rowString) {
+                                flatRows.add(rowString);
+                            }
+                        }
                     }
                 }
             } else {
                 // Flat structure: rows is already a list of strings
-                flatRows = (List<String>) (List<?>) def.rows;
+                for (Object row : def.rows) {
+                    if (row instanceof String rowString) {
+                        flatRows.add(rowString);
+                    }
+                }
             }
 
             int height = flatRows.size();

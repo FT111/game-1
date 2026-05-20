@@ -1,5 +1,6 @@
 package resources;
 
+import engine.CoreWorld;
 import engine.EventBus;
 import engine.World;
 import engine_interfaces.objects.*;
@@ -38,7 +39,7 @@ public class AwarenessHudSystem extends System {
         super.onEnter(world);
         // Build a simple HUD label in the top-left of the screen
         UiBuilders ui = new UiBuilders(world);
-        var labelBuilder = ui.new LabelBuilder<>();
+        var labelBuilder = ui.new LabelBuilder();
         labelBuilder.withPosition(new Point(0, 0), Positioning.FIXED)
                 .withDimensions(40, 6)
                 .withZIndex(100)
@@ -80,7 +81,7 @@ public class AwarenessHudSystem extends System {
     private void updateHudText(int threshold) {
         if (hudLayer == null) return;
         var comps = world.Layers.get(hudLayer);
-        var textComp = (TextComponent) comps.get(TextComponent.class);
+        var textComp = CoreWorld.getComponent(comps, TextComponent.class);
         if (textComp == null) return;
         // compute the guard with maximum awareness
         EntityID maxGuard = null;

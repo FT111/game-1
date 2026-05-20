@@ -112,6 +112,10 @@ public class InventorySystem extends System {
                     Logs.log("Picked up item: " + item.itemName);
                     pickedItem = entityID;
                     updateInventoryUI(world, inventory.items);
+                    if (inventory.items.size() == 1) {
+                        selectItem(world, inventory.items.getFirst());
+                    }
+
                     break;
                 }
             }
@@ -140,16 +144,20 @@ public class InventorySystem extends System {
             }
             InventoryComponent.Item clickedItem = layerToItemMap.get(btnEvent.buttonLayerId);
             if (clickedItem != null) {
-                resources.setAsset("gameState", "selectedItem", clickedItem.itemName);
-                TextComponent descText = world.getLayerComponent(descriptionLabelID, TextComponent.class);
-                if (descText != null) {
-                    descText.text = "§ "+ clickedItem.itemName + " - " + clickedItem.description;
-                    world.Layers.get(descriptionLabelID).put(TextComponent.class, descText);
-                }
+                selectItem(world, clickedItem);
             }
         });
     }
-    
+
+    private void selectItem(World world, InventoryComponent.Item clickedItem) {
+        resources.setAsset("gameState", "selectedItem", clickedItem.itemName);
+        TextComponent descText = world.getLayerComponent(descriptionLabelID, TextComponent.class);
+        if (descText != null) {
+            descText.text = "§ "+ clickedItem.itemName + " - " + clickedItem.description;
+            world.Layers.get(descriptionLabelID).put(TextComponent.class, descText);
+        }
+    }
+
     @Override
     public void onExit(World world) {
         if (uiLayerID != null) {

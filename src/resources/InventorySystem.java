@@ -108,12 +108,12 @@ public class InventorySystem extends System {
                 PositionComponent pos = world.getEntityComponent(entityID, PositionComponent.class);
                 if (pos.Origin.equals(moveEvent.newOrigin)) {
                     ItemComponent item = world.getEntityComponent(entityID, ItemComponent.class);
-                    inventory.items.add(new InventoryComponent.Item(item.itemName, item.description));
+                    inventory.items.put(item.itemName, new InventoryComponent.Item(item.itemName, item.description));
                     Logs.log("Picked up item: " + item.itemName);
                     pickedItem = entityID;
                     updateInventoryUI(world, inventory.items);
                     if (inventory.items.size() == 1) {
-                        selectItem(world, inventory.items.getFirst());
+                        selectItem(world, inventory.items.values().stream().findFirst().get());
                     }
 
                     break;
@@ -184,7 +184,7 @@ public class InventorySystem extends System {
         }
     }
 
-    private void updateInventoryUI(World world, List<InventoryComponent.Item> items) {
+    private void updateInventoryUI(World world, HashMap<String, InventoryComponent.Item> items) {
         if (uiLayerID == null) return;
 
         for (LayerID oldLayer : itemLayers) {
@@ -197,7 +197,7 @@ public class InventorySystem extends System {
 
         int currentX = 2;
         int currentY = 1;
-        for (InventoryComponent.Item item : items) {
+        for (InventoryComponent.Item item : items.values()) {
             int width = item.itemName.length() + 2;
             if (currentX + width > 48) {
                 currentX = 2;

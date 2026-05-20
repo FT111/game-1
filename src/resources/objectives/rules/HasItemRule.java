@@ -26,11 +26,7 @@ public class HasItemRule implements ObjectiveRule {
             if (world.Entities.get(player) != null && world.Entities.get(player).containsKey(InventoryComponent.class)) {
                 InventoryComponent inv = world.getEntityComponent(player, InventoryComponent.class);
                 if (inv != null) {
-                    for (InventoryComponent.Item item : inv.items) {
-                        if (item.itemName.equals(itemName)) {
-                            return true;
-                        }
-                    }
+                    if (inv.items.containsKey(itemName)) return true;
                 }
             }
         }

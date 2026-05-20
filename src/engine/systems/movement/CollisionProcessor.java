@@ -3,6 +3,7 @@ package engine.systems.movement;
 import engine.EventBus;
 import engine.Resources;
 import engine.World;
+import engine.layout.SpatialMap;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;
 import engine_interfaces.objects.LayerID;
@@ -21,6 +22,7 @@ import engine.layout.LayoutManager;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
 import static engine.Utils.extractTilePointsFromTileMap;
 
@@ -44,11 +46,17 @@ public class CollisionProcessor implements MovementProcessor {
         // only validates against static collision map for now
         var collisionMap = layoutManager.getSpatialMap("collision");
 
-        boolean canMove = collisionMap.getLayersAt(proposal.proposedPosition).isEmpty();
+        Set<LayerID> layersAt = getLayersAt(proposal, collisionMap);
+
+        boolean canMove = layersAt.isEmpty();
         if (!canMove) {
-            bus.publish(new CollisionEvent(proposal.entityID));
+            bus.publish(new CollisionEvent(proposal.entityID, layersAt.stream().findFirst().get()));
         }
 
         return canMove;
+    }
+
+    private static Set<LayerID> getLayersAt(MovementProposalEvent proposal, SpatialMap collisionMap) {
+        return collisionMap.getLayersAt(proposal.proposedPosition);
     }
 }

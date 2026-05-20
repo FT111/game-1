@@ -3,10 +3,12 @@ package resources.components;
 import engine_interfaces.objects.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 public class InventoryComponent extends Component {
-    public List<Item> items = new ArrayList<>();
+    public HashMap<String, Item> items = new HashMap<>();
 
     public static class Item {
         public String itemName;
@@ -20,6 +22,15 @@ public class InventoryComponent extends Component {
         @Override
         public String toString() {
             return itemName;
+        }
+    }
+
+    public InventoryComponent() {
+    }
+
+    public InventoryComponent(InventoryComponent.Item ...items) {
+        for (Item item : items) {
+            this.items.put(item.itemName, item);
         }
     }
 }

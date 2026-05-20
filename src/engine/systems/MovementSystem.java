@@ -2,6 +2,7 @@ package engine.systems;
 
 import engine.CoreWorld;
 import engine.EventBus;
+import engine.Logs;
 import engine.World;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.EntityID;

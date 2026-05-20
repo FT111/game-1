@@ -23,7 +23,7 @@ import resources.components.PlayerComponent;
 import resources.objectives.Objective;
 import resources.objectives.ObjectiveManager;
 import resources.objectives.ObjectiveSystem;
-import resources.objectives.rules.AndRule;
+import resources.objectives.rules.OrRule;
 import resources.objectives.rules.HasItemRule;
 import resources.objectives.rules.ReachLocationRule;
 
@@ -50,7 +50,7 @@ public class GameplayIntegrationTest {
                 new PositionComponent(new Point(0, 0))
         );
         EntityID item = world.createEntity(
-                new ItemComponent("Artifact", "A rare relic"),
+                new ItemComponent("TestItem", "TestDescription"),
                 new PositionComponent(new Point(1, 1))
         );
 
@@ -58,9 +58,9 @@ public class GameplayIntegrationTest {
         inventorySystem.onEnter(world);
 
         ObjectiveManager manager = new ObjectiveManager();
-        HasItemRule hasItem = new HasItemRule("Artifact", "Collect the artifact");
+        HasItemRule hasItem = new HasItemRule("TestItem", "TestDescription");
         ReachLocationRule reachExit = new ReachLocationRule(new Point(2, 2), 0, "Reach the exit");
-        Objective objective = new Objective("Escape", new AndRule(hasItem, reachExit, "Find artifact & escape"));
+        Objective objective = new Objective("Escape", new OrRule(hasItem, reachExit, "TestDescription"));
         manager.addObjective(objective);
 
         ObjectiveSystem objectiveSystem = new ObjectiveSystem(manager, bus);
@@ -76,7 +76,7 @@ public class GameplayIntegrationTest {
 
         InventoryComponent inventory = world.getEntityComponent(player, InventoryComponent.class);
         assertEquals(1, inventory.items.size());
-        assertEquals("Artifact", inventory.items.get(0).itemName);
+        assertEquals("TestItem", inventory.items.get("TestItem").itemName);
         assertFalse(world.Entities.containsKey(item));
 
         bus.publish(new MovementProposalEvent(player, new Point(2, 2), new Point(1, 1)));

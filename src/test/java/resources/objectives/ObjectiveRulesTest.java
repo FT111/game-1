@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import resources.components.InventoryComponent;
 import resources.components.PlayerComponent;
 import resources.objectives.rules.AndRule;
+import resources.objectives.rules.OrRule;
 import resources.objectives.rules.HasItemRule;
 import resources.objectives.rules.ReachLocationRule;
 
@@ -21,7 +22,7 @@ public class ObjectiveRulesTest {
         EventBus bus = new EventBus();
         World world = new World(bus);
         InventoryComponent inventory = new InventoryComponent();
-        inventory.items.add(new InventoryComponent.Item("key", "a small key"));
+        inventory.items.put("key", new InventoryComponent.Item("key", "a small key"));
         world.createEntity(new PlayerComponent(), inventory);
 
         HasItemRule rule = new HasItemRule("key", "has key");

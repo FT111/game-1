@@ -1,22 +1,10 @@
 import engine.Engine;
 import engine.EngineFactory;
 import engine.Logs;
-import engine.systems.InputHandlerSystem;
-import engine.systems.MovementSystem;
-import engine.systems.UiInteractionSystem;
-import engine_interfaces.objects.EntityID;
-import engine_interfaces.objects.Point;
-import engine_interfaces.objects.System;
-import engine_interfaces.objects.components.*;
 import resources.*;
-import resources.components.VisionEmitterComponent;
-import resources.components.VisionLayerComponent;
 import resources.scenes.GameplayScene;
 import resources.scenes.GlobalScene;
 import resources.scenes.MainMenuScene;
-
-import java.util.HashMap;
-import java.util.HashSet;
 
 public class Main {
     public static void main(String[] args) {

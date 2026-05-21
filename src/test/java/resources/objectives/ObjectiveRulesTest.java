@@ -170,4 +170,65 @@ public class ObjectiveRulesTest {
 
         assertTrue(obj.isCompleted());
     }
+
+    @Test
+    void objectiveManagerChecksAllObjectivesComplete() {
+        ObjectiveRule trueRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "ok";
+            }
+        };
+
+        ObjectiveRule falseRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "fail";
+            }
+        };
+
+        World world = new World(new EventBus());
+        EventBus bus = new EventBus();
+
+        // Test: no objectives
+        ObjectiveManager manager = new ObjectiveManager();
+        assertFalse(manager.areAllObjectivesComplete());
+
+        // Test: one incomplete objective
+        Objective incomplete = new Objective("test", falseRule);
+        manager.addObjective(incomplete);
+        manager.update(world, bus);
+        assertFalse(manager.areAllObjectivesComplete());
+
+        // Test: all objectives complete
+        ObjectiveManager manager2 = new ObjectiveManager();
+        Objective complete = new Objective("test", trueRule);
+        manager2.addObjective(complete);
+        manager2.update(world, bus);
+        assertTrue(manager2.areAllObjectivesComplete());
+
+        // Test: multiple objectives, all complete
+        ObjectiveManager manager3 = new ObjectiveManager();
+        manager3.addObjective(new Objective("obj1", trueRule));
+        manager3.addObjective(new Objective("obj2", trueRule));
+        manager3.update(world, bus);
+        assertTrue(manager3.areAllObjectivesComplete());
+
+        // Test: multiple objectives, one incomplete
+        ObjectiveManager manager4 = new ObjectiveManager();
+        manager4.addObjective(new Objective("obj1", trueRule));
+        manager4.addObjective(new Objective("obj2", falseRule));
+        manager4.update(world, bus);
+        assertFalse(manager4.areAllObjectivesComplete());
+    }
 }

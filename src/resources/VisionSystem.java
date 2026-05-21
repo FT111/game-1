@@ -14,6 +14,7 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.Colour;
+import resources.components.DoorComponent;
 import resources.components.VisionBlockerComponent;
 import resources.components.VisionEmitterComponent;
 import resources.events.PlayerSeenEvent; // added
@@ -84,6 +85,36 @@ public class VisionSystem extends System {
             Point relative = blocker.subtract(emitterPos);
             if (Math.max(Math.abs(relative.x()), Math.abs(relative.y())) <= maxRange) {
                 relativeBlockers.add(relative);
+            }
+        });
+        return relativeBlockers;
+    }
+
+    private HashSet<Point> buildRelativeDoorBlockMap(Point emitterPos, int maxRange) {
+        var relativeBlockers = new HashSet<Point>();
+        world.ComponentLayersIndex.query(
+                DoorComponent.class,
+                PositionComponent.class,
+                DimensionsComponent.class
+        ).forEach(doorLayerId -> {
+            var door = world.getLayerComponent(doorLayerId, DoorComponent.class);
+            if (door == null || door.isOpen) {
+                return;
+            }
+
+            var position = world.getLayerComponent(doorLayerId, PositionComponent.class);
+            var dimensions = world.getLayerComponent(doorLayerId, DimensionsComponent.class);
+            if (position == null || dimensions == null) {
+                return;
+            }
+
+            for (int y = 0; y < dimensions.height; y++) {
+                for (int x = 0; x < dimensions.width; x++) {
+                    Point relative = new Point(position.Origin.x() + x - emitterPos.x(), position.Origin.y() + y - emitterPos.y());
+                    if (Math.max(Math.abs(relative.x()), Math.abs(relative.y())) <= maxRange) {
+                        relativeBlockers.add(relative);
+                    }
+                }
             }
         });
         return relativeBlockers;
@@ -204,6 +235,7 @@ public class VisionSystem extends System {
 
     public HashSet<Point> calculatePointsInLineOfSight(Point emitterPos, OrientationComponent orientation, int fieldOfViewAngle, int range) {
         var relativeVisionBlocks = buildRelativeVisionBlockMap(emitterPos, range);
+        relativeVisionBlocks.addAll(buildRelativeDoorBlockMap(emitterPos, range));
         var allVisiblePoints = castView(range, relativeVisionBlocks);
         return filterPointsWithinFov(allVisiblePoints, orientation, fieldOfViewAngle);
     }

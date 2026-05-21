@@ -13,6 +13,7 @@ import resources.menus.InteractionHooks;
 import resources.menus.KeyInputBind;
 import resources.menus.MenuState;
 import resources.menus.MenuStates;
+import resources.events.SwitchMenuStateEvent;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -46,11 +47,8 @@ public class MenuSystem extends System{
         subscriptions.add(bus.subscribe(LayerHoverEvent.class, () -> isEnabled, this::handleHover));
         subscriptions.add(bus.subscribe(LayerHoverExitEvent.class, () -> isEnabled, this::handleHoverExit));
         subscriptions.add(bus.subscribe(KeyInputEvent.class, () -> isEnabled, this::handleKeyPress));
-        // Show caught screen when requested
-        subscriptions.add(bus.subscribe(resources.events.ShowCaughtMenuEvent.class, () -> isEnabled, event -> {
-            // switch to caught menu state
-            switchState(states.caughtMenu);
-        }));
+        // Handle menu state switch events
+        subscriptions.add(bus.subscribe(SwitchMenuStateEvent.class, () -> isEnabled, this::handleSwitchMenuState));
         switchState(currentMenuState);
     }
 
@@ -155,5 +153,27 @@ public class MenuSystem extends System{
         if (callback != null) {
             callback.run();
         }
+    }
+
+    private void handleSwitchMenuState(Event event) {
+        if (!(event instanceof SwitchMenuStateEvent switchEvent)) {
+            return;
+        }
+
+        MenuState targetState = getMenuStateByName(switchEvent.menuStateName);
+        if (targetState != null) {
+            switchState(targetState);
+        }
+    }
+
+    private MenuState getMenuStateByName(String stateName) {
+        return switch (stateName) {
+            case "gameHud" -> states.gameHud;
+            case "mainMenu" -> states.mainMenu;
+            case "caughtMenu" -> states.caughtMenu;
+            case "completionMenu" -> states.completionMenu;
+            case "menuGate" -> states.menuGate;
+            default -> null;
+        };
     }
 }

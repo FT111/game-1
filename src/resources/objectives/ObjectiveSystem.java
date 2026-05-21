@@ -10,11 +10,13 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
 import engine_interfaces.objects.rendering.Colour;
 import resources.UiBuilders;
+import resources.events.LevelCompletedEvent;
 
 public class ObjectiveSystem extends System {
     private final ObjectiveManager manager;
     private final EventBus bus;
     private LayerID hudLayer;
+    private boolean levelCompletedEventPublished = false;
 
     public ObjectiveSystem(ObjectiveManager manager, EventBus bus) {
         this.manager = manager;
@@ -43,6 +45,12 @@ public class ObjectiveSystem extends System {
 
         // update objective states
         manager.update(world, bus);
+
+        // check if all objectives are complete and publish event once
+        if (!levelCompletedEventPublished && manager.areAllObjectivesComplete()) {
+            bus.publish(new LevelCompletedEvent());
+            levelCompletedEventPublished = true;
+        }
 
         // update ui Text
         if (hudLayer != null) {

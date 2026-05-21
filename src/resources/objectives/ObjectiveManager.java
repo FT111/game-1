@@ -22,4 +22,16 @@ public class ObjectiveManager {
     public List<Objective> getObjectives() {
         return objectives;
     }
+
+    public boolean areAllObjectivesComplete() {
+        if (objectives.isEmpty()) {
+            return false;
+        }
+        for (Objective objective : objectives) {
+            if (!objective.isCompleted()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

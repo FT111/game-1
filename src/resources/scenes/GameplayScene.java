@@ -126,7 +126,7 @@ public class GameplayScene extends Scene {
         add(new ChunkSystem(engine.EventBus, engine.World, 8, chunkMap));
         add(new PlayerSystem(engine.EventBus));
         add(new FogSystem(engine.Resources));
-        add(new CaughtSystem(engine));
+        add(new GameEndSystem(engine));
 
         MovementSystem movementSys = new MovementSystem(engine.EventBus);
         movementSys.movementPipeline.add(new CollisionProcessor(engine.EventBus, engine.World, engine.Resources, engine.LayoutManager));

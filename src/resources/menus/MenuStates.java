@@ -7,6 +7,7 @@ import engine_interfaces.objects.LayerID;
 import resources.UiBuilders;
 import resources.menus.states.GameHud;
 import resources.menus.states.MainMenu;
+import resources.menus.states.CompletionMenu;
 import resources.menus.states.MenuGate;
 
 import java.util.HashMap;
@@ -17,6 +18,7 @@ public class MenuStates {
     public final GameHud gameHud;
     public final MainMenu mainMenu;
     public final resources.menus.states.CaughtMenu caughtMenu;
+    public final CompletionMenu completionMenu;
     public final MenuGate menuGate;
 
     public MenuStates(Consumer<MenuState> switchTo, UiBuilders ui, EventBus bus, World world, Function<LayerID, HashMap<Class<? extends Component>, Component>> elementComponents) {
@@ -26,6 +28,8 @@ public class MenuStates {
         gameHud = new GameHud(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 
         caughtMenu = new resources.menus.states.CaughtMenu(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
+
+        completionMenu = new CompletionMenu(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 
         menuGate = new MenuGate(new StateContext(switchTo, new UiBuilders(world), bus, this, elementComponents));
 

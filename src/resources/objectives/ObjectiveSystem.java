@@ -40,6 +40,14 @@ public class ObjectiveSystem extends System {
     }
 
     @Override
+    public void onExit(World world) {
+        super.onExit(world);
+        if (hudLayer != null) {
+            world.removeLayer(hudLayer);
+        }
+    }
+
+    @Override
     public void update(World world, int tickCount) {
         super.update(world, tickCount);
 

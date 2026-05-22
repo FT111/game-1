@@ -1,4 +1,37 @@
-classDiagram
-namespace GameEngine {
+---
+config:
+  layout: elk
+---
 
-}
+flowchart TD
+    Main[Main] --> Factory[EngineFactory]
+    Factory --> Engine[Engine]
+
+    Main --> Loader[MapAssetLoader]
+    Main --> Scenes[Register scenes]
+    Scenes --> Global[GlobalScene]
+    Scenes --> Menu[MainMenuScene]
+    Scenes --> Gameplay[GameplayScene]
+
+    Engine --> Bus[EventBus]
+    Engine --> World[World]
+    Engine --> Renderer[Renderer]
+    Engine --> Resources[Resources]
+    Engine --> SceneManager[SceneManager]
+
+    Global --> GlobalSystems[CameraSystem<br/>UiInteractionSystem<br/>MenuSystem<br/>ControlSystem<br/>InputHandlerSystem]
+    Gameplay --> Level1[Level1]
+
+    Level1 --> Layers[Level1Layers]
+    Level1 --> Player[Level1Player]
+    Level1 --> Guards[Level1Guards]
+    Level1 --> Doors[Level1DoorsAndItems]
+    Level1 --> Systems[Level1Systems]
+    Level1 --> Objectives[Level1Objective]
+
+    Layers --> TileMap[Map tile layers]
+    Layers --> VisionLayer[Player vision layer]
+    Player --> PlayerEntity[Player entity]
+    Guards --> GuardFactory[GuardFactory]
+    Doors --> DoorSystem[DoorSystem]
+    Objectives --> ObjectiveManager[ObjectiveManager]

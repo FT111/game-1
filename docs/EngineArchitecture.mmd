@@ -4,160 +4,110 @@ config:
 ---
 
 classDiagram
-    class EventBus {
-        -Queues: Dict[EventTypes, Queue[Event]]
-        -Listeners: Dict[EventTypes, Func[Event, void]]
-        +Publish(event: Event) void
-        +Subscribe(eventType: EventTypes, callback: Func[Event, void]) void
-        +Flush() void
-    }
+direction TB
 
-    class Engine {
-        + SystemRegistry: SystemRegistry
-        + EventBus: EventBus
-        + World: World
-        + GraphicsAPI: GraphicsAPI
-        + Renderer: Renderer
+class EngineFactory {
+    +withWorld(World world) EngineFactory
+    +withRenderer(Renderer renderer) EngineFactory
+    +withTicksPerSecond(int ticksPerSecond) EngineFactory
+    +build() Engine
+}
 
-        + Start() void
-    }
+class Engine {
+    +World: World
+    +Renderer: Renderer
+    +Systems: Systems
+    +Resources: Resources
+    +EventBus: EventBus
+    +SceneManager: SceneManager
+    +LayoutManager: LayoutManager
+    +StartGameLoop() void
+}
 
-    class World {
-        + Entities: Dict[EntityID, List[Component]]
-        + EntityComponentIndex: Dict[Component, List[EntityID]]
+class EventBus {
+    +publish(event) EventSubscriptionReceipt
+    +subscribe(type, enabledPredicate, callback) EventSubscriptionReceipt
+    +flush() void
+}
 
-        + Layers: Dict[LayerID, Layer]
-        + LayerComponentIndex: Dict[Component, List[LayerID]]
-    }
+class World
+class Systems {
+    +addSystem(system) void
+    +removeSystem(type) void
+    +update(world, tickCount) void
+}
+class Resources {
+    +addResourceLoader(loader) void
+    +getAsset(key, id, type) Object
+    +setAsset(key, id, asset) void
+}
+class Renderer {
+    +renderPasses: List<RenderPass>
+    +render(world, resources) void
+}
+class SceneManager {
+    +addScene(name, scene) SceneManager
+    +switchScene(sceneName) void
+    +pushScene(sceneName) void
+    +popScene() void
+}
+class LayoutManager {
+    +defineMapLayer(name) MapLayerBuilder
+    +getSpatialMap(name) SpatialMap
+}
 
-    class SystemRegistry {
-        + Systems: ArrayList[System]
-        + SystemIndex: Dict[string, System]
-        + Register(System system, string Identifier)
-    }
+class Scene {
+    +systems: Set<System>
+    +world: SceneWorld
+}
+class SceneWorld
+class System {
+    <<abstract>>
+}
+class GraphicsAPI {
+    <<interface>>
+}
+class LanternaAPI
+class RenderPass {
+    <<abstract>>
+}
+class TileMapRenderPass
+class BlockRenderPass
+class EntityRenderPass
+class TextRenderPass
+class InputHandlerSystem
+class MovementSystem
+class UiInteractionSystem
+class GlobalScene
+class MainMenuScene
+class GameplayScene
 
-
-    class Renderer {
-        # renderPipelines: ArrayList[RenderPass]
-        # render(World world, GraphicsAPI IO) void
-        - cameraView: CameraView
-
-        - renderBuffer: RenderBuffer
-
-    }
-
-    class Cell {
-        + Content: char
-        + fgColor: string
-        + bgColor: string
-    }
-
-    class RenderPass {
-        <<abstract>>
-        + render(World world, CameraView camera, RenderBuffer buffer) void
-    }
-
-
-    class UIRenderPass {
-    }
-
-    class TilemapRenderPass {
-    }
-
-    class EntityRenderPass {
-    }
-
-
-    class InputHandler {
-        InputHandler(World world, EventBus eventBus, GraphicsAPI io)
-        # update(TimeDelta delta) void
-    }
-    class RenderBuffer {
-        - cells = Cell[][]
-        - width: int
-        -  height: int
-        + set(x: int, y: int, Cell cell) void
-        + get(x: int, y: int) Cell
-        + clear() void
-        }
-
-    class CameraView {
-        - originX: int
-        - originY: int
-        - viewWidth: int
-        - viewHeight: int
-
-        + CameraView(CameraComponent camera) void
-        + isInView(Vector2Int position) bool
-        + worldToView(Vector2Int worldPos) Vector2Int
-    }
-    class System {
-        <<abstract>>
-        + System(World world, EventBus eventBus)
-        + update(TimeDelta delta) void
-    }
-
-    class Point {
-        <<record>>
-        + x: int
-        + y: int
-    }
-
-    class Component {
-        <<interface>>
-    }
-
-    class CameraComponent {
-        + origin: Vector2Int
-        + viewWidth: int
-        + viewHeight: int
-    }
-
-    class RenderableComponent {
-        + Content: char
-        + fgColor: string
-        + bgColor: string
-    }
-
-    class GraphicsAPI {
-        <<interface>>
-        + render(RenderBuffer buffer) void
-        + listen(callback: Func[InputEvent, void]) void
-        + clear() void
-
-        + getWidth() int
-        + getHeight() int
-        + onResize(callback: Func[void]) void
-    }
-
-    class Resources {
-        + ResoucePath: Path
-        +
-    }
-
+EngineFactory --> Engine
 
 Engine *-- World
-Engine *-- SystemRegistry
+Engine *-- Renderer
+Engine *-- Systems
 Engine *-- Resources
 Engine *-- EventBus
-Engine *-- Renderer
-Engine *-- GraphicsAPI
+Engine *-- SceneManager
+Engine *-- LayoutManager
+Engine ..> GraphicsAPI
 
-Renderer *-- RenderBuffer
-Renderer *-- CameraView : updates each tick
+GraphicsAPI <|.. LanternaAPI
+
 Renderer o-- RenderPass
-
-RenderPass <|-- TilemapRenderPass
+RenderPass <|-- TileMapRenderPass
+RenderPass <|-- BlockRenderPass
 RenderPass <|-- EntityRenderPass
-RenderPass <|-- UIRenderPass
+RenderPass <|-- TextRenderPass
 
-RenderBuffer o-- Cell
+SceneManager o-- Scene
+Scene *-- SceneWorld
+Systems o-- System
+System <|-- InputHandlerSystem
+System <|-- MovementSystem
+System <|-- UiInteractionSystem
 
-SystemRegistry o-- System
-
-Component <|-- CameraComponent
-Component <|-- RenderableComponent
-
-System <|-- InputHandler
-
-World o-- Component
+Scene <|-- GlobalScene
+Scene <|-- MainMenuScene
+Scene <|-- GameplayScene

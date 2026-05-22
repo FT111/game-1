@@ -1,18 +1,27 @@
 sequenceDiagram
     actor Player
+    participant API as GraphicsAPI
     participant InputHandlerSystem
-    participant Event Bus
-    participant PlayerMovementSystem
-    participant CollisionSystem
-    participant PlayerEntity
+    participant EventBus
+    participant PlayerSystem
+    participant MovementSystem
+    participant CollisionProcessor
+    participant VelocityProcessor
+    participant World
 
-    Player->>InputHandlerSystem: Provide Input [e.g., WASD keys]
-    InputHandlerSystem->>Event Bus: InputEvent [Movement]
-    Event Bus-->>PlayerMovementSystem: InputEvent [Movement]
+    Player->>API: Press WASD / move mouse
+    API->>InputHandlerSystem: emit KeyInputEvent / MouseInputEvent
+    InputHandlerSystem->>EventBus: publish input event
+    EventBus-->>PlayerSystem: input event
 
-    PlayerMovementSystem->>Event Bus: ProposeMovementEvent
-    Event Bus-->>CollisionSystem: ProposeMovementEvent
-    CollisionSystem-->>Event Bus: CollisionEvent [IF Collision Detected]
-    Event Bus-->>PlayerMovementSystem: CollisionEvent [IF Collision Detected]
-    PlayerMovementSystem->>PlayerEntity: UpdatePosition [IF No Collision]
+    PlayerSystem->>EventBus: publish MovementProposalEvent(s)
+    EventBus-->>MovementSystem: MovementProposalEvent
+    MovementSystem->>CollisionProcessor: validateMove(...)
+    MovementSystem->>VelocityProcessor: validateMove(...)
 
+    alt move accepted
+        MovementSystem->>World: update entity position
+        MovementSystem->>EventBus: publish MovementEvent
+    else move rejected
+        MovementSystem->>EventBus: queue proposal again if retryOnRejection
+    end

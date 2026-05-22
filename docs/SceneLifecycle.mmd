@@ -1,0 +1,22 @@
+---
+config:
+  layout: elk
+---
+
+sequenceDiagram
+    participant Engine
+    participant SceneManager
+    participant OldScene
+    participant NewScene
+    participant Systems
+    participant World
+
+    Engine->>SceneManager: switchScene(name) / pushScene(name) / popScene()
+    SceneManager->>SceneManager: collect active systems
+    SceneManager->>Systems: deactivate systems leaving the stack
+    SceneManager->>OldScene: exit()
+    SceneManager->>World: remove(oldScene.world)
+    SceneManager->>World: merge(newScene.world)
+    SceneManager->>NewScene: enter()
+    SceneManager->>Systems: activate systems for new stack
+    SceneManager->>Systems: afterSceneChange(oldScene, newScene)

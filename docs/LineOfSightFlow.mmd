@@ -1,4 +1,25 @@
+---
+config:
+  layout: elk
+---
+
 flowchart TD
-    start([Start])
-    --> find[Find closest geometry corners to entity]
-    --> raycast[Raycast from entity to corners, using Bresenham's line algorithm]
+    enter[VisionSystem.onEnter] --> bake[Bake static blocker map]
+    bake --> staticQuery[Query VisionBlocker tiles]
+    bake --> doorQuery[Query closed doors]
+
+
+    VisionSystem.onUpdate -->
+    select[Query for vision emitting entities] -->
+    iterate[Call getVisiblePoints for each emitter]
+
+    VisionSystem.getVisiblePoints -->
+    build[Build relative shadow casting map] -->
+    cast[castView over 8 octants]
+    cast --> light[castLight recursive shadow casting]
+    light --> fov[filterPointsWithinFov]
+    fov --> sight[Visible points for emitter]
+    sight --> compare[Compare against player position]
+    compare --> seen[Publish PlayerSeenEvent]
+    sight --> updateLayer["Write vision Cell[][] asset"]
+    updateLayer --> moveLayer[Move vision output layer to emitter]

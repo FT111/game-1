@@ -1,0 +1,26 @@
+---
+config:
+  layout: elk
+---
+
+flowchart TD
+    ObjectiveSystem[ObjectiveSystem.onEnter] --> Hud[Create HUD layer]
+    Hud --> Update[ObjectiveSystem.update]
+    Update --> Manager["ObjectiveManager.update(world, bus)"]
+    Manager --> Obj[Objective.update]
+    Obj --> Rules{All rules met?}
+    Rules -->|yes| Complete[Mark objective completed]
+    Rules -->|no| Pending[Remain incomplete]
+
+    Obj --> RuleSet[ObjectiveRule set]
+    RuleSet --> HasItem[HasItemRule]
+    RuleSet --> Reach[ReachLocationRule]
+    RuleSet --> And[AndRule]
+    RuleSet --> Or[OrRule]
+
+    Manager --> AllDone{All objectives complete?}
+    AllDone -->|yes| LevelComplete[Publish LevelCompletedEvent]
+    AllDone -->|no| Continue[Keep updating HUD]
+    LevelComplete --> GameEndSystem[GameEndSystem]
+    GameEndSystem --> MainMenu[Pop scene, push MainMenu, switch menu state]
+    Update --> HUDText[Render objective text and rule status]

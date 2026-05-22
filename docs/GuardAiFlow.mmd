@@ -1,0 +1,29 @@
+---
+config:
+  layout: elk
+---
+
+flowchart TD
+    VisionSystem[VisionSystem] -->|PlayerSeenEvent| GuardAiSystem[GuardAiSystem]
+    GuardAiSystem --> Awareness[Update per-guard awareness]
+    Awareness --> SeenThisTick[Mark players seen this tick]
+    Awareness --> Threshold{Reached awareness threshold?}
+    Threshold -->|yes| Spotted[Publish PlayerSpottedEvent]
+    Spotted --> Alert[Set global alertness to ALERT]
+    Threshold -->|no| Meter[Publish AwarenessChangedEvent]
+
+    GuardAiSystem --> Tick["update(world, tick)"]
+    Tick --> Decay[Decay awareness if player not seen]
+    Decay --> Clear[Clear seenThisTick]
+    Clear --> Tree[Build or reuse behavior tree]
+
+    Tree --> Selector[Selector]
+    Selector --> CatchSeq[Sequence: IsPlayerCatchable -> CatchPlayerNode]
+    Selector --> ChaseSeq[Sequence: IsPlayerSpottedNode -> ChasePlayerNode]
+    Selector --> Patrol[PatrolNode]
+
+    CatchSeq --> Catch[Publish PlayerCaughtEvent]
+    ChaseSeq --> ChaseMove[Route to last known player position]
+    Patrol --> PatrolMove[Route along patrol points]
+
+    Catch --> GameEndSystem[GameEndSystem]

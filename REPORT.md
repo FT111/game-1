@@ -2,7 +2,7 @@ Module Code: CS1OP
 
 Assignment report Title: Project
 
-Student Number (e.g. 25098635): 34028527
+Student Number: 34028527
 
 Actual hrs spent for the assignment: 211
 

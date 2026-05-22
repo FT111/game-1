@@ -1,10 +1,10 @@
 import engine.Engine;
 import engine.EngineFactory;
 import engine.Logs;
-import resources.*;
-import resources.scenes.GameplayScene;
-import resources.scenes.GlobalScene;
-import resources.scenes.MainMenuScene;
+import game.*;
+import game.scenes.GameplayScene;
+import game.scenes.GlobalScene;
+import game.scenes.MainMenuScene;
 
 public class Main {
     public static void main(String[] args) {
@@ -29,7 +29,7 @@ public class Main {
 
         // Switch to default scene
         engine.SceneManager.switchScene("Global");
-        engine.SceneManager.pushScene("Gameplay");
+        engine.SceneManager.pushScene("MainMenu");
         // Now that the gameplay scene has been merged into the engine world,
         // register the vision layer resource loader so it can discover vision
         // layers that were created by the scene and seed blank assets for them.

@@ -12,7 +12,6 @@ import engine.layout.LayoutManager;
 import engine_interfaces.objects.components.LayerColliderComponent;
 import engine_interfaces.objects.components.ui.ClickComponent;
 import engine_interfaces.objects.components.ui.HoverComponent;
-import resources.components.DoorComponent;
 import engine_interfaces.objects.rendering.RenderPass;
 
 import java.io.IOException;
@@ -62,10 +61,6 @@ public class Engine {
 
         LayoutManager.defineMapLayer("hoverable")
                 .fromBoundingBox(HoverComponent.class)
-                .register();
-
-        LayoutManager.defineMapLayer("doors")
-                .fromBoundingBox(DoorComponent.class)
                 .register();
 
         Renderer = (renderer != null) ? renderer : new Renderer(new LanternaAPI(), LayoutManager);

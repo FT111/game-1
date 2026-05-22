@@ -7,7 +7,7 @@ import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
 import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.*;
-import resources.components.MaskToTileMapComponent;
+import engine_interfaces.objects.components.MaskToTileMapComponent;
 import engine_interfaces.objects.rendering.*;
 
 import java.util.HashMap;

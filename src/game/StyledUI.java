@@ -1,0 +1,22 @@
+package game;
+
+import engine.CoreWorld;
+import engine_interfaces.objects.components.BackgroundComponent;
+import engine_interfaces.objects.rendering.Colour;
+
+public class StyledUI {
+    public static UiBuilders.ButtonBuilder menuButton(UiBuilders ui) {
+        return ui.new ButtonBuilder()
+                .withBackground(new Colour(64, 64, 64), null, -1)
+                .onHoverEnter((button) -> {
+                    var bg = CoreWorld.getComponent(button, BackgroundComponent.class);
+                    if (bg != null) {
+                        bg.bgColour = new Colour(15, 15, 15);
+                    }})
+                .onHoverExit((button) -> {
+                    var bg = CoreWorld.getComponent(button, BackgroundComponent.class);
+                    if (bg != null) {
+                        bg.bgColour = new Colour(64, 64, 64);
+                    }});
+    }
+}

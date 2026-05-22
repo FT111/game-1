@@ -1,0 +1,237 @@
+package tests.resources.objectives;
+
+import engine.EventBus;
+import engine.World;
+import engine_interfaces.objects.Point;
+import engine_interfaces.objects.components.PositionComponent;
+import game.objectives.Objective;
+import game.objectives.ObjectiveManager;
+import game.objectives.ObjectiveRule;
+import org.junit.jupiter.api.Test;
+import game.components.InventoryComponent;
+import game.components.PlayerComponent;
+import game.objectives.rules.AndRule;
+import game.objectives.rules.OrRule;
+import game.objectives.rules.HasItemRule;
+import game.objectives.rules.ReachLocationRule;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ObjectiveRulesTest {
+
+    @Test
+    void hasItemRuleChecksPlayerInventory() {
+        EventBus bus = new EventBus();
+        World world = new World(bus);
+        InventoryComponent inventory = new InventoryComponent();
+        inventory.items.put("key", new InventoryComponent.Item("key", "a small key"));
+        world.createEntity(new PlayerComponent(), inventory);
+
+        HasItemRule rule = new HasItemRule("key", "has key");
+
+        assertTrue(rule.isMet(world, bus));
+        assertFalse(new HasItemRule("missing", "missing").isMet(world, bus));
+    }
+
+    @Test
+    void hasItemRuleReturnsFalseWithoutInventoryOrPlayers() {
+        EventBus bus = new EventBus();
+        World world = new World(bus);
+        HasItemRule rule = new HasItemRule("key", "has key");
+
+        assertFalse(rule.isMet(world, bus));
+
+        world.createEntity(new PlayerComponent());
+        assertFalse(rule.isMet(world, bus));
+    }
+
+    @Test
+    void reachLocationRuleUsesRadius() {
+        EventBus bus = new EventBus();
+        World world = new World(bus);
+        world.createEntity(new PlayerComponent(), new PositionComponent(new Point(5, 5)));
+
+        ReachLocationRule rule = new ReachLocationRule(new Point(7, 5), 2, "reach");
+
+        assertTrue(rule.isMet(world, bus));
+        assertFalse(new ReachLocationRule(new Point(10, 10), 2, "far").isMet(world, bus));
+    }
+
+    @Test
+    void reachLocationRuleReturnsFalseWithoutPlayerOrPosition() {
+        EventBus bus = new EventBus();
+        World world = new World(bus);
+        ReachLocationRule rule = new ReachLocationRule(new Point(1, 1), 1, "reach");
+
+        assertFalse(rule.isMet(world, bus));
+
+        world.createEntity(new PlayerComponent());
+        assertFalse(rule.isMet(world, bus));
+    }
+
+    @Test
+    void andRuleCombinesDescriptionsAndResults() {
+        ObjectiveRule always = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "one";
+            }
+        };
+        ObjectiveRule never = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "two";
+            }
+        };
+
+        AndRule rule = new AndRule(always, never);
+
+        assertFalse(rule.isMet(new World(new EventBus()), new EventBus()));
+        assertTrue(rule.getDescription().contains("one"));
+        assertTrue(rule.getDescription().contains("two"));
+    }
+
+    @Test
+    void andRuleUsesDescriptionOverride() {
+        ObjectiveRule always = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "one";
+            }
+        };
+        ObjectiveRule never = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "two";
+            }
+        };
+
+        AndRule rule = new AndRule(always, never, "custom");
+
+        assertTrue(rule.getDescription().contains("custom"));
+    }
+
+    @Test
+    void objectiveCompletesWhenAllRulesMet() {
+        ObjectiveRule trueRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "ok";
+            }
+        };
+
+        Objective obj = new Objective("test", trueRule);
+        obj.update(new World(new EventBus()), new EventBus());
+
+        assertTrue(obj.isCompleted());
+    }
+
+    @Test
+    void objectiveManagerUpdatesAllObjectives() {
+        ObjectiveRule trueRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "ok";
+            }
+        };
+
+        ObjectiveManager manager = new ObjectiveManager();
+        Objective obj = new Objective("test", trueRule);
+        manager.addObjective(obj);
+        manager.update(new World(new EventBus()), new EventBus());
+
+        assertTrue(obj.isCompleted());
+    }
+
+    @Test
+    void objectiveManagerChecksAllObjectivesComplete() {
+        ObjectiveRule trueRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return true;
+            }
+
+            @Override
+            public String getDescription() {
+                return "ok";
+            }
+        };
+
+        ObjectiveRule falseRule = new ObjectiveRule() {
+            @Override
+            public boolean isMet(World world, EventBus eventBus) {
+                return false;
+            }
+
+            @Override
+            public String getDescription() {
+                return "fail";
+            }
+        };
+
+        World world = new World(new EventBus());
+        EventBus bus = new EventBus();
+
+        // Test: no objectives
+        ObjectiveManager manager = new ObjectiveManager();
+        assertFalse(manager.areAllObjectivesComplete());
+
+        // Test: one incomplete objective
+        Objective incomplete = new Objective("test", falseRule);
+        manager.addObjective(incomplete);
+        manager.update(world, bus);
+        assertFalse(manager.areAllObjectivesComplete());
+
+        // Test: all objectives complete
+        ObjectiveManager manager2 = new ObjectiveManager();
+        Objective complete = new Objective("test", trueRule);
+        manager2.addObjective(complete);
+        manager2.update(world, bus);
+        assertTrue(manager2.areAllObjectivesComplete());
+
+        // Test: multiple objectives, all complete
+        ObjectiveManager manager3 = new ObjectiveManager();
+        manager3.addObjective(new Objective("obj1", trueRule));
+        manager3.addObjective(new Objective("obj2", trueRule));
+        manager3.update(world, bus);
+        assertTrue(manager3.areAllObjectivesComplete());
+
+        // Test: multiple objectives, one incomplete
+        ObjectiveManager manager4 = new ObjectiveManager();
+        manager4.addObjective(new Objective("obj1", trueRule));
+        manager4.addObjective(new Objective("obj2", falseRule));
+        manager4.update(world, bus);
+        assertFalse(manager4.areAllObjectivesComplete());
+    }
+}

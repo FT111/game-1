@@ -9,7 +9,7 @@ import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.rendering.Cell;
 import engine_interfaces.objects.rendering.RenderBuffer;
 import engine_interfaces.objects.rendering.renderObjects;
-import resources.components.MaskToTileMapComponent;
+import engine_interfaces.objects.components.MaskToTileMapComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 
 import java.util.List;

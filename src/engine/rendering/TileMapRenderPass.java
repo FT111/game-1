@@ -1,16 +1,14 @@
 package engine.rendering;
 
 import engine.CoreWorld;
-import engine.Utils;
 import engine_interfaces.objects.Component;
 import engine_interfaces.objects.LayerID;
 import engine_interfaces.objects.Point;
-import engine_interfaces.objects.Positioning;
 import engine_interfaces.objects.components.DimensionsComponent;
 import engine_interfaces.objects.components.PositionComponent;
 import engine_interfaces.objects.components.TileMapComponent;
 import engine_interfaces.objects.components.VisibilityComponent;
-import resources.components.MaskToTileMapComponent;
+import engine_interfaces.objects.components.MaskToTileMapComponent;
 import engine_interfaces.objects.rendering.*;
 
 import java.util.HashMap;
